@@ -1,0 +1,12 @@
+# digital out
+int32 PIN_DOUT1 = 1
+int32 PIN_DOUT2 = 2
+int32 PIN_DOUT3 = 3
+int32 PIN_DOUT4 = 4
+int32 PIN_DOUT5 = 5
+int32 PIN_DOUT6 = 6
+
+int32 pin
+bool state
+---
+bool success

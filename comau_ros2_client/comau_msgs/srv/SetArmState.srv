@@ -1,0 +1,8 @@
+int32 arm_terminate 0
+int32 arm_lock 1
+int32 arm_reset 2
+int32 arm_resume 3
+
+int32 arm_state
+---
+bool success

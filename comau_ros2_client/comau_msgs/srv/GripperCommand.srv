@@ -1,0 +1,3 @@
+bool gripper_command
+---
+bool success

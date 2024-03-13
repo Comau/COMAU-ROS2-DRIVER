@@ -1,0 +1,12 @@
+##Description: Moves robot arm to a specified sequence of poses.
+
+#goal definition                           
+# trajectory_msgs/JointTrajectoryPoint[] trajectory   # array of desired joint position to move angle in RADS not DEGREE  
+comau_msgs/JointPose[] trajectory   # array of desired joint position to move angle in RADS not DEGREE  
+---
+#result definition
+comau_msgs/ActionResult action_result
+---
+#feedback
+uint32 joints_goal_index                    # current index of JointTrajectoryPoint[] vector
+comau_msgs/ActionFeedback action_feedback

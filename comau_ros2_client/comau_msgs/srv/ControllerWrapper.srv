@@ -1,0 +1,15 @@
+# The constants
+uint8 list 0                        # Returns the current mode
+uint8 async_trajectory 1            # Used for Pass through trajectories (real only)
+uint8 sync_trajectory 2             # Robot controller - Movefly
+uint8 sensor_tracking_relative 3    # Sensor Tracking relative (real only)
+uint8 sensor_tracking_absolute 4    # Sensor Tracking absolute (real only)
+uint8 moveit_jog 5                  # MoveIt Jog (sim only as of now)
+uint8 unknown 6                     # Unknown set of controllers active
+
+# The service call mode to switch to
+uint8 mode
+---
+bool switch_ok       # Switch succesfull
+uint8 current_mode   # The current mode 
+bool ok              # Service call succesfull

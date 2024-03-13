@@ -1,0 +1,11 @@
+##Description: Moves robot arm to a specified sequence of poses.
+
+#goal definition                           
+comau_msgs/CartesianPoseStamped[] trajectory               # array of desired cartesian positions to move        
+---
+#result definition
+comau_msgs/ActionResult action_result
+---
+#feedback
+uint32 joints_goal_index                    # current index of JointTrajectoryPoint[] vector
+comau_msgs/ActionFeedback action_feedback

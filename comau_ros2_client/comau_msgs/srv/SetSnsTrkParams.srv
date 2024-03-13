@@ -1,0 +1,21 @@
+# Constants for Sensor Type
+
+int32 SUSPEND = 0           # Suspend the sensor tracking
+int32 TOOL_REL = 5          # Tool relative mode
+int32 UFRAME_REL = 6        # Uframe relative mode
+int32 WORLD_REL = 7         # World relative mode
+int32 WEAVE_REL = 8         # Weave relative mode
+int32 TOOL_ABS = 9          # Tool absolute mode
+int32 UFRAME_ABS = 10       # Uframe absolute mode
+int32 WORLD_ABS = 11        # World absolute mode
+int32 WEAVE_ABS = 12        # Weave absolute mode
+
+
+int32 sensor_type           # The mode of Sensor Tracking
+int32 sensor_cnvrsn         # convert the values to millimeters : default 1
+int32 sensor_gain           # percentage value that define the speed to be used for the corrections : default 100
+int32 sensor_time           # period in which the corrections must be applied default 2ms
+int32 sensor_ofst_lim_trans # maximum translational offset default 500
+int32 sensor_ofst_lim_rot   # maximum rotational offset default 800
+---
+bool success

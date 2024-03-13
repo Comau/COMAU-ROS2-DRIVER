@@ -1,0 +1,4 @@
+# Open client-server TCP/IP connection
+bool open_connection
+---
+bool success
