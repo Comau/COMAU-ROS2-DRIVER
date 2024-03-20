@@ -1,0 +1,247 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro">
+
+  <!-- 
+    Author: LMS
+   -->
+
+  <xacro:include filename="$(find racer7-14_description)/urdf/comau_common.macro.xacro"/>
+  <xacro:include filename="$(find racer7-14_description)/urdf/racer7-14/racer7-14.transmission.xacro" />
+  <xacro:include filename="$(find racer7-14_description)/urdf/racer7-14/racer7-14.gazebo.xacro" />
+
+  <!--Experimental Parameters!-->
+  <xacro:property name="col_scale" default="1.0"/> <!--Just to make sure the dont self collide-->
+  <xacro:property name="damp" default="0.02"/>
+  <xacro:property name="fric" default="0.0"/>
+  <xacro:property name="m_scale" default="0.001"/> <!--To Reduce VIbrations-->
+  <!---->
+  
+  <xacro:macro name="racer7-14_robot" params="prefix transmission_hw_interface:=hardware_interface/PositionJointInterface">
+
+    <xacro:racer7-14_transmission prefix="${prefix}" hw_interface="${transmission_hw_interface}" />
+    <xacro:racer7-14_gazebo prefix="${prefix}" />
+
+    <link name="${prefix}base_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 ${M_PI}" />
+        <geometry>
+          <mesh filename="package://racer7-14_description/meshes/racer7-14/base_link.STL"/>
+        </geometry>
+        <xacro:c_d_grey/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 ${M_PI}" />
+        <xacro:col_mask_0/>
+        <geometry>
+          <mesh filename="package://racer7-14_description/meshes/racer7-14/base_link.STL" scale="${col_scale} ${col_scale} ${col_scale}"/>
+        </geometry>
+      </collision> 
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 ${M_PI}" />
+        <mass value="${0.03284 * m_scale}"/>
+        <inertia ixx="0.4" ixy="0.0" ixz="0.0" iyy="0.4" iyz="0.0" izz="0.2"/>
+      </inertial>
+    </link>
+
+    <link name="${prefix}link_1">
+      <visual>
+        <origin xyz="0 0 0" rpy="${M_PI} 0 ${M_PI}" />
+        <geometry>
+          <mesh filename="package://racer7-14_description/meshes/racer7-14/link1.STL"/>
+        </geometry>
+        <xacro:c_red/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="${M_PI} 0 ${M_PI}" />
+        <xacro:col_mask_1/>
+        <geometry>
+          <mesh filename="package://racer7-14_description/meshes/racer7-14/link1.STL" scale="${col_scale} ${col_scale} ${col_scale}"/>
+        </geometry>
+      </collision> 
+      <inertial>
+        <origin rpy="0 0 ${M_PI / 2}" xyz="0.00048 0.02167 0.00018"/>
+        <mass value="${0.03284 * m_scale}"/>
+        <inertia ixx="0.4" ixy="0.0" ixz="0.0" iyy="0.4" iyz="0.0" izz="0.2"/>
+      </inertial>
+    </link>
+
+    <joint name="${prefix}joint_1" type="revolute">
+      <parent link="base_link" />
+      <child link="link_1"/>
+      <origin xyz="0 0 0.1766" rpy="${M_PI} 0 0" />
+      <axis xyz="0 0 1"/>
+      <limit lower="-2.8797932658" upper="2.8797932658" effort="10000.00" velocity="20.00"/>
+      <dynamics damping="${damp}" friction="${fric}"/>
+    </joint>
+
+    <link name="${prefix}link_2">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 ${M_PI} 0" />
+        <geometry>
+          <mesh filename="package://racer7-14_description/meshes/racer7-14/link2.STL"/>
+        </geometry>
+        <xacro:c_red/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 ${M_PI} 0" />
+        <xacro:col_mask_0/>
+        <geometry>
+          <mesh filename="package://racer7-14_description/meshes/racer7-14/link2.STL" scale="${col_scale} ${col_scale} ${col_scale}"/>
+        </geometry>
+      </collision> 
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 ${M_PI} 0" />
+        <mass value="${0.03284 * m_scale}"/>
+        <inertia ixx="0.4" ixy="0.0" ixz="0.0" iyy="0.4" iyz="0.0" izz="0.2"/>
+      </inertial>
+    </link>
+
+    <joint name="${prefix}joint_2" type="revolute">
+      <parent link="link_1" />
+      <child link="link_2"/>
+      <origin xyz="0.15 0.09 -0.25344" rpy="${M_PI / 2} ${M_PI} 0" />
+      <axis xyz="0 0 1"/>
+      <limit lower="-1.4835298642" upper="2.7052603406" effort="10000.00" velocity="20.00"/>
+      <dynamics damping="${damp}" friction="${fric}"/>
+    </joint>
+
+    <link name="${prefix}link_3">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 ${M_PI} ${M_PI / 2}" />
+        <geometry>
+          <mesh filename="package://racer7-14_description/meshes/racer7-14/link3.STL"/>
+        </geometry>
+        <xacro:c_red/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 ${M_PI} ${M_PI / 2}" />
+        <xacro:col_mask_0/>
+        <geometry>
+          <mesh filename="package://racer7-14_description/meshes/racer7-14/link3.STL" scale="${col_scale} ${col_scale} ${col_scale}"/>
+        </geometry>
+      </collision> 
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 ${M_PI} ${M_PI / 2}" />
+        <mass value="${0.03284 * m_scale}"/>
+        <inertia ixx="0.4" ixy="0.0" ixz="0.0" iyy="0.4" iyz="0.0" izz="0.2"/>
+      </inertial>
+    </link>
+
+    <joint name="${prefix}joint_3" type="revolute">
+      <parent link="link_2" />
+      <child link="link_3"/>
+      <origin xyz="0 0.58996 -0.0005" rpy="${M_PI} 0 ${M_PI}" />
+      <axis xyz="0 0 1"/>
+      <!--limit lower="-0.1" upper="2.93215" effort="10000.00" velocity="20.00"/-->
+      <limit lower="-2.9321531434" upper="0" effort="10000.00" velocity="20.00"/>
+      <dynamics damping="${damp}" friction="${fric}"/>
+    </joint>
+
+    <link name="${prefix}link_4">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 ${M_PI} ${M_PI / 2}" />
+        <geometry>
+          <mesh filename="package://racer7-14_description/meshes/racer7-14/link4.STL"/>
+        </geometry>
+        <xacro:c_red/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 ${M_PI} ${M_PI / 2}" />
+        <xacro:col_mask_0/>
+        <geometry>
+          <mesh filename="package://racer7-14_description/meshes/racer7-14/link4.STL" scale="${col_scale} ${col_scale} ${col_scale}"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 ${M_PI} ${M_PI / 2}" />
+        <mass value="${0.03284 * m_scale}"/>
+        <inertia ixx="0.4" ixy="0.0" ixz="0.0" iyy="0.4" iyz="0.0" izz="0.2"/>
+      </inertial>
+    </link>
+
+    <joint name="${prefix}joint_4" type="revolute">
+      <parent link="link_3" />
+      <child link="link_4"/>
+      <origin xyz="-0.091 0.091 -0.08925" rpy=" ${M_PI / 2} 0 0" />
+      <axis xyz="0 0 1"/>
+      <limit lower="-3.6651914292" upper="3.6651914292" effort="10000.00" velocity="20.00"/>
+      <dynamics damping="${damp}" friction="${fric}"/>
+    </joint>
+
+    <link name="${prefix}link_5">
+      <visual>
+        <geometry>
+          <mesh filename="package://racer7-14_description/meshes/racer7-14/link5.STL"/>
+        </geometry>
+        <xacro:c_d_grey/>
+      </visual>
+      <collision>
+        <xacro:col_mask_1/>
+        <geometry>
+          <mesh filename="package://racer7-14_description/meshes/racer7-14/link5.STL" scale="${col_scale} ${col_scale} ${col_scale}"/>
+        </geometry>
+      </collision> 
+      <inertial>
+        <mass value="${0.03284 * m_scale}"/>
+        <inertia ixx="0.4" ixy="0.0" ixz="0.0" iyy="0.4" iyz="0.0" izz="0.2"/>
+      </inertial>
+    </link>
+
+    <joint name="${prefix}joint_5" type="revolute">
+      <parent link="link_4" />
+      <child link="link_5"/>
+      <origin xyz="0 0.04825 -0.593" rpy="${M_PI/2} -${M_PI/2} 0" />
+      <axis xyz="0 0 1"/>
+      <limit lower="-2.3561944902" upper="2.3561944902" effort="10000.00" velocity="20.00"/>
+      <dynamics damping="${damp}" friction="${fric}"/>
+    </joint>
+
+    <link name="${prefix}link_6">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 ${M_PI} ${M_PI}" />
+        <geometry>
+          <mesh filename="package://racer7-14_description/meshes/racer7-14/link6.STL"/>
+        </geometry>
+        <xacro:c_d_grey/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 ${M_PI} ${M_PI}" />
+        <xacro:col_mask_0/>
+        <geometry>
+          <mesh filename="package://racer7-14_description/meshes/racer7-14/link6.STL" scale="${col_scale} ${col_scale} ${col_scale}"/>
+        </geometry>
+      </collision> 
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 ${M_PI} ${M_PI}" />
+        <mass value="${0.03284 * m_scale}"/>
+        <inertia ixx="0.4" ixy="0.0" ixz="0.0" iyy="0.4" iyz="0.0" izz="0.2"/>
+      </inertial>
+    </link>
+
+    <joint name="${prefix}joint_6" type="revolute">
+      <parent link="link_5" />
+      <child link="link_6"/>
+      <origin xyz="-0.086 -0.00071728 0.048478" rpy="${M_PI} -${M_PI / 2} 0" />
+      <axis xyz="0 0 1"/>
+      <limit lower="-47.1238898" upper="47.1238898" effort="10000.00" velocity="20.00"/>
+      <dynamics damping="${damp}" friction="${fric}"/>
+    </joint>
+
+    <link name="${prefix}ee_link">
+      <visual>
+        <geometry>
+          <cylinder length="0.001" radius="0.001"/>
+        </geometry>
+      </visual>
+    </link>
+
+    <joint name="${prefix}joint_ee_link" type="fixed">
+      <origin xyz="0 0 0" rpy="${M_PI} 0 ${M_PI/2}"/>
+      <parent link="link_6"/>
+      <child link="ee_link"/>
+      <axis xyz="0 0 0"/>
+    </joint>
+
+  </xacro:macro>
+
+</robot>
