@@ -1,0 +1,370 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro">
+
+  <!-- 
+    Author: LMS
+   -->
+
+  <xacro:include filename="$(find nj4-170-29_description)/urdf/comau_common.macro.xacro" />
+  <xacro:include filename="$(find nj4-170-29_description)/urdf/nj4-170-29/nj4-170-aura.transmission.xacro" />
+  <xacro:include filename="$(find nj4-170-29_description)/urdf/nj4-170-29/nj4-170-aura.gazebo.xacro" />
+
+  <!--Experimental Parameters!-->
+  <xacro:property name="col_scale" default="1.0"/>
+  <!--Just to make sure the dont self collide-->
+  <xacro:property name="damp" default="0.02"/>
+  <xacro:property name="fric" default="0.0"/>
+  <xacro:property name="m_scale" default="0.01"/>
+  <!--To Reduce VIbrations-->
+
+  <xacro:macro name="nj4-170-aura_robot" params="prefix transmission_hw_interface:=hardware_interface/EffortJointInterface">
+
+    <xacro:nj4-170-aura_transmission prefix="${prefix}" hw_interface="${transmission_hw_interface}" />
+    <xacro:nj4-170-aura_gazebo prefix="${prefix}" />
+
+    <!-- Links: main link chain -->
+
+    <link name="${prefix}base_link">
+      <inertial>
+        <origin xyz="-0.0358170633766101 -0.133200870997853 -1.20441996126676E-05" rpy="0 0 0" />
+        <mass value="536.680741" />
+        <inertia ixx="62.360874" ixy="0.654948" ixz="-1.979074" iyy="76.271867" iyz="-0.358742" izz="57.830487" />
+      </inertial>
+      <visual>
+        <geometry>
+          <mesh filename="package://nj4-170-29_description/meshes/nj4-170-aura/base_link.STL" />
+        </geometry>
+        <xacro:c_d_grey/>
+      </visual>
+      <collision>
+        <xacro:col_mask_0/>
+        <geometry>
+          <mesh filename="package://nj4-170-29_description/meshes/nj4-170-aura/base_link.STL" />
+        </geometry>
+      </collision>
+    </link>
+
+    <link name="${prefix}link_1">
+      <inertial>
+        <origin xyz="0.281724738455948 0.0188072298221098 0.424980225708466" rpy="0 0 0" />
+        <mass value="495.053691" />
+        <inertia ixx="111.675220" ixy="58.620245" ixz="-2.104607" iyy="80.645840" iyz="-2.948129" izz="133.290493" />
+      </inertial>
+      <visual>
+        <geometry>
+          <mesh filename="package://nj4-170-29_description/meshes/nj4-170-aura/link1.STL" />
+        </geometry>
+        <xacro:c_grey/>
+      </visual>
+      <collision>
+        <xacro:col_mask_1/>
+        <geometry>
+          <mesh filename="package://nj4-170-29_description/meshes/nj4-170-aura/link1.STL" />
+        </geometry>
+      </collision>
+    </link>
+
+    <link name="${prefix}link_2">
+      <inertial>
+        <origin xyz="0.0184154121072617 -0.00325920706538008 0.5138379312381" rpy="0 0 0" />
+        <mass value="127.559389" />
+        <inertia ixx="2.196733" ixy="-0.075490" ixz="-0.000625" iyy="23.519186" iyz="0.000539" izz="23.885208" />
+      </inertial>
+      <visual>
+        <geometry>
+          <mesh filename="package://nj4-170-29_description/meshes/nj4-170-aura/link2.STL" />
+        </geometry>
+        <xacro:c_grey/>
+      </visual>
+      <collision>
+        <xacro:col_mask_0/>
+        <geometry>
+          <mesh filename="package://nj4-170-29_description/meshes/nj4-170-aura/link2.STL" />
+        </geometry>
+      </collision>
+    </link>
+
+    <link name="${prefix}link_3">
+      <inertial>
+        <origin xyz="-0.0344340431558973 0.140671597782221 0.214177487655968" rpy="0 0 0" />
+        <mass value="190.944976" />
+        <inertia ixx="25.534120" ixy="-6.654023" ixz="-10.202298" iyy="25.607238" iyz="8.329824" izz="20.298344" />
+      </inertial>
+      <visual>
+        <geometry>
+          <mesh filename="package://nj4-170-29_description/meshes/nj4-170-aura/link3.STL" />
+        </geometry>
+        <xacro:c_grey/>
+      </visual>
+      <collision>
+        <xacro:col_mask_0/>
+        <geometry>
+          <mesh filename="package://nj4-170-29_description/meshes/nj4-170-aura/link3.STL" />
+        </geometry>
+      </collision>
+    </link>
+
+    <link name="${prefix}link_3_virtual">
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <mass value="${190.944976 * m_scale}" />
+        <inertia ixx="25.534120" ixy="-6.654023" ixz="-10.202298" iyy="25.607238" iyz="8.329824" izz="20.298344" />
+      </inertial>
+    </link>
+
+    <link name="${prefix}link_4">
+      <inertial>
+        <origin xyz="0.80900424962901 0.000451706567845002 -0.00382756003622609" rpy="0 0 0" />
+        <mass value="120.345471" />
+        <inertia ixx="74.553230" ixy="0.085830" ixz="-0.051324" iyy="19.281614" iyz="-31.774605" izz="56.337834" />
+      </inertial>
+      <visual>
+        <geometry>
+          <mesh filename="package://nj4-170-29_description/meshes/nj4-170-aura/link4.STL" />
+        </geometry>
+        <xacro:c_grey/>
+      </visual>
+      <collision>
+        <xacro:col_mask_0/>
+        <geometry>
+          <mesh filename="package://nj4-170-29_description/meshes/nj4-170-aura/link4.STL" />
+        </geometry>
+      </collision>
+    </link>
+
+    <link name="${prefix}link_5">
+      <inertial>
+        <origin xyz="0.115261031754369 0.000133172079047274 0.303652656537663" rpy="0 0 0" />
+        <mass value="34.709332" />
+        <inertia ixx="1.484441" ixy="-0.003976" ixz="0.000570" iyy="0.463806" iyz="0.283810" izz="1.194671"/>
+      </inertial>
+      <visual>
+        <geometry>
+          <mesh filename="package://nj4-170-29_description/meshes/nj4-170-aura/link5.STL" />
+        </geometry>
+        <xacro:c_d_grey/>
+      </visual>
+      <collision>
+        <xacro:col_mask_1/>
+        <geometry>
+          <mesh filename="package://nj4-170-29_description/meshes/nj4-170-aura/link5.STL" />
+        </geometry>
+      </collision>
+    </link>
+
+    <link name="${prefix}link_6">
+      <inertial>
+        <origin xyz="0.0504075130041792 0.000546453728390363 0.004902792369613" rpy="0 0 0" />
+        <mass value="10.580951" />
+        <inertia ixx="0.045584" ixy="-0.001353" ixz="-0.000164" iyy="0.045388" iyz=" -0.000059" izz="0.080017" />
+      </inertial>
+      <visual>
+        <geometry>
+          <mesh filename="package://nj4-170-29_description/meshes/nj4-170-aura/link6.STL" />
+        </geometry>
+        <xacro:c_d_grey/>
+      </visual>
+      <collision>
+        <xacro:col_mask_0/>
+        <geometry>
+          <mesh filename="package://nj4-170-29_description/meshes/nj4-170-aura/link6.STL" />
+        </geometry>
+      </collision>
+    </link>
+
+    <link name="${prefix}ee_link"/>
+
+
+    <!-- joints: main serial chain -->
+    <joint name="${prefix}joint_1" type="revolute">
+      <origin xyz="0 0 0.30155" rpy="0 0 0" />
+      <parent link="${prefix}base_link" />
+      <child link="${prefix}link_1" />
+      <axis xyz="0 0 -1" />
+      <limit lower="-3.1416" upper="3.1416" effort="100" velocity="1.75" />
+      <dynamics damping="${damp}" friction="${fric}"/>
+    </joint>
+
+    <joint name="${prefix}joint_2" type="revolute">
+      <origin xyz="0.4 0 0.52845" rpy="0 0 0" />
+      <parent link="${prefix}link_1" />
+      <child link="${prefix}link_2" />
+      <axis xyz="0 1 0" />
+      <limit lower="-0.34907" upper="1.4835" effort="70" velocity="1.48" />
+      <dynamics damping="${damp}" friction="${fric}"/>
+    </joint>
+
+    <joint name="${prefix}joint_2m" type="continuous">
+      <origin xyz="0 0 1.175" rpy="0 -1.5708 0" />
+      <parent link="${prefix}link_2" />
+      <child link="${prefix}link_3_virtual" />
+      <axis xyz="0 -1 0" />
+      <limit lower="-3.8397" upper="-0.87267" effort="70" velocity="1.48" />
+      <mimic joint="joint_2" multiplier="1" offset="0" />
+      <dynamics damping="${damp}" friction="${fric}"/>
+    </joint>
+
+    <joint name="${prefix}joint_3" type="revolute">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <parent link="${prefix}link_3_virtual" />
+      <child link="${prefix}link_3" />
+      <axis xyz="0 -1 0" />
+      <limit lower="-3.8397" upper="-0.87267" effort="100" velocity="1.75" />
+      <dynamics damping="${damp}" friction="${fric}"/>
+    </joint>
+
+    <joint name="${prefix}joint_4" type="revolute">
+      <origin xyz="0.11564 0 0.25" rpy="0 0 0" />
+      <parent link="${prefix}link_3" />
+      <child link="${prefix}link_4" />
+      <axis xyz="-1 0 0" />
+      <limit lower="-3.1416" upper="3.1416" effort="100" velocity="2.27" />
+      <dynamics damping="${damp}" friction="${fric}"/>
+    </joint>
+
+    <joint name="${prefix}joint_5" type="revolute">
+      <origin xyz="1.1805 0 -0.12279" rpy="0 0 0" />
+      <parent link="${prefix}link_4" />
+      <child link="${prefix}link_5" />
+      <axis xyz="0.5 0 0.86603" />
+      <limit lower="-3.1416" upper="3.1416" effort="100" velocity="2.44" />
+      <dynamics damping="${damp}" friction="${fric}"/>
+    </joint>
+
+    <joint name="${prefix}joint_6" type="revolute">
+      <origin xyz="0.249020884993843 0 0.252697025311508" rpy="0 0 0" />
+      <parent link="${prefix}link_5" />
+      <child link="${prefix}link_6" />
+      <axis xyz="1 0 0" />
+      <limit lower="-3.1416" upper="3.1416" effort="70" velocity="3.32" />
+      <dynamics damping="${damp}" friction="${fric}"/>
+    </joint>
+
+
+
+    <joint name="${prefix}fixed_ee_joint" type="fixed">
+      <parent link="${prefix}link_6"/>
+      <child link="${prefix}ee_link"/>
+    </joint>
+
+
+
+
+    <!-- Links: secondary link chain -->
+
+    <link name="${prefix}link_2_1">
+      <inertial>
+        <origin xyz="-0.149430916086398 -0.0730764409904377 -0.00637855207501181" rpy="0 0 0" />
+        <mass value="41.9048352148066" />
+        <inertia ixx="0.159517267730873" ixy="0.0223796510916143" ixz="-0.030698771781332" iyy="0.838355911105699" iyz="0.000176798709562468" izz="0.749293043737559" />
+      </inertial>
+      <visual>
+        <geometry>
+          <mesh filename="package://nj4-170-29_description/meshes/nj4-170-aura/link2_1.STL" />
+        </geometry>
+        <xacro:c_d_grey/>
+      </visual>
+      <collision>
+        <xacro:col_mask_0/>
+        <geometry>
+          <mesh filename="package://nj4-170-29_description/meshes/nj4-170-aura/link2_1.STL" />
+        </geometry>
+      </collision>
+    </link>
+
+    <link name="link_2_2_virtual">
+    </link>
+
+    <link name="${prefix}link_2_2">
+      <inertial>
+        <origin xyz="-0.0644338140998114 -0.063152193647086 0.51885238255067" rpy="0 0 0" />
+        <mass value="60.719237134825" />
+        <inertia ixx="5.57989277567401" ixy="-0.000752901321734202" ixz="-0.138038749053976" iyy="5.67223047313108" iyz="-0.00287664173376546" izz="0.144813574269965" />
+      </inertial>
+      <visual>
+        <geometry>
+          <mesh filename="package://nj4-170-29_description/meshes/nj4-170-aura/link2_2.STL" />
+        </geometry>
+        <xacro:c_d_grey/>
+      </visual>
+      <collision>
+        <xacro:col_mask_0/>
+        <geometry>
+          <mesh filename="package://nj4-170-29_description/meshes/nj4-170-aura/link2_2.STL" />
+        </geometry>
+      </collision>
+    </link>
+
+    <link name="link_3_1_virtual">
+    </link>
+
+    <link name="${prefix}link_3_1">
+      <inertial>
+        <origin xyz="-0.0644338140998114 -0.063152193647086 0.51885238255067" rpy="0 0 0" />
+        <mass value="119.762661162239" />
+        <inertia ixx="2.7506807175944" ixy="-0.135344693690216" ixz="-0.510528062059962" iyy="3.34744798113798" iyz="-0.579259059219219" izz="1.62613056221182" />
+      </inertial>
+      <visual>
+        <geometry>
+          <mesh filename="package://nj4-170-29_description/meshes/nj4-170-aura/link3_1.STL" />
+        </geometry>
+        <xacro:c_d_grey/>
+      </visual>
+      <collision>
+        <xacro:col_mask_0/>
+        <geometry>
+          <mesh filename="package://nj4-170-29_description/meshes/nj4-170-aura/link3_1.STL" />
+        </geometry>
+      </collision>
+    </link>
+
+
+    <!-- joints: parallel bar joints -->
+    <joint name="${prefix}joint_2_1" type="continuous">
+      <origin xyz="0.4 -0.0975 0.52845" rpy="0 0 0" />
+      <parent link="${prefix}link_1"/>
+      <child link="${prefix}link_2_1"/>
+      <axis xyz="0 -1 0"/>
+      <mimic joint="${prefix}joint_3" multiplier="1" offset="-4.71" />
+      <dynamics damping="${damp}" friction="${fric}"/>
+    </joint>
+
+    <joint name="${prefix}joint_2_2" type="continuous">
+      <origin xyz="-0.35 -0.0039999999999988 0.0" rpy="0 0 0" />
+      <parent link="${prefix}link_2_1" />
+      <child link="${prefix}link_2_2_virtual" />
+      <axis xyz="0 1 0" />
+      <mimic joint="${prefix}joint_3" multiplier="1" offset="1.57"/>
+      <dynamics damping="${damp}" friction="${fric}"/>
+    </joint>
+
+    <joint name="${prefix}joint_2_2_5" type="continuous">
+      <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+      <parent link="${prefix}link_2_2_virtual" />
+      <child link="${prefix}link_2_2" />
+      <axis xyz="0 1 0" />
+      <mimic joint="${prefix}joint_2" multiplier="1" offset="0"/>
+      <dynamics damping="${damp}" friction="${fric}"/>
+    </joint>
+
+    <joint name="${prefix}joint_3_1" type="continuous">
+      <origin xyz="0.0 0.0 1.175" rpy="0 0 0" />
+      <parent link="link_2_2" />
+      <child link="link_3_1_virtual" />
+      <axis xyz="0 1 0" />
+      <mimic joint="${prefix}joint_3" multiplier="-1" offset="4.71"/>
+      <dynamics damping="${damp}" friction="${fric}"/>
+    </joint>
+
+    <joint name="${prefix}joint_3_1_5" type="continuous">
+      <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+      <parent link="link_3_1_virtual" />
+      <child link="link_3_1" />
+      <axis xyz="0 1 0" />
+      <mimic joint="${prefix}joint_2" multiplier="-1" offset="0"/>
+      <dynamics damping="${damp}" friction="${fric}"/>
+    </joint>
+
+  </xacro:macro>
+
+</robot>

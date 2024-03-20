@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro" name="nj4-170-29">
+
+  <!-- 
+    Author: LMS
+   -->
+   
+  <xacro:arg name="transmission_hw_interface" default="hardware_interface/PositionJointInterface"/>
+
+  <xacro:arg name="pos_x" default="0"/>
+  <xacro:arg name="pos_y" default="0"/>
+  <xacro:arg name="pos_z" default="0"/>
+  <xacro:arg name="roll" default="0"/>
+  <xacro:arg name="pitch" default="0"/>
+  <xacro:arg name="yaw" default="0"/>
+
+  <!-- common stuff - empty at the moment-->
+  <xacro:include filename="$(find nj4-170-29_description)/urdf/common.gazebo.xacro" />
+
+  <!--load nj4-170-29 -->
+  <xacro:include filename="$(find nj4-170-29_description)/urdf/nj4-170-29/nj4-170-29.urdf.xacro" />
+
+  <!-- arm -->
+  <xacro:nj4-170-aura_robot prefix="" transmission_hw_interface="$(arg transmission_hw_interface)"/>
+
+  <link name="world" />
+
+  <joint name="world_joint" type="fixed">
+    <parent link="world" />
+    <child link = "base_link" />
+    <origin xyz="$(arg pos_x) $(arg pos_y) $(arg pos_z)" rpy="$(arg roll) $(arg pitch) $(arg yaw)" />
+  </joint>
+
+</robot>

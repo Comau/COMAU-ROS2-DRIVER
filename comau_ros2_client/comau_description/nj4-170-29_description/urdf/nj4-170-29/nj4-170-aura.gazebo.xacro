@@ -1,0 +1,94 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro">
+
+  <xacro:macro name="nj4-170-aura_gazebo" params="prefix">
+
+
+<!--Mimic Joint Plug in for Gazebo-->
+  <xacro:macro name="mimic_joint_plugin_gazebo" params="name_prefix parent_joint mimic_joint has_pid:=false multiplier:=1.0 offset:=0 sensitiveness:=0.0 max_effort:=1.0 robot_namespace:=''">
+    <gazebo>
+      <plugin name="${name_prefix}mimic_joint_plugin" filename="libroboticsgroup_gazebo_mimic_joint_plugin.so">
+        <joint>${parent_joint}</joint>
+        <mimicJoint>${mimic_joint}</mimicJoint>
+        <xacro:if value="${has_pid}">                    
+          <hasPID />
+        </xacro:if>
+        <multiplier>${multiplier}</multiplier>
+        <offset>${offset}</offset>
+        <sensitiveness>${sensitiveness}</sensitiveness>  
+        <maxEffort>${max_effort}</maxEffort>             
+        <xacro:unless value="${robot_namespace == ''}">
+          <robotNamespace>($robot_namespace)</robotNamespace>
+        </xacro:unless>
+      </plugin>
+    </gazebo>
+  </xacro:macro> 
+
+  <xacro:macro name="controller_plugin_gazebo" params="robot_namespace:=''">
+    <gazebo>
+      <plugin name="ros_control" filename="libgazebo_ros_control.so">
+        <xacro:unless value="${robot_namespace == ''}">
+          <robotNamespace>($robot_namespace)</robotNamespace>
+        </xacro:unless>
+        <controlPeriod>0.001</controlPeriod>
+      </plugin>
+    </gazebo>
+  </xacro:macro>   
+  <controller_plugin_gazebo />
+
+   <xacro:mimic_joint_plugin_gazebo name_prefix="${prefix}joint_2m"
+        parent_joint="${prefix}joint_2" mimic_joint="${prefix}joint_2m"
+        has_pid="false" multiplier="1.0" max_effort="10.0" /> -->
+    <!--Mimic Joint Plug in for Gazebo-->
+
+    <gazebo reference="${prefix}base_link">
+      <gravity>true</gravity>
+      <selfCollide>false</selfCollide>
+      <material>Gazebo/DarkGrey</material>
+    </gazebo>
+
+    <gazebo reference="${prefix}link_1">
+      <gravity>true</gravity>
+      <selfCollide>false</selfCollide>
+      <material>Gazebo/Grey</material>
+    </gazebo>
+
+    <gazebo reference="${prefix}link_2">
+      <gravity>true</gravity>
+      <selfCollide>false</selfCollide>
+      <material>Gazebo/Grey</material>
+    </gazebo>
+
+   <gazebo reference="${prefix}link_3_virtual">
+      <gravity>true</gravity>
+      <selfCollide>false</selfCollide>
+      <material>Gazebo/Grey</material>
+    </gazebo>
+
+    <gazebo reference="${prefix}link_3">
+      <gravity>true</gravity>
+      <selfCollide>false</selfCollide>
+      <material>Gazebo/Grey</material>
+    </gazebo>
+
+    <gazebo reference="${prefix}link_4">
+      <gravity>true</gravity>
+      <selfCollide>false</selfCollide>
+      <material>Gazebo/Grey</material>
+    </gazebo>
+
+    <gazebo reference="${prefix}link_5">
+      <gravity>true</gravity>
+      <selfCollide>false</selfCollide>
+      <material>Gazebo/DarkGrey</material>
+    </gazebo>
+
+    <gazebo reference="${prefix}link_6">
+      <gravity>true</gravity>
+      <selfCollide>false</selfCollide>
+      <material>Gazebo/Black</material>
+    </gazebo>
+
+  </xacro:macro>
+
+</robot>
