@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro">
+
+  <xacro:macro name="nj4-110_gazebo" params="prefix">
+
+    <gazebo reference="${prefix}base_link">
+      <gravity>false</gravity>
+      <material>Gazebo/DarkGrey</material>
+    </gazebo>
+
+    <gazebo reference="${prefix}link_1">
+      <gravity>false</gravity>
+      <material>Gazebo/Grey</material>
+    </gazebo>
+
+    <gazebo reference="${prefix}link_2">
+      <gravity>false</gravity>
+      <material>Gazebo/Grey</material>
+    </gazebo>
+
+    <gazebo reference="${prefix}link_3">
+      <gravity>false</gravity>
+      <material>Gazebo/Grey</material>
+    </gazebo>
+
+    <gazebo reference="${prefix}link_4">
+      <gravity>false</gravity>
+      <material>Gazebo/Grey</material>
+    </gazebo>
+
+    <gazebo reference="${prefix}link_5">
+      <gravity>false</gravity>
+      <material>Gazebo/DarkGrey</material>
+    </gazebo>
+
+    <gazebo reference="${prefix}link_6">
+      <gravity>false</gravity>
+      <material>Gazebo/Black</material>
+    </gazebo>
+
+  </xacro:macro>
+
+</robot>

@@ -1,0 +1,239 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro">
+
+  <!-- 
+    Author: LMS
+   -->
+
+  <xacro:include filename="$(find nj4-110_description)/urdf/comau_common.macro.xacro" />
+  <xacro:include filename="$(find nj4-110_description)/urdf/nj4-110/nj4-110.transmission.xacro" />
+  <xacro:include filename="$(find nj4-110_description)/urdf/nj4-110/nj4-110.gazebo.xacro" />
+
+  <!-- joint kinematics -->
+  <xacro:macro name="joint_1_kin">
+    <origin xyz="0 0 0.343999999999999" rpy="0 0 0" />
+    <axis xyz="0 0 1" />
+    <limit lower="-3.142" upper="3.142" effort="100000.00" velocity="20.00" />
+  </xacro:macro>
+
+  <xacro:macro name="joint_2_kin">
+    <origin xyz="0.4 0 0.206" rpy="0 0 0" />
+    <axis xyz="0 -1 0" />
+    <limit lower="-2.182" upper="1.047" effort="100000.00" velocity="20.00" />
+  </xacro:macro>
+
+  <xacro:macro name="joint_3_kin">
+    <origin xyz="0 0 0.86" rpy="0 0 0" />
+    <axis xyz="0 1 0" />
+    <limit lower="-1.348" upper="1.222" effort="1000000.0" velocity="20.0" />
+  </xacro:macro>
+
+  <xacro:macro name="joint_4_kin">
+    <origin xyz="0.1675 0 0.209999999999999" rpy="0 0 0" />
+    <axis xyz="-1 0 0" />
+    <limit lower="-3.49" upper="3.49" effort="1000000.00" velocity="20.0" />
+  </xacro:macro>
+
+  <xacro:macro name="joint_5_kin">
+    <origin xyz="0.773530000000007 0 0.0251666982339762" rpy="0 0 0" />
+    <axis xyz="0.5 0 0.866025403784439" />
+    <limit lower="-3.49" upper="3.49" effort="100000.00" velocity="20.0" />
+  </xacro:macro>
+
+  <xacro:macro name="joint_6_kin">
+    <origin xyz="0.171670000000078 0 0.104737112333619" rpy="0 0 0" />
+    <axis xyz="1 0 0" />
+    <limit lower="-3.49" upper="3.49" effort="1000000.00" velocity="20.0" />
+  </xacro:macro>
+
+  <xacro:macro name="nj4-110_robot" params="prefix transmission_hw_interface:=hardware_interface/EffortJointInterface">
+
+    <xacro:nj4-110_transmission prefix="${prefix}" hw_interface="${transmission_hw_interface}" />
+    <xacro:nj4-110_gazebo prefix="${prefix}" />
+
+    <link name="${prefix}base_link">
+      <inertial>
+        <origin xyz="-0.02726 -0.00092453 0.18863" rpy="0 0 0" />
+        <mass value="174.73" />
+        <inertia ixx="4.4573" ixy="-0.013405" ixz="0.045107" iyy="5.1352" iyz="-0.003497" izz="8.2462" />
+      </inertial>
+      <visual>
+        <geometry>
+          <mesh filename="package://nj4-110_description/meshes/nj4-110/base_link.STL" />
+        </geometry>
+        <xacro:c_d_grey/>
+      </visual>
+      <collision>
+        <xacro:col_mask_0/>
+        <geometry>
+          <mesh filename="package://nj4-110_description/meshes/nj4-110/base_link.STL" />
+        </geometry>
+      </collision>
+    </link>
+
+    <link name="${prefix}link_1">
+      <inertial>
+        <origin xyz="0.245193138063495 -0.0327033653193244 0.157933138294569" rpy="0 0 0" />
+        <mass value="197.748954386442" />
+        <inertia ixx="3.81277392236618" ixy="1.59349538420282" ixz="-1.96054304779697" iyy="9.6375625089479" iyz="0.391005310123559" izz="8.99724291768946" />
+      </inertial>
+      <visual>
+        <geometry>
+          <mesh filename="package://nj4-110_description/meshes/nj4-110/Link1.STL" />
+        </geometry>
+        <xacro:c_grey/>
+      </visual>
+      <collision>
+        <xacro:col_mask_1/>
+        <geometry>
+          <mesh filename="package://nj4-110_description/meshes/nj4-110/Link1.STL" />
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}joint_1" type="revolute">
+      <parent link="${prefix}base_link" />
+      <child link="${prefix}link_1" />
+      <xacro:joint_1_kin/>
+    </joint>
+
+    <link name="${prefix}link_2">
+      <inertial>
+        <origin xyz="0.0095189 -0.19578 0.41368" rpy="0 0 0" />
+        <mass value="11.747" />
+        <inertia ixx="1.0446" ixy="0.0046497" ixz="0.021962" iyy="1.1031" iyz="-0.007277" izz="0.15292" />
+      </inertial>
+      <visual>
+        <geometry>
+          <mesh filename="package://nj4-110_description/meshes/nj4-110/Link2.STL" />
+        </geometry>
+        <xacro:c_grey/>
+      </visual>
+      <collision>
+        <xacro:col_mask_0/>
+        <geometry>
+          <mesh filename="package://nj4-110_description/meshes/nj4-110/Link2.STL" />
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}joint_2" type="revolute">
+      <parent link="${prefix}link_1" />
+      <child link="${prefix}link_2" />
+      <xacro:joint_2_kin/>
+    </joint>
+
+    <link name="${prefix}link_3">
+      <inertial>
+        <origin xyz="0.034 -0.024449 0.1079" rpy="0 0 0" />
+        <mass value="134.47" />
+        <inertia ixx="3.1095" ixy="-0.2806" ixz="-0.56191" iyy="2.7169" iyz="-0.92274" izz="2.1429" />
+      </inertial>
+      <visual>
+        <geometry>
+          <mesh filename="package://nj4-110_description/meshes/nj4-110/Link3.STL" />
+        </geometry>
+        <xacro:c_grey/>
+      </visual>
+      <collision>
+        <xacro:col_mask_0/>
+        <geometry>
+          <mesh filename="package://nj4-110_description/meshes/nj4-110/Link3.STL" />
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}joint_3" type="revolute">
+      <parent link="${prefix}link_2" />
+      <child link="${prefix}link_3" />
+      <xacro:joint_3_kin/>
+    </joint>
+
+    <link name="${prefix}link_4">
+      <inertial>
+        <origin xyz="0.506286605618155 -0.000568553709501414 -0.000332649727048162" rpy="0 0 0" />
+        <mass value="33.0266351015358" />
+        <inertia ixx="0.262711395685612" ixy="0.00351046359110569" ixz="0.0611935029164724" iyy="0.661822513024839" iyz="-0.000113938713962132" izz="0.702943167645996" />
+      </inertial>
+      <visual>
+        <geometry>
+          <mesh filename="package://nj4-110_description/meshes/nj4-110/Link4.STL" />
+        </geometry>
+        <xacro:c_grey/>
+      </visual>
+      <collision>
+        <xacro:col_mask_0/>
+        <geometry>
+          <mesh filename="package://nj4-110_description/meshes/nj4-110/Link4.STL" />
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}joint_4" type="revolute">
+      <parent link="${prefix}link_3" />
+      <child link="${prefix}link_4" />
+      <xacro:joint_4_kin/>
+    </joint>
+
+    <link name="${prefix}link_5">
+      <inertial>
+        <origin xyz="0.0558324895223856 0.000760610782770877 0.145200076628859" rpy="0 0 0" />
+        <mass value="13.1772238829428" />
+        <inertia ixx="0.119800136762879" ixy="-0.000443346560155563" ixz="0.00309164810697158" iyy="0.15893662279958" iyz="0.00094222211239456" izz="0.114562839140715" />
+      </inertial>
+      <visual>
+        <geometry>
+          <mesh filename="package://nj4-110_description/meshes/nj4-110/Link5.STL" />
+        </geometry>
+        <xacro:c_d_grey/>
+      </visual>
+      <collision>
+        <xacro:col_mask_1/>
+        <geometry>
+          <mesh filename="package://nj4-110_description/meshes/nj4-110/Link5.STL" />
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}joint_5" type="revolute">
+      <parent link="${prefix}link_4" />
+      <child link="${prefix}link_5" />
+      <xacro:joint_5_kin/>
+    </joint>
+
+    <link name="${prefix}link_6">
+      <inertial>
+        <origin xyz="0.0160228852261408 0.00139203375358819 0.000729669966278879" rpy="0 0 0" />
+        <mass value="7.87168161667254" />
+        <inertia ixx="0.0699067665403601" ixy="0.00011623684875006" ixz="9.11864003021948E-05" iyy="0.0353140591770777" iyz="-0.000835719724148206" izz="0.0359178227317506" />
+      </inertial>
+      <visual>
+        <geometry>
+          <mesh filename="package://nj4-110_description/meshes/nj4-110/Link6.STL" />
+        </geometry>
+        <xacro:c_d_grey/>
+      </visual>
+      <collision>
+        <xacro:col_mask_0/>
+        <geometry>
+          <mesh filename="package://nj4-110_description/meshes/nj4-110/Link6.STL" />
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}joint_6" type="revolute">
+      <parent link="${prefix}link_5" />
+      <child link="${prefix}link_6" />
+      <xacro:joint_6_kin/>
+    </joint>
+
+    <link name="${prefix}ee_link"/>
+
+    <joint name="${prefix}fixed_ee_joint" type="fixed">
+      <parent link="${prefix}link_6"/>
+      <child link="${prefix}ee_link"/>
+    </joint>
+
+  </xacro:macro>
+
+</robot>
