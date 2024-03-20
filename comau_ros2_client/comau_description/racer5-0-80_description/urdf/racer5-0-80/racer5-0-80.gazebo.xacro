@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro">
+
+  <xacro:macro name="racer5-0-80_gazebo" params="prefix">
+
+    <gazebo reference="base_link">
+      <selfCollide>true</selfCollide>
+      <material>Gazebo/Grey</material>
+    </gazebo>
+    <gazebo reference="link_1">
+      <selfCollide>true</selfCollide>
+      <material>Gazebo/Grey</material>
+    </gazebo>
+    <gazebo reference="link_2">
+      <selfCollide>true</selfCollide>
+      <material>Gazebo/DarkGrey</material>
+    </gazebo>
+    <gazebo reference="link_3">
+      <selfCollide>true</selfCollide>
+      <material>Gazebo/Grey</material>
+    </gazebo>
+    <gazebo reference="link_4">
+      <selfCollide>true</selfCollide>
+      <material>Gazebo/DarkGrey</material>
+    </gazebo>
+    <gazebo reference="link_5">
+      <selfCollide>true</selfCollide>
+      <material>Gazebo/DarkGrey</material>
+    </gazebo>
+    <gazebo reference="link_6">
+      <selfCollide>true</selfCollide>
+      <material>Gazebo/DarkGrey</material>
+    </gazebo>
+
+  </xacro:macro>
+
+</robot>

@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro">
+
+  <!-- colors -->
+  <xacro:macro name="c_d_grey">
+    <material name="comau_dark_grey">
+      <color rgba="0.25098 0.25098 0.25098 1" />
+    </material>
+  </xacro:macro>
+  <xacro:macro name="c_grey">
+    <material name="comau_grey">
+      <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+    </material>
+  </xacro:macro>
+  <xacro:macro name="c_grey2">
+    <material name="comau_grey_2">
+      <color rgba="0.50196 0.50196 0.50196 1"/>
+    </material>
+  </xacro:macro>
+  <xacro:macro name="c_red">
+    <material name="comau_red">
+      <color rgba="1 0 0 1"/>
+    </material>
+  </xacro:macro>
+  <xacro:macro name="c_blue">
+    <material name="comau_blue">
+      <color rgba="0 0 1 1"/>
+    </material>
+  </xacro:macro>
+  <xacro:macro name="c_white">
+    <material name="comau_white">
+      <color rgba="1 0.95 0.89 1"/>
+    </material>
+  </xacro:macro>
+
+
+  <!-- collide bitmask -->
+  <xacro:macro name="col_mask_0">
+    <surface>
+      <contact>
+        <collide_bitmask>0x01</collide_bitmask>
+      </contact>
+    </surface>
+  </xacro:macro>
+  <xacro:macro name="col_mask_1">
+    <surface>
+      <contact>
+        <collide_bitmask>0x10</collide_bitmask>
+      </contact>
+    </surface>
+  </xacro:macro>
+
+  <xacro:property name="M_PI" value="3.1415926535897931"/>
+  <xacro:property name="deg_to_rad" value="0.01745329251994329577"/>
+
+</robot>
