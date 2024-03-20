@@ -14,11 +14,6 @@ find_package(rclcpp REQUIRED)
 find_package(urdf REQUIRED)
 find_package(xacro REQUIRED)
 
-# install .launch.py
-#install(PROGRAMS
- # launch/view_aura.launch.py
- # DESTINATION lib/${PROJECT_NAME})
-
 install(
   DIRECTORY 
     launch 
