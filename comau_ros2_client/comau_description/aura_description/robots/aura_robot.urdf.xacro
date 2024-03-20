@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro" name="aura">
+
+  <!-- 
+    Author: LMS
+   -->
+   
+  <xacro:arg name="transmission_hw_interface" default="hardware_interface/PositionJointInterface"/>
+  <!--use mimic parameter-->
+  <xacro:arg name="use_mimic" default="false"/>
+
+  <xacro:arg name="pos_x" default="0"/>
+  <xacro:arg name="pos_y" default="0"/>
+  <xacro:arg name="pos_z" default="0"/>
+  <xacro:arg name="roll" default="0"/>
+  <xacro:arg name="pitch" default="0"/>
+  <xacro:arg name="yaw" default="0"/>
+
+
+
+  <!--load aura -->
+  <xacro:include filename="$(find aura_description)/urdf/aura/aura.urdf.xacro" />
+
+  <!-- arm -->
+  <xacro:aura_robot prefix="" use_mimic="$(arg use_mimic)" transmission_hw_interface="$(arg transmission_hw_interface)"/>
+
+  <link name="world" />
+
+  <joint name="world_joint" type="fixed">
+    <parent link="world" />
+    <child link = "base_link" />
+    <origin xyz="$(arg pos_x) $(arg pos_y) $(arg pos_z)" rpy="$(arg roll) $(arg pitch) $(arg yaw)" />
+  </joint>
+
+</robot>
