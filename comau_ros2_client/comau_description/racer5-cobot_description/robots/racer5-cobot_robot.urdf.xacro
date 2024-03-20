@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro" name="racer5-cobot">
+
+  <!-- 
+    Author: LMS
+   -->
+   
+  <xacro:arg name="transmission_hw_interface" default="hardware_interface/PositionJointInterface"/>
+
+  <xacro:arg name="pos_x" default="0"/>
+  <xacro:arg name="pos_y" default="0"/>
+  <xacro:arg name="pos_z" default="0"/>
+  <xacro:arg name="roll" default="0"/>
+  <xacro:arg name="pitch" default="0"/>
+  <xacro:arg name="yaw" default="0"/>
+  
+  <!-- common stuff -->
+  <xacro:include filename="$(find racer5-cobot_description)/urdf/common.gazebo.xacro" />
+
+  <!--load racer5-cobot -->
+  <xacro:include filename="$(find racer5-cobot_description)/urdf/racer5-cobot/racer5-cobot.urdf.xacro" />
+
+  <!-- arm -->
+  <xacro:racer5-cobot_robot prefix="" transmission_hw_interface="$(arg transmission_hw_interface)"/>
+
+  <link name="world" />
+
+  <joint name="world_joint" type="fixed">
+    <parent link="world" />
+    <child link = "base_link" />
+    <origin xyz="$(arg pos_x) $(arg pos_y) $(arg pos_z)" rpy="$(arg roll) $(arg pitch) $(arg yaw)" />
+  </joint>
+
+</robot>
