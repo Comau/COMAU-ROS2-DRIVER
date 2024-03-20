@@ -1,0 +1,224 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro">
+
+  <!-- 
+    Author: LMS
+   -->
+  <xacro:include filename="$(find nj220_description)/urdf/comau_common.macro.xacro" />
+  <xacro:include filename="$(find nj220_description)/urdf/nj220/nj220.transmission.xacro" />
+  <xacro:include filename="$(find nj220_description)/urdf/nj220/nj220.gazebo.xacro" />
+
+  <xacro:macro name="nj220_robot" params="prefix transmission_hw_interface:=hardware_interface/PositionJointInterface">
+
+    <xacro:nj220_transmission prefix="${prefix}" hw_interface="${transmission_hw_interface}" />
+    <xacro:nj220_gazebo prefix="${prefix}" />
+
+    <link name="${prefix}base_link">
+      <inertial>
+        <origin xyz="-0.035816740591987 -1.213095767006E-05 0.133200705246718" rpy="0 0 0" />
+        <mass value="716.304099681006" />
+        <inertia ixx="23.6539521109557" ixy="-0.0021651342678452" ixz="0.00704289922942905" iyy="30.8615363967876" iyz="2.3557586200018E-05" izz="44.0968370515603" />
+      </inertial>
+      <visual>
+        <geometry>
+          <mesh filename="package://nj220_description/meshes/nj220/base_link.STL" />
+        </geometry>
+        <xacro:c_d_grey/>
+      </visual>
+      <collision>
+        <xacro:col_mask_0/>
+        <geometry>
+          <mesh filename="package://nj220_description/meshes/nj220/base_link.STL" />
+        </geometry>
+      </collision>
+    </link>
+
+    <link name="${prefix}link_1">
+      <inertial>
+        <origin xyz="0.280527366991791 0.0253806478923063 0.399601996204198" rpy="0 0 0" />
+        <mass value="82.6779100155354" />
+        <inertia ixx="4.86714391267403" ixy="0.064064395621225" ixz="-1.27272420010088" iyy="4.13833569016732" iyz="0.0199332480110321" izz="4.67474592099139" />
+      </inertial>
+      <visual>
+        <xacro:c_grey/>
+        <geometry>
+          <mesh filename="package://nj220_description/meshes/nj220/Link1.STL" />
+        </geometry>
+      </visual>
+      <collision>
+        <xacro:col_mask_1/>
+        <geometry>
+          <mesh filename="package://nj220_description/meshes/nj220/Link1.STL" />
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}joint_1" type="revolute">
+      <origin xyz="0 0 0.326" rpy="0 0 0" />
+      <parent link="base_link" />
+      <child link="link_1" />
+      <axis xyz="0 0 -1" />
+      <limit lower="-3.14" upper="3.14" effort="10000.00" velocity="20.00" />
+    </joint>
+
+    <link name="${prefix}link_2">
+      <inertial>
+        <origin xyz="0.0184079053720003 -0.00325799474821191 0.513836750330918" rpy="0 0 0" />
+        <mass value="111.905463626803" />
+        <inertia ixx="20.4211100724091" ixy="0.00151966528053895" ixz="-0.100652273176936" iyy="20.1523522415084" iyz="0.433762912812149" izz="2.06210348480687" />
+      </inertial>
+      <visual>
+        <geometry>
+          <mesh filename="package://nj220_description/meshes/nj220/Link2.STL" />
+        </geometry>
+        <xacro:c_grey/>
+      </visual>
+      <collision>
+        <xacro:col_mask_0/>
+        <geometry>
+          <mesh filename="package://nj220_description/meshes/nj220/Link2.STL" />
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}joint_2" type="revolute">
+      <origin xyz="0.4 0 0.504" rpy="0 0 0" />
+      <parent link="link_1" />
+      <child link="link_2" />
+      <axis xyz="0 1 0" />
+      <limit lower="-1.309" upper="1.658" effort="10000.00" velocity="20.00" />
+    </joint>
+
+    <link name="${prefix}link_3">
+      <inertial>
+        <origin xyz="-0.0584887541283703 0.0263801657730134 0.213499546248928" rpy="0 0 0" />
+        <mass value="157.757335015634" />
+        <inertia ixx="5.30261821646137" ixy="0.16054583642015" ixz="-0.118711868915761" iyy="3.30672932512359" iyz="-0.563825093475539" izz="4.09615069490349" />
+      </inertial>
+      <visual>
+        <geometry>
+          <mesh filename="package://nj220_description/meshes/nj220/Link3.STL" />
+        </geometry>
+        <xacro:c_grey/>
+      </visual>
+      <collision>
+        <xacro:col_mask_0/>
+        <geometry>
+          <mesh filename="package://nj220_description/meshes/nj220/Link3.STL" />
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}joint_3" type="revolute">
+      <origin xyz="0 0 1.175" rpy="0 -1.57 0" />
+      <parent link="link_2" />
+      <child link="link_3" />
+      <axis xyz="0 -1 0" />
+      <limit lower="-1.396" upper="1.238" effort="10000.00" velocity="20.00" />
+    </joint>
+
+    <link name="${prefix}link_4">
+      <inertial>
+        <origin xyz="0.588887351411885 -0.0172955641971404 -2.62021790171652E-05" rpy="0 0 0" />
+        <mass value="51.3013366013648" />
+        <inertia ixx="0.354847133825327" ixy="0.0628009931395974" ixz="-0.000814607050611503" iyy="2.77815362976002" iyz="0.000490931007752271" izz="2.81007925866005" />
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://nj220_description/meshes/nj220/Link4.STL" />
+        </geometry>
+        <xacro:c_grey/>
+      </visual>
+      <collision>
+        <xacro:col_mask_0/>
+        <geometry>
+          <mesh filename="package://nj220_description/meshes/nj220/Link4.STL" />
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}joint_4" type="revolute">
+      <origin xyz="0.105 0 0.249999999999999" rpy="0 0 0" />
+      <parent link="link_3" />
+      <child link="link_4" />
+      <axis xyz="-1 0 0" />
+      <limit lower="-3.14" upper="3.14" effort="10000.00" velocity="20.00" />
+
+    </joint>
+
+    <link name="${prefix}link_5">
+      <inertial>
+        <origin xyz="0.0907543703116531 0.0150627857042923 2.49569749883882E-05" rpy="0 0 0" />
+        <mass value="46.4243167652395" />
+        <inertia ixx="0.612926214987563" ixy="0.0242043386605059" ixz="1.70823333705629E-05" iyy="0.35531883723998" iyz="-9.12438666920468E-05" izz="0.794223524938011" />
+      </inertial>
+      <visual>
+        <geometry>
+          <mesh filename="package://nj220_description/meshes/nj220/Link5.STL" />
+        </geometry>
+        <xacro:c_grey/>
+      </visual>
+      <collision>
+        <xacro:col_mask_1/>
+        <geometry>
+          <mesh filename="package://nj220_description/meshes/nj220/Link5.STL" />
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}joint_5" type="revolute">
+      <origin xyz="1.02333 0 0" rpy="0 0 0" />
+      <parent link="link_4" />
+      <child link="link_5" />
+      <axis xyz="0 1 0" />
+      <limit lower="-2.182" upper="2.182" effort="10000.00" velocity="20.00" />
+    </joint>
+
+    <link name="${prefix}link_6">
+      <inertial>
+        <origin xyz="0.0238593646017924 -0.000609515326313876 -5.99002442753793E-05" rpy="0 0 0" />
+        <mass value="5.30965928979932" />
+        <inertia ixx="0.0289484687068401" ixy="-1.0797496900213E-05" ixz="-1.18901729051219E-06" iyy="0.0150500625378696" iyz="-5.62155117903563E-06" izz="0.0149077305882133" />
+      </inertial>
+      <visual>
+        <geometry>
+          <mesh filename="package://nj220_description/meshes/nj220/Link6.STL" />
+        </geometry>
+        <xacro:c_d_grey/>
+      </visual>
+      <collision>
+        <xacro:col_mask_0/>
+        <geometry>
+          <mesh filename="package://nj220_description/meshes/nj220/Link6.STL" />
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}joint_6" type="revolute">
+      <origin xyz="0.1875 0 0" rpy="0 0 0" />
+      <parent link="link_5" />
+      <child link="link_6" />
+      <axis xyz="-1 0 0" />
+      <limit lower="-3.14" upper="3.14" effort="10000.00" velocity="20.00" />
+    </joint>
+
+    <link name="${prefix}ee_link">
+      <visual>
+        <geometry>
+          <cylinder length="0.001" radius="0.001"/>
+        </geometry>
+      </visual>
+    </link>
+
+    <joint name="${prefix}joint_ee_link" type="fixed">
+      <origin xyz="0.0 0.0 0.0" rpy="0 0 0.0"/>
+      <parent link="link_6"/>
+      <child link="ee_link"/>
+      <axis xyz="0 0 0"/>
+    </joint>
+
+  </xacro:macro>
+
+</robot>
+
