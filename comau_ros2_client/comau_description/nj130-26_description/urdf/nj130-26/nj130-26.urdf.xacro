@@ -1,0 +1,344 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro">
+
+    <!-- 
+    Author: LMS
+    -->
+    <xacro:include filename="$(find nj130-26_description)/urdf/comau_common.macro.xacro" />
+    <xacro:include filename="$(find nj130-26_description)/urdf/nj130-26/nj130-26.transmission.xacro" />
+    <xacro:include filename="$(find nj130-26_description)/urdf/nj130-26/nj130-26.gazebo.xacro" />
+
+    <xacro:macro name="nj130-26_robot" params="prefix transmission_hw_interface:=hardware_interface/PositionJointInterface">
+
+        <xacro:nj130-26_transmission prefix="${prefix}" hw_interface="${transmission_hw_interface}" />
+        <xacro:nj130-26_gazebo prefix="${prefix}" />
+        <link name="${prefix}base_link">
+            <inertial>
+                <origin xyz="-0.0361845572105411 -3.05740596352742E-05 0.132251332860171" rpy="0 0 0" />
+                <mass value="774.894943020899" />
+                <inertia
+                    ixx="25.6575789201931"
+                    ixy="-0.00496689814433623"
+                    ixz="0.0198401850217023"
+                    iyy="33.5126130551"
+                    iyz="-0.000259272865919447"
+                    izz="47.9029473115196" />
+            </inertial>
+            <visual>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://nj130-26_description/meshes/link0.STL" />
+                </geometry>
+                <material name="">
+                    <color rgba="1 0 0 1" />
+                </material>
+            </visual>
+            <collision>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://nj130-26_description/meshes/link0.STL" />
+                </geometry>
+            </collision>
+        </link>
+
+        <link name="${prefix}link_1">
+            <inertial>
+            <origin xyz="0.223823373633036 0.0182515023064352 0.370408964002915" rpy="0 0 0" />
+            <mass value="622.742568357298" />
+            <inertia
+                ixx="67.8176971990728"
+                ixy="2.62565563323783"
+                ixz="-14.9372082983885"
+                iyy="51.0345456787575"
+                iyz="0.850388863470645"
+                izz="71.0963408141935" />
+            </inertial>
+            <visual>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                <mesh filename="package://nj130-26_description/meshes/link1.STL" />
+                </geometry>
+                <material name="">
+                <color rgba="1 0 0 1" />
+                </material>
+            </visual>
+            <collision>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                <mesh filename="package://nj130-26_description/meshes/link1.STL" />
+                </geometry>
+            </collision>
+        </link>
+
+        <joint name="${prefix}joint_1" type="continuous">
+            <origin xyz="0 0 0.29865" rpy="0 0 0" />
+            <parent link="${prefix}base_link" />
+            <child link="${prefix}link_1" />
+            <axis xyz="0 0 -1" />
+        </joint>
+
+        <!-- <link name="${prefix}link_2_ext">
+            <inertial>
+                <origin xyz="-0.162088688906247 -0.0694635320023716 -0.0240803890675549" rpy="0 0 0" />
+                <mass value="33.9808711338694" />
+                <inertia
+                ixx="0.129517055448557"
+                ixy="-0.00389429853113817"
+                ixz="-0.0635366793852722"
+                iyy="0.571563206918394"
+                iyz="-0.00164810440624878"
+                izz="0.505011471360637" />
+            </inertial>
+            <visual>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                <mesh filename="package://nj130_26_urdf/meshes/link2_ext.STL" />
+                </geometry>
+                <material name="">
+                <color rgba="1 0 0 1" />
+                </material>
+            </visual>
+            <collision>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                <mesh filename="package://nj130_26_urdf/meshes/link2_ext.STL" />
+                </geometry>
+            </collision>
+        </link>
+
+        <joint name="${prefix}joint_2_ext" type="continuous">
+            <origin xyz="0.35 -0.0975 0.53135" rpy="0 0 0" />
+            <parent link="${prefix}link_1" />
+            <child link="${prefix}link_2_ext" />
+            <axis xyz="0 1 0" />
+        </joint> 
+
+        <link name="${prefix}link_3_ext">
+            <inertial>
+            <origin xyz="-0.0651470484626871 -0.0552527420542973 0.508837920565456" rpy="0 0 0" />
+            <mass value="59.4972435307222" />
+            <inertia
+                ixx="5.23888307927869"
+                ixy="-0.00036894066066532"
+                ixz="-0.137381305347039"
+                iyy="5.32972113013809"
+                iyz="-0.00177177806110387"
+                izz="0.141952902760178" />
+            </inertial>
+            <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="package://nj130_26_urdf/meshes/link3_ext.STL" />
+            </geometry>
+            <material name="">
+                <color rgba="1 0 0 1" />
+            </material>
+            </visual>
+            <collision>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="package://nj130_26_urdf/meshes/link3_ext.STL" />
+            </geometry>
+            </collision>
+        </link>
+
+        <joint name="${prefix}joint_3_ext" type="continuous">
+            <origin xyz="-0.31878 -0.012 -0.02789" rpy="0 0 0" />
+            <parent link="${prefix}link_2_ext" />
+            <child link="${prefix}link_3_ext" />
+            <axis xyz="0 1 0" />
+        </joint> -->
+
+        <link name="${prefix}link_2">
+            <inertial>
+            <origin xyz="0.0239282633860053 -0.0242000728108603 0.523998538656614" rpy="0 0 0" />
+            <mass value="179.411938551206" />
+            <inertia
+                ixx="24.9443415856971"
+                ixy="0.0547214435284436"
+                ixz="-0.0565192589255693"
+                iyy="24.0973147552006"
+                iyz="0.401816406646127"
+                izz="2.6804399042202" />
+            </inertial>
+            <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="package://nj130-26_description/meshes/link2.STL" />
+            </geometry>
+            <material name="">
+                <color rgba="1 0 0 1" />
+            </material>
+            </visual>
+            <collision>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="package://nj130-26_description/meshes/link2.STL" />
+            </geometry>
+            </collision>
+        </link>
+
+        <joint name="${prefix}joint_2" type="continuous">
+            <origin xyz="0.35 0 0.53135" rpy="0 0 0" />
+            <parent link="${prefix}link_1" />
+            <child link="${prefix}link_2" />
+            <axis xyz="0 1 0" />
+        </joint>
+
+        <link name="${prefix}link_3">
+            <inertial>
+            <origin xyz="-0.00823086364130676 0.0336245409135121 0.214015592296739" rpy="0 0 0" />
+            <mass value="226.714584241142" />
+            <inertia
+                ixx="6.82656511799789"
+                ixy="0.644549711948834"
+                ixz="-0.663209563468363"
+                iyy="5.38455261928483"
+                iyz="-0.817561197021521"
+                izz="6.14633521526375" />
+            </inertial>
+            <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="package://nj130-26_description/meshes/link3.STL" />
+            </geometry>
+            <material name="">
+                <color rgba="1 0 0 1" />
+            </material>
+            </visual>
+            <collision>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="package://nj130-26_description/meshes/link3.STL" />
+            </geometry>
+            </collision>
+        </link>
+
+        <joint name="${prefix}joint_3" type="continuous">
+            <origin xyz="0 0 1.16" rpy="0 -1.57 0" />
+            <parent link="${prefix}link_2" />
+            <child link="${prefix}link_3" />
+            <axis xyz="0 -1 0" />
+        </joint>
+
+        <link name="${prefix}link_4">
+            <inertial>
+            <origin xyz="0.631483857028514 0.00143736237037472 0.00269777742445765" rpy="0 0 0" />
+            <mass value="310.871263888054" />
+            <inertia
+                ixx="4.15091709295853"
+                ixy="0.465598960288027"
+                ixz="-0.0778277655707573"
+                iyy="24.6174611135231"
+                iyz="-0.0458840065894541"
+                izz="26.7234725545298" />
+            </inertial>
+            <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="package://nj130-26_description/meshes/link4.STL" />
+            </geometry>
+            <material name="">
+                <color rgba="1 0 0 1" />
+            </material>
+            </visual>
+            <collision>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="package://nj130-26_description/meshes/link4.STL" />
+            </geometry>
+            </collision>
+        </link>
+
+        <joint name="${prefix}joint_4" type="continuous">
+            <origin xyz="0.145 0 0.25" rpy="0 0 0" />
+            <parent link="${prefix}link_3" />
+            <child link="${prefix}link_4" />
+            <axis xyz="-1 0 0" />
+        </joint>
+
+        <link name="${prefix}link_5">
+            <inertial>
+            <origin xyz="0.0501381933007941 0.000255411382632705 0.000312892923768793" rpy="0 0 0" />
+            <mass value="31.4945074401953" />
+            <inertia
+                ixx="0.0899904162298318"
+                ixy="-0.00272588283998132"
+                ixz="0.00261845532875675"
+                iyy="0.236429812146763"
+                iyz="8.81391505459128E-05"
+                izz="0.250342696638773" />
+            </inertial>
+            <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="package://nj130-26_description/meshes/link5.STL" />
+            </geometry>
+            <material name="">
+                <color rgba="0.250980392156863 0.250980392156863 0.250980392156863 1" />
+            </material>
+            </visual>
+            <collision>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="package://nj130-26_description/meshes/link5.STL" />
+            </geometry>
+            </collision>
+        </link>
+
+        <joint name="${prefix}joint_5" type="continuous">
+            <origin xyz="0.96058 0 0" rpy="0 0 0" />
+            <parent link="${prefix}link_4" />
+            <child link="${prefix}link_5" />
+            <axis xyz="0 1 0" />
+        </joint>
+
+        <link name="${prefix}link_6">
+            <inertial>
+            <origin xyz="0.0273479317034322 -4.70620758939121E-08 -0.00160267586794882" rpy="0 0 0" />
+            <mass value="3.76689116258319" />
+            <inertia
+                ixx="0.0127050616656888"
+                ixy="-4.39171290610782E-09"
+                ixz="-3.45917454019728E-05"
+                iyy="0.00657213950823366"
+                iyz="7.99509556103947E-10"
+                izz="0.00702021362826505" />
+            </inertial>
+            <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="package://nj130-26_description/meshes/link6.STL" />
+            </geometry>
+            <material name="">
+                <color rgba="0.250980392156863 0.250980392156863 0.250980392156863 1" />
+            </material>
+            </visual>
+            <collision>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="package://nj130-26_description/meshes/link6.STL" />
+            </geometry>
+            </collision>
+        </link>
+
+        <joint name="${prefix}joint_6" type="continuous">
+            <origin xyz="0.165 0 0" rpy="0 0 0" />
+            <parent link="${prefix}link_5" />
+            <child link="${prefix}link_6" />
+            <axis xyz="-1 0 0" />
+        </joint>
+
+        <link name="${prefix}ee_link"/>
+        
+        <joint name="${prefix}fixed_ee_joint" type="fixed">
+            <origin
+            xyz="0.0 0 0.0"
+            rpy="0 ${M_PI/2} 0" />
+            <parent link="${prefix}link_6"/>
+            <child link="${prefix}ee_link"/>
+        </joint>
+    </xacro:macro>
+
+
+</robot>
