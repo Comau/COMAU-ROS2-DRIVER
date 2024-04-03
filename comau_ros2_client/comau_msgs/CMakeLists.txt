@@ -3,7 +3,7 @@ project(comau_msgs)
 
 # Default to C++14
 if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD 17)
 endif()
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -11,9 +11,11 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(actionlib_msgs REQUIRED)
+find_package(action_msgs REQUIRED)
 find_package(trajectory_msgs REQUIRED)
 find_package(shape_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
@@ -43,7 +45,7 @@ set(srv_files
   "srv/OpenConnection.srv"
   "srv/SetArmState.srv"
   "srv/SetIO.srv"
- "srv/SetMoveFlyParams.srv"
+  "srv/SetMoveFlyParams.srv"
   "srv/SetSnsTrkParams.srv"
   "srv/SnsTrkPlotReset.srv"
 )
