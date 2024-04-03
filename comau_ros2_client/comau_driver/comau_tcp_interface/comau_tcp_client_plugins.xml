@@ -1,0 +1,8 @@
+<library path="comau_tcp_interface">
+  <class type="comau_tcp_interface::StateClient" base_class_type="comau_tcp_interface::ComauClientBase">
+    <description>This is the implementation for Comau State Client.</description>
+  </class>
+  <class type="comau_tcp_interface::RobotClient" base_class_type="comau_tcp_interface::ComauClientBase">
+    <description>This is the implementation for Comau Robot Client.</description>
+  </class>
+</library>
