@@ -432,7 +432,7 @@ bool RobotClient::sendDisconnectMessage() {
 
 bool RobotClient::sendInitializeMessage(bool with_verbose, int &sensor_type, int &sensor_cnvrsn, int &sensor_gain,
                                         int &sensor_time, int &sensor_ofst_lim_trans, int &sensor_ofst_lim_rot,
-                                        std::vector<int> &din_pins, std::vector<int> &dout_pins) {
+                                        std::vector<long int> &din_pins, std::vector<long int> &dout_pins) {
   utils::MessagePackage msg(getSendInitializeRecipe());
   uint32_t verb = 1;
   uint32_t no_verb = 0;
