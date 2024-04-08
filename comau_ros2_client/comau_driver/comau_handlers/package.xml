@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>comau_handlers</name>
+  <version>0.1.0</version>
+  <description>The comau_handlers package</description>
+
+  <author>Laboratory for Manufacturing Systems and Automation (LMS) - University of Patras</author>
+  <maintainer email="lmsgit@lms.mech.upatras.gr">Laboratory for Manufacturing Systems and Automation (LMS) - University of Patras</maintainer>
+
+  <license>BSD-2-Clause</license>
+  <license>Apache-2.0</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  
+  <build_depend>boost</build_depend>
+  
+
+  <depend>rclcpp</depend>
+  <depend>rclcpp_action</depend>
+  <depend>rclcpp_components</depend>
+  <depend>comau_driver</depend>
+  <depend>joint_limits</depend>
+  <depend>ros2_control</depend>
+  <depend>tf2_ros</depend>
+  <!--depend>rosparam_shortcuts</depend-->
+  <depend>urdf</depend>
+  <depend>hardware_interface</depend>
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>tf2_geometry_msgs</depend>
+  <depend>comau_msgs</depend>
+  <depend>nav2_util</depend>
+
+  <doc_depend>doxygen</doc_depend>
+
+  <export>
+    <rosdoc config="doc/rosdoc.yaml" />
+  </export>
+</package>
