@@ -84,12 +84,6 @@ target_link_libraries(comau_handlers
   ${catkin_LIBRARIES}
 )
 
-install(TARGETS comau_handlers
-        ARCHIVE DESTINATION lib/${PROJECT_NAME}
-        LIBRARY DESTINATION lib/${PROJECT_NAME}
-        RUNTIME DESTINATION lib/${PROJECT_NAME}
-)
-
 ## Mark cpp header files for installation
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION include)
@@ -116,5 +110,11 @@ ament_export_dependencies(
   tf2_geometry_msgs
   comau_msgs
   Boost
+)
+install(TARGETS comau_handlers
+        DESTINATION lib/${PROJECT_NAME}
+        ARCHIVE DESTINATION lib/${PROJECT_NAME}
+        LIBRARY DESTINATION lib/${PROJECT_NAME}
+        RUNTIME DESTINATION bin/${PROJECT_NAME}
 )
 ament_package()
