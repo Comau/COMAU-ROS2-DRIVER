@@ -5,7 +5,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wno-unused-parameter)
 endif()
 
-# Controlla il supporto per c++17 / c++11 / c++0x
+# check c++17 / c++11 / c++0x / c++14
 
 include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag("-std=c++17" COMPILER_SUPPORTS_CXX17)
@@ -14,25 +14,20 @@ check_cxx_compiler_flag("-std=c++14" COMPILER_SUPPORTS_CXX14)
 check_cxx_compiler_flag("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
 
 if(COMPILER_SUPPORTS_CXX17)
-  message(STATUS "Compilazione con supporto a C++17")
+  message(STATUS "CCompile with C++17 support")
   add_compile_options(-std=c++17)
 elseif(COMPILER_SUPPORTS_CXX14)
-  message(STATUS "Compilazione con supporto a C++14")
+  message(STATUS "Compile with c++14 support")
   add_compile_options(-std=c++14) 
 elseif(COMPILER_SUPPORTS_CXX11)
-  message(STATUS "Compilazione con supporto a C++11")
+  message(STATUS "Compile with c++11 support")
   add_compile_options(-std=c++11)
 elseif(COMPILER_SUPPORTS_CXX0X)
-  message(STATUS "Compilazione con supporto a C++0x")
+  message(STATUS "Compile with c++0x support")
   add_compile_options(-std=c++0x)
 else()
-  message(FATAL_ERROR "Il compilatore ${CMAKE_CXX_COMPILER} non ha supporto per C++. Si prega di utilizzare un compilatore C++ diverso. Soluzione suggerita: aggiornare il pacchetto build-essential.")
+  message(FATAL_ERROR "Il compilatore ${CMAKE_CXX_COMPILER} has no C++ support. Please use a different C++ compiler. Suggested solution: update the pkg build-essential ")
 endif()
-
-
-
-
-
 
 # find dependencies
 
@@ -49,7 +44,6 @@ add_library(
     SHARED
     src/comau_driver.cpp)
  
- 
 target_include_directories(
        ${PROJECT_NAME}
        PUBLIC
@@ -57,9 +51,9 @@ target_include_directories(
  	 ${catkin_INCLUDE_DIRS}
  	 ${Boost_INCLUDE_DIRS}
  	 ${comau_tcp_interface_INCLUDE_DIRS})
- 	 
-        
-ament_target_dependencies(
+ 
+#necessario per compilazione 	        
+ament_target_dependencies( 
       ${PROJECT_NAME} 
       rclcpp
       pluginlib
@@ -118,12 +112,5 @@ if(BUILD_TESTING)
  # set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 endif()
-
-
-
-
-
-
-
 
 ament_package()

@@ -11,9 +11,8 @@
 #include "rclcpp/rclcpp.hpp"
 #include "comau_driver/comau_driver.hpp"
 #include "pluginlib/class_loader.hpp"
-
-
 //#include <vector>
+
 using namespace comau_tcp_interface;
 using namespace comau_tcp_interface::utils;
 
