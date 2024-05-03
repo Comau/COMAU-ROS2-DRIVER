@@ -1,0 +1,10 @@
+#Parameters for connecting with virtual robot at Roboshop
+comau_driver:     
+  ros__parameters:
+    robot_ip: "192.168.56.2"      # this the the IP of the Robot
+    #  robot_ip: "192.168.29.2"   # aura 
+    #  robot_ip: "172.16.205.10"  # nj130-26
+    #  robot_ip: "192.168.56.3"   # racer7 
+    state_server_port: 1104       # the port of TCP state server
+    robot_server_port: 1105       # the port of TCP robot/executor server
+    arm1_server_port: 1101        # the port of TCP for Arm1 server

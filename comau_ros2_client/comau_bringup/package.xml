@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>comau_bringup</name>
+  <version>0.0.0</version>
+  <description>The comau_bringup package</description>
+
+  <author>Laboratory for Manufacturing Systems and Automation (LMS) - University of Patras</author>
+  <maintainer email="lmsgit@lms.mech.upatras.gr">Laboratory for Manufacturing Systems and Automation (LMS) - University of Patras</maintainer>
+  <license>BSD-2-Clause</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+  <depend>rclcpp</depend>
+
+<!-- All used packages -->
+  <exec_depend>comau_driver</exec_depend>
+  <exec_depend>comau_tcp_interface</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>aura_description</exec_depend> 
+    <exec_depend>comau_viz</exec_depend> 
+  <exec_depend>controller_manager</exec_depend>
+  <exec_depend>comau_hardware_interface</exec_depend>
+  
+<!--  <exec_depend>comau_handlers</exec_depend>
+ 
+  <exec_depend>comau_controllers</exec_depend> 
+  
+   <export>
+    <rosdoc2>rosdoc2.yaml</rosdoc2>
+  </export> -->
+  
+  <export>
+   <build_type>ament_cmake</build_type>
+   <file path="share/${PROJECT_NAME}">
+      <install destination="share/${PROJECT_NAME}">
+             ${PROJECT_NAME}/config/driver/controllers.yaml
+             ${PROJECT_NAME}/config/net/*.yaml
+             ${PROJECT_NAME}/config/transforms/parallel_joint_fix_value.yaml             
+      </install>
+      <install destination="share/${PROJECT_NAME}">
+          ${PROJECT_NAME}/config/rqt_config/*.xml
+      </install>
+      
+    </file>
+  </export>
+</package>
+

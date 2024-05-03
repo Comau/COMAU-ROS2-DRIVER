@@ -1,0 +1,145 @@
+# Settings for ros_control control loop
+comau_hardware_control_loop:   
+  ros__parameters:
+    loop_hz: &loop_hz 500
+    cycle_time_error_threshold: 0.025
+
+# Settings for ros_control hardware interface
+comau_hardware_interface: 
+  ros__parameters:
+    use_state_server: true
+    use_robot_server: true
+    use_arm1_server: true  # the hold program must be running at start (green), afterwards can be set to hold
+    verbose: true
+
+comau_driver:
+  ros__parameters:
+  # pdl and driver print more information
+    verbose: true
+  # Joint/cartesian linear velocity 
+    default_linear_velocity: 1.0
+  # Movefly parameters (used with synchronous pos_joint_traj_controller) - Not stable
+    fly_lin_velocity: 0.2
+    fly_dist: 5.0
+    threshold: 0.2 # how often to publish movefly commands
+  # Sensor tracking parameters
+    sensor_type: 10    # 5-9 relative , 10-13 absolute
+    sensor_cnvrsn: 1
+    sensor_gain: 100
+    sensor_time: 0
+    sensor_ofst_lim_trans: 500
+    sensor_ofst_lim_rot: 800
+  # choose the number of din and dout pins
+  # size must be 6, -1 bypasses the pin
+    din_pins: [-1, -1, -1, -1, -1, -1]
+    dout_pins: [-1, -1, -1, -1, -1, -1]
+  # din_pins: [80, 81, -1, 84, 85, -1]
+  # dout_pins: [90, 91, -1, 93, 94, 95]
+
+# Experimental pid position controller using relative sensor tracking
+# Works only for position target's and world frame
+comau_point_follower:   
+  ros__parameters:
+    with_ori: false
+    loop_hz: 100
+    cycle_time_error_threshold: 0.01
+
+# Publish all joint states ----------------------------------
+joint_state_controller:
+  ros__parameters:
+    type:         joint_state_controller/JointStateController
+    publish_rate: 500   #${loop_hz}
+
+# Controller for relative sensor tracking
+sensor_tracking_relative_controller: 
+  ros__parameters:
+    type: comau_controllers/SensorTrackingRelativeController
+    joints: &robot_joints           #["joint_1", "joint_2", "joint_3", "joint_4", "joint_5", "joint_6"]
+      - joint_1
+      - joint_2
+      - joint_3
+      - joint_4
+      - joint_5
+      - joint_6
+      #- joint_7
+      #- joint_8
+      #- joint_9
+      #- joint_10
+    loop_hz: 500      #${loop_hz}
+    dead_man_timeout: 0.2
+    ee_vel_limit: 0.9 # used in relative mode
+    with_plot: true
+    stop_trajectory_duration: 0.5
+    state_publish_rate: 50
+    action_monitor_rate: 20
+
+# Controller for absolute sensor tracking
+sensor_tracking_absolute_controller:
+  ros__parameters:
+    type: comau_controllers/SensorTrackingAbsoluteController
+    joints: &robot_joints
+      - joint_1
+      - joint_2
+      - joint_3
+      - joint_4
+      - joint_5
+      - joint_6
+      #- joint_7
+      #- joint_8
+      #- joint_9
+      #- joint_10
+    loop_hz: 500  #${loop_hz}
+    dead_man_timeout: 0.2
+    ee_vel_limit: 5.0 # used in relative mode
+    with_plot: true
+    stop_trajectory_duration: 0.5
+    state_publish_rate: 50
+    action_monitor_rate: 20
+
+# Joint Trajectory Controller - position based -------------------------------
+# For detailed explanations of parameter see http://wiki.ros.org/joint_trajectory_controller
+pos_joint_traj_controller:  
+  ros__parameters:
+    type: position_controllers/JointTrajectoryController
+    joints: &robot_joints
+      - joint_1
+      - joint_2
+      - joint_3
+      - joint_4
+      - joint_5
+      - joint_6
+      #- joint_7
+      #- joint_8
+      #- joint_9
+      #- joint_10
+    constraints: 
+     goal_time: 0.6
+     stopped_velocity_tolerance: 0.05
+     joint_1:  {trajectory: 0.2, goal: 0.1}
+     joint_2:  {trajectory: 0.2, goal: 0.1}
+     joint_3:  {trajectory: 0.2, goal: 0.1}
+     joint_4:  {trajectory: 0.2, goal: 0.1}
+     joint_5:  {trajectory: 0.2, goal: 0.1}
+     joint_6:  {trajectory: 0.2, goal: 0.1}
+     #joint_7:  {trajectory: 0.2, goal: 0.1}
+     #joint_8:  {trajectory: 0.2, goal: 0.1}
+     #joint_9:  {trajectory: 0.2, goal: 0.1}
+     #joint_10: {trajectory: 0.2, goal: 0.1}
+    stop_trajectory_duration: 0.5
+    state_publish_rate: 500 #  ${loop_hz}  # Frequency (in Hz) at which the controller state is published.
+    action_monitor_rate: 20 # Frequency (in Hz) at which the action goal status is monitored. This is an advanced parameter that should not require changing.
+
+arm_jog_controller: 
+  ros__parameters:
+    type: position_controllers/JointGroupPositionController
+    joints: &robot_joints
+      - joint_1
+      - joint_2
+      - joint_3
+      - joint_4
+      - joint_5
+      - joint_6
+      #- joint_7
+      #- joint_8
+      #- joint_9
+      #- joint_10
