@@ -59,8 +59,10 @@ def generate_launch_description():
     xacro_file = os.path.join(get_package_share_directory('aura_description'), 'robots', 'aura_robot.urdf.xacro')    
     robot_description_config = xacro.process_file(xacro_file)
     robot_description = robot_description_config.toxml()
-#
+
     #print(robot_description)
+    
+
 
     return LaunchDescription([
       robot_name_arg,  
