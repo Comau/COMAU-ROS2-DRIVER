@@ -1,11 +1,18 @@
 import os
+import xacro
+from launch_ros.actions import Node
 from launch import LaunchDescription
-from launch.actions import (DeclareLaunchArgument, IncludeLaunchDescription)
 from launch.substitutions import LaunchConfiguration
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from ament_index_python import get_package_share_directory
 
 def generate_launch_description():
+
+    # Load robot_description
+    xacro_file_path = os.path.join(get_package_share_directory('racer5-0-80_description'), 'robots', 'racer5-0-80_robot.urdf.xacro')
+    robot_description_config = xacro.process_file(xacro_file_path)
+    xml = robot_description_config.toxml()    
    
     ns_arg = DeclareLaunchArgument(
         name='ns',
@@ -32,8 +39,23 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-     ns_arg,
-     robot_description_file_arg,
-     comau_common_launch
+      ns_arg,
+      robot_description_file_arg,
+      comau_common_launch,
+
+      Node(
+        package='robot_state_publisher',
+        executable='robot_state_publisher',
+        name='robot_state_publisher',
+        output='screen',
+        parameters=[{'robot_description':xml}]
+        ),
+  
+      Node(
+        package='joint_state_publisher',
+        executable='joint_state_publisher',
+        name='joint_state_publisher',
+        parameters=[{'robot_description':xml}]
+        )        
     ])
 
