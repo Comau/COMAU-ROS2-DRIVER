@@ -1,13 +1,19 @@
 import os
-from launch import LaunchDescription
+import xacro
 from launch_ros.actions import Node
-from launch.actions import (DeclareLaunchArgument, IncludeLaunchDescription)
+from launch import LaunchDescription
 from launch.substitutions import LaunchConfiguration
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from ament_index_python import get_package_share_directory
 
 def generate_launch_description():
-   
+
+    # Load robot_description
+    xacro_file_path= os.path.join(get_package_share_directory('aura_description'), 'robots', 'aura_robot.urdf.xacro')  
+    robot_description_config = xacro.process_file(xacro_file_path)
+    xml = robot_description_config.toxml()
+
     ns_arg = DeclareLaunchArgument(
         name='ns',
         default_value='/',
@@ -51,12 +57,27 @@ def generate_launch_description():
       robot_description_file_arg,
       use_mimic_arg,
       comau_common_launch, 
-        
+
       Node(
         package='comau_bringup',
         executable='load_param_node',
         name='param_value',              
         parameters=[config],                               
-      )
+      ),
+
+      Node(
+        package='robot_state_publisher',
+        executable='robot_state_publisher',
+        name='robot_state_publisher',
+        output='screen',
+        parameters=[{'robot_description':xml}]
+      ),
+        
+      Node(
+        package='joint_state_publisher',
+        executable='joint_state_publisher',
+        name='joint_state_publisher',
+        parameters=[{'robot_description':xml}]
+      )      
     ])
 
