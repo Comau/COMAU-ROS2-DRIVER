@@ -100,15 +100,6 @@ public:
    */
   template <typename T> bool getData(const std::string &name, T &value) {
     if (data_.find(name) != data_.end()) {
-      /*try
-      {
-        value = std::get<T>(data_[name]);
-      }
-      catch (const std::bad_variant_access& e)
-      {
-        std::cerr << "MessagePackage::getData throw an excpetion at getData: " << e.what() << std::endl;
-        return false;
-      }*/
       try {
         value = boost::strict_get<T>(data_[name]);
       } catch (const boost::bad_get &e) {

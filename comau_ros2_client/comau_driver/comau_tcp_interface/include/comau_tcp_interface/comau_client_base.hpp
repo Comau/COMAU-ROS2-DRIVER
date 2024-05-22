@@ -9,8 +9,8 @@
  *
  */
 
-#ifndef COMAU_TCP_INTERFACE__COMAU_CLIENT_BASE_H
-#define COMAU_TCP_INTERFACE__COMAU_CLIENT_BASE_H
+#ifndef COMAU_TCP_INTERFACE__COMAU_CLIENT_BASE_HPP
+#define COMAU_TCP_INTERFACE__COMAU_CLIENT_BASE_HPP
 
 #include "comau_tcp_interface/comau_tcp_interface.hpp"
 #include "comau_tcp_interface/utils/custom_data_type.hpp"
@@ -24,12 +24,13 @@ protected:
   ComauClientBase() {}
 
 public:
-  virtual ~ComauClientBase() {}
+  virtual ~ComauClientBase(){}
 
   virtual bool initialize(const ComauTcpInterfaceParameters &params) = 0;
   virtual void close() = 0;
   virtual bool isConnected() = 0;
   virtual bool getLastMessage(utils::MessagePackage &msg) = 0;
+  virtual bool openStateThread(bool openState, bool success) = 0; /*TEMP*/
   utils::vectorstr_t getRecvRecipe() {
     return incoming_msg_descr_;
   }
@@ -97,4 +98,4 @@ protected:
 
 } // namespace comau_tcp_interface
 
-#endif
+#endif //COMAU_TCP_INTERFACE__COMAU_CLIENT_BASE_HPP

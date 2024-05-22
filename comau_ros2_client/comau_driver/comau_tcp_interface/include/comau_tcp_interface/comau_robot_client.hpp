@@ -135,7 +135,7 @@ public:
    */
   bool sendInitializeMessage(bool with_verbose, int &sensor_type, int &sensor_cnvrsn, int &sensor_gain,
                              int &sensor_time, int &sensor_ofst_lim_trans, int &sensor_ofst_lim_rot,
-                             std::vector<long int> &din_pins, std::vector<long int> &dout_pins);
+                             std::vector<int> &din_pins, std::vector<int> &dout_pins);
   /**
    * @brief  Sends the message to start the robot
    *
@@ -183,7 +183,7 @@ public:
    * @return
    */
   bool openHandlerThread(bool openHandler, bool success); /*ANDY*/
-
+  bool openStateThread(bool openState, bool success); /*TEMP*/
 private:
   /**
    * @brief Read the message and parse it into the MessagePackage last_recv_msg_

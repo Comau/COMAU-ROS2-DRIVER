@@ -3,12 +3,29 @@ project(comau_tcp_interface)
 
 # Default to C++14
 if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD 17)
 endif()
 
-#if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-#  add_compile_options(-std=c++11)
-#endif()
+include(CheckCXXCompilerFlag)
+check_cxx_compiler_flag("-std=c++17" COMPILER_SUPPORTS_CXX17)
+check_cxx_compiler_flag("-std=c++14" COMPILER_SUPPORTS_CXX14)
+check_cxx_compiler_flag("-std=c++11" COMPILER_SUPPORTS_CXX11)
+check_cxx_compiler_flag("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
+if(COMPILER_SUPPORTS_CXX17)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+    message(STATUS "C++17 support: OK (-std=c++17)")
+elseif(COMPILER_SUPPORTS_CXX14)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+    message(STATUS "C++14 support: OK (-std=c++14)")
+elseif(COMPILER_SUPPORTS_CXX11)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+    message(STATUS "C++11 support: OK (-std=c++11)")
+elseif(COMPILER_SUPPORTS_CXX0X)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+    message(STATUS "C++00 support: OK (-std=c++0x)")
+else()
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
+endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
@@ -60,11 +77,6 @@ target_link_libraries(
   ${catkin_LIBRARIES}
 )
 
-#ament_target_dependencies(
-#  comau_tcp_interface
-#  ${THIS_PACKAGE_INCLUDE_DEPENDS}
-#)
-
 ament_target_dependencies(
   comau_tcp_interface
   pluginlib
@@ -73,18 +85,25 @@ ament_target_dependencies(
   ${THIS_PACKAGE_INCLUDE_DEPENDS}
 )
 
-pluginlib_export_plugin_description_file(comau_driver/comau_tcp_interface comau_tcp_client_plugins.xml)
+pluginlib_export_plugin_description_file(comau_tcp_interface comau_tcp_client_plugins.xml)
 
-target_compile_features(comau_tcp_interface PRIVATE c_std_99 cxx_std_17)
+target_compile_features(comau_tcp_interface PRIVATE cxx_std_17)
+
+add_executable(comau_tcp_interface_node src/comau_state_client_node.cpp)
+ament_target_dependencies(comau_tcp_interface_node ${THIS_PACKAGE_INCLUDE_DEPENDS})
+install(TARGETS comau_tcp_interface_node
+  DESTINATION lib/${PROJECT_NAME})
+
+install(
+  DIRECTORY include/
+  DESTINATION include
+)
 
 install(TARGETS ${PROJECT_NAME}
+  comau_tcp_interface_node
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
-)
-
-install(DIRECTORY include/
-  DESTINATION include
 )
 
 install(FILES comau_tcp_client_plugins.xml
@@ -97,7 +116,7 @@ install(DIRECTORY include/
   FILES_MATCHING PATTERN "*.h"
   PATTERN ".svn" EXCLUDE
 ) 
-ament_export_include_directories(include)
+
 ament_export_libraries(comau_tcp_interface)
 ament_export_dependencies(
   rclcpp
@@ -105,5 +124,9 @@ ament_export_dependencies(
   rcutils
   comau_msgs 
   Boost
+)
+
+ament_export_include_directories(
+  include
 )
 ament_package()

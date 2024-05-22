@@ -41,7 +41,7 @@ void ComauTcpConnection::connectToServer() {
     socket_ptr_->open(tcp::v4());
 
     boost::asio::connect(*socket_ptr_, endpoint_iterator);
-    RCLCPP_INFO(rclcpp::get_logger(params_.log_tag), "Connected!");
+    RCLCPP_INFO(rclcpp::get_logger(params_.log_tag),"Connected!!!!!");
   } catch (const boost::system::system_error &e) {
     // leave the treatment to the initialize function of each client class
     throw e;
@@ -51,7 +51,7 @@ void ComauTcpConnection::connectToServer() {
 void ComauTcpConnection::read(std::vector<uint8_t>& buf, const size_t buf_len, size_t& read) {
   boost::system::error_code error;
   read = socket_ptr_->read_some(boost::asio::buffer(buf), error);
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger(params_.log_tag), "Read from socket " << read << " bytes");
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger(params_.log_tag), " Read from socket " << read << " bytes");
   if (error) {
     throw boost::system::system_error(error);
   }

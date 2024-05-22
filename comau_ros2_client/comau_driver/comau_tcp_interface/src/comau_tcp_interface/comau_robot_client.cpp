@@ -96,19 +96,19 @@ bool RobotClient::initialize(const ComauTcpInterfaceParameters &params) {
   /*try {
     robot_receiving_thread_.reset(new std::thread(&RobotClient::callback, this, std::move(robot_future_obj_for_exit_))); //tcp_interface_ptr_.reset(new ComauTcpConnection(*params_ptr_));
   }catch (const std::bad_alloc &e) {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), 
-                    " Callback thread allocation failed: " << e.what());
+    RCLCPP_ERROR_STREAM("[" << params_ptr_->log_tag << "] "
+                         << "Callback thread allocation failed: " << e.what());
     return false;
   } catch (const boost::system::system_error &e) {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), 
-                    " Callback thread instantion throws : " << e.what());
+    RCLCPP_ERROR_STREAM("[" << params_ptr_->log_tag << "] "
+                         << "Callback thread instantion throws : " << e.what());
     return false;
   } catch (...) {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), 
-                    " Callback thread instantion throws unexpected error ");
+    RCLCPP_ERROR_STREAM("[" << params_ptr_->log_tag << "] "
+                         << "Callback thread instantion throws unexpected error ");
     return false;
   }*/ /*catch (const boost::system::system_error &e) {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag),   e.what());
+    RCLCPP_ERROR_STREAM("[" << params_ptr_->log_tag << "] " << e.what());
     return false;
   }*/
 
@@ -127,18 +127,15 @@ bool RobotClient::openRobotThread(bool openRobot, bool success)
     try {
       robot_receiving_thread_.reset(new std::thread(&RobotClient::callback, this, std::move(robot_future_obj_for_exit_))); //tcp_interface_ptr_.reset(new ComauTcpConnection(*params_ptr_));
     }catch (const std::bad_alloc &e) {
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), 
-                    " Callback thread allocation failed: " << e.what());
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), "Callback thread allocation failed: " << e.what());
                         success = false;
       return false;
     } catch (const boost::system::system_error &e) {
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), 
-                    " Callback thread instantion throws : " << e.what());
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), "Callback thread instantion throws : " << e.what());
                         success = false;
       return false;
     } catch (...) {
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), 
-                    " Callback thread instantion throws unexpected error ");
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), "Callback thread instantion throws unexpected error ");
                         success = false;
       return false;
     }
@@ -169,18 +166,15 @@ bool RobotClient::openHandlerThread(bool openHandler, bool success)
     try {
       robot_receiving_thread_.reset(new std::thread(&RobotClient::callback, this, std::move(robot_future_obj_for_exit_))); //tcp_interface_ptr_.reset(new ComauTcpConnection(*params_ptr_));
     }catch (const std::bad_alloc &e) {
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), 
-                    " Callback thread allocation failed: " << e.what());
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), "Callback thread allocation failed: " << e.what());
                         success = false;
       return false;
     } catch (const boost::system::system_error &e) {
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), 
-                    " Callback thread instantion throws : " << e.what());
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), "Callback thread instantion throws : " << e.what());
                         success = false;
       return false;
     } catch (...) {
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), 
-                    " Callback thread instantion throws unexpected error ");
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), "Callback thread instantion throws unexpected error ");
                         success = false;
       return false;
     }
@@ -201,7 +195,10 @@ bool RobotClient::openHandlerThread(bool openHandler, bool success)
   success = true;
   return true;
 } /* thread*/
-
+bool RobotClient::openStateThread(bool openState, bool success) /*TEMP*/
+{
+  return true;
+}
 void RobotClient::close() {
   this->sendTerminateMessage();
   std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -214,7 +211,9 @@ bool RobotClient::isConnected() {
 }
 
 bool RobotClient::getLastMessage(MessagePackage &msg) {
+  std::cout << "getLastMessage" << std::endl;
   MessagePackage *last = dynamic_cast<MessagePackage *>(last_recv_msg_.get());
+  std::cout << "last" << std::endl;
   if (last != nullptr) {
     msg = *last;
     return true;
@@ -229,20 +228,17 @@ void RobotClient::receive(std::chrono::milliseconds timeout) {
 
   tcp_interface_ptr_->read(recv_raw_data, sizeof(recv_raw_data), read_len);
   if (read_len == 0) {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), 
-                    "  Received zero bytes message");
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), " Received zero bytes message");
     return;
   }
 
   MessageParser mp(recv_raw_data.data(), read_len);
   if (!last_recv_msg_->parseWith(mp)) {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), 
-                    " Received message could not parsed");
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), " Received message could not parsed");
     return;
   }
 
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger(params_ptr_->log_tag), 
-                    "  Received message : " << last_recv_msg_->toString());
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger(params_ptr_->log_tag), " Received message : " << last_recv_msg_->toString());
 }
 
 bool RobotClient::send(MessagePackage &msg) {
@@ -257,13 +253,11 @@ bool RobotClient::send(MessagePackage &msg) {
   tcp_interface_ptr_->write(send_buffer, serielized_buffer_size, written_size);
 
   if (written_size != serielized_buffer_size) {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), 
-                    "  Send message failed buffer size: " << serielized_buffer_size
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), " Send message failed buffer size: " << serielized_buffer_size
                          << "  written: " << written_size);
     return false;
   }
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger(params_ptr_->log_tag), 
-                    "  " << msg.toString());
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger(params_ptr_->log_tag), msg.toString());
   return true;
 }
 
@@ -274,8 +268,7 @@ bool RobotClient::sendJointPositionMessage(utils::vector6f_t joint_position_comm
   if (com1 && com2) {
     return send(msg);
   } else {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), 
-                    "  Send message failed ");
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), " Send message failed ");
     return false;
   }
 }
@@ -290,8 +283,7 @@ bool RobotClient::sendJointMoveFlyMessage(utils::vector6f_t joint_position_comma
   if (com1 && com2 && com3 && com4) {
     return send(msg);
   } else {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), 
-                    "  Send message failed ");
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), " Send message failed ");
     return false;
   }
 }
@@ -303,8 +295,7 @@ bool RobotClient::sendSensorTrackingMessage(utils::vector6f_t sensor_tracking_co
   if (com1 && com2) {
     return send(msg);
   } else {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), 
-                    "  Send message failed ");
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), " Send message failed ");
     return false;
   }
 }
@@ -320,8 +311,7 @@ bool RobotClient::sendJointTrajectoryMessage(utils::joint_trajectoryf_t trajecto
   if (com1 /*&& com2*/ && com3 && com4) {
     return send(msg);
   } else {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), 
-                    "  Send message failed ");
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), " Send message failed ");
     return false;
   }
 }
@@ -337,8 +327,7 @@ bool RobotClient::sendCartTrajectoryMessage(utils::trajectoryf_t trajectory) {
   if (com1 /* && com2 */ && com3 && com4) {
     return send(msg);
   } else {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), 
-                    "  Send message failed ");
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), " Send message failed ");
     return false;
   }
 }
@@ -357,8 +346,7 @@ bool RobotClient::sendSensorConfigurationMessage(int &sensor_type, int &sensor_c
   if (com1 && com2 && com3 && com4 && com5 && com6 && com7) {
     return send(msg);
   } else {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), 
-                    "  Send message failed ");
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), " Send message failed ");
     return false;
   }
 }
@@ -376,8 +364,7 @@ bool RobotClient::sendIOMessage(int pin, bool state) {
   if (com1 && com2 && com3) {
     return send(msg);
   } else {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), 
-                    "  Send message failed ");
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), " Send message failed ");
     return false;
   }
 }
@@ -388,8 +375,7 @@ bool RobotClient::sendTerminateMessage() {
   if (com1) {
     return send(msg);
   } else {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), 
-                    "  Send message failed ");
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), " Send message failed ");
     return false;
   }
 }
@@ -400,8 +386,7 @@ bool RobotClient::sendResetMessage() {
   if (com1) {
     return send(msg);
   } else {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), 
-                    "  Send message failed ");
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), " Send message failed ");
     return false;
   }
 }
@@ -412,8 +397,7 @@ bool RobotClient::sendCancelMessage() {
   if (com1) {
     return send(msg);
   } else {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), 
-                    "  Send message failed ");
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), " Send message failed ");
     return false;
   }
 }
@@ -424,15 +408,14 @@ bool RobotClient::sendDisconnectMessage() {
   if (com1) {
     return send(msg);
   } else {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), 
-                    "  Send message failed ");
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), " Send message failed ");
     return false;
   }
 }
 
 bool RobotClient::sendInitializeMessage(bool with_verbose, int &sensor_type, int &sensor_cnvrsn, int &sensor_gain,
                                         int &sensor_time, int &sensor_ofst_lim_trans, int &sensor_ofst_lim_rot,
-                                        std::vector<long int> &din_pins, std::vector<long int> &dout_pins) {
+                                        std::vector<int> &din_pins, std::vector<int> &dout_pins) {
   utils::MessagePackage msg(getSendInitializeRecipe());
   uint32_t verb = 1;
   uint32_t no_verb = 0;
@@ -459,8 +442,7 @@ bool RobotClient::sendInitializeMessage(bool with_verbose, int &sensor_type, int
   if (com1 && com2 && com3 && com4 && com5 && com6 && com7 && com8 && com9 && com10) {
     return send(msg);
   } else {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), 
-                    "  Send message failed ");
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), " Send message failed ");
     return false;
   }
 }
@@ -481,8 +463,7 @@ bool RobotClient::sendArmStateMessage(int state) {
   if (com1) {
     return send(msg);
   } else {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), 
-                    "  Send message failed ");
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), " Send message failed ");
     return false;
   }
 }
@@ -493,8 +474,7 @@ bool RobotClient::sendStartMessage() {
   if (com1) {
     return send(msg);
   } else {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), 
-                    "  Send message failed ");
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), " Send message failed ");
     return false;
   }
 }
@@ -504,30 +484,25 @@ bool RobotClient::validate() {
   const int UTC_diff = 7199; // The time difference between the two timestamps (1h59m59s) constant due to SNTP sync.
   const int validation_threshold = 1; // The threshold (in seconds) between send and receive.
 
-  std::int32_t time;
-  std::int32_t timeNowSec;
-  std::uint32_t timeNowNanoSec;
+  /*std::int32_t time;
   if (last_recv_msg_->getData("timestamp", time)) {
-    rclcpp::Time(timeNowSec,timeNowNanoSec,RCL_SYSTEM_TIME);
-    if (time - timeNowSec - UTC_diff > validation_threshold ||
-        time - timeNowSec - UTC_diff < -validation_threshold) {
+    if (time - ros::Time::now().toSec() - UTC_diff > validation_threshold ||
+        time - ros::Time::now().toSec() - UTC_diff < -validation_threshold) {
       return false;
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), 
-                    " Message validation error: Time difference between COMAU CONTROLLER and ROS MASTER is over "
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), " Message validation error: Time difference between COMAU CONTROLLER and ROS MASTER is over "
               << validation_threshold);
     } else {
       return true;
     }
   } else {
     return false;
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), 
-                    " Message validation error: COMAU CONTROLLER timestamp could not parsed correctly");
-  }
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), " Message validation error: COMAU CONTROLLER timestamp could not parsed correctly");
+  }*/
+  return true;
 }
 
 void RobotClient::callback(std::future<void> exit_signal) {
-  RCLCPP_INFO_STREAM(rclcpp::get_logger(params_ptr_->log_tag), 
-                    " Receiving callback starting for host ip : " << params_ptr_->server_ip_address << ":"
+  RCLCPP_INFO_STREAM(rclcpp::get_logger(params_ptr_->log_tag), " Receiving callback starting for host ip : " << params_ptr_->server_ip_address << ":"
                       << params_ptr_->server_port);
 
   // TODO remove try to connect it is not working with the current server
@@ -537,10 +512,10 @@ void RobotClient::callback(std::future<void> exit_signal) {
         tcp_interface_ptr_.reset(new ComauTcpConnection(*params_ptr_));
         is_connected_ = true;
       } catch (const boost::system::system_error &e) {
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag),  e.what());
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), e.what());
         is_connected_ = false;
         size_t timeout = 10;
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag),  " Trying again in " << timeout << " seconds");
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), " Trying again in " << timeout << " seconds");
         std::this_thread::sleep_for(std::chrono::seconds(timeout));
         continue;
       }
@@ -552,17 +527,15 @@ void RobotClient::callback(std::future<void> exit_signal) {
           // is_connected_ = false;
         }
       } catch (const boost::system::system_error &e) {
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag),   e.what());
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), e.what());
         is_connected_ = false;
         continue;
       }
     }
   }
 
-  RCLCPP_INFO_STREAM(rclcpp::get_logger(params_ptr_->log_tag), 
-                    " Receiving callback ending ");
-  RCLCPP_INFO_STREAM(rclcpp::get_logger(params_ptr_->log_tag), 
-                    " Connection is Closed.");
+  RCLCPP_INFO_STREAM(rclcpp::get_logger(params_ptr_->log_tag), " Receiving callback ending ");
+  RCLCPP_INFO_STREAM(rclcpp::get_logger(params_ptr_->log_tag), " Connection is Closed.");
 }
 
 } // namespace comau_tcp_interface

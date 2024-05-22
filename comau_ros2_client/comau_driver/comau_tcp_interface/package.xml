@@ -4,8 +4,8 @@
   <version>0.0.0</version>
   <description>The comau_tcp_interface package</description>
 
-  <author>Laboratory for Manufacturing Systems and Automation (LMS) - University of Patras</author>
-  <maintainer email="lmsgit@lms.mech.upatras.gr">Laboratory for Manufacturing Systems and Automation (LMS) - University of Patras</maintainer>
+  <author>Comau S.p.A.</author>
+  <maintainer email="andrea.perica@comau.com">Ing. Andrea Perica</maintainer>
 
   <license>BSD-2-Clause</license>
   <license>Apache-2.0</license>

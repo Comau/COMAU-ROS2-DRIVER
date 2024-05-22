@@ -52,16 +52,13 @@ bool StateClient::initialize(const ComauTcpInterfaceParameters &params) {
   /*try {
     receiving_thread_.reset(new std::thread(&StateClient::callback, this, std::move(future_obj_for_exit_)));
   } catch (const std::bad_alloc &e) {
-    RCLCPP_ERROR_STREAM("[" << params_ptr_->log_tag << "] "
-                         << "Callback thread allocation failed: " << e.what());
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), " Callback thread allocation failed: " << e.what());
     return false;
   } catch (const boost::system::system_error &e) {
-    RCLCPP_ERROR_STREAM("[" << params_ptr_->log_tag << "] "
-                         << "Callback thread instantion throws : " << e.what());
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), " Callback thread instantion throws : " << e.what());
     return false;
   } catch (...) {
-    RCLCPP_ERROR_STREAM("[" << params_ptr_->log_tag << "] "
-                         << "Callback thread instantion throws unexpected error ");
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), " Callback thread instantion throws unexpected error ");
     return false;
   }
 
@@ -114,7 +111,8 @@ void StateClient::close() {
   std::this_thread::sleep_for(std::chrono::seconds(5));
 }
 
-bool StateClient::isConnected() {
+bool StateClient::isConnected() 
+{
   return is_connected_;
 }
 
@@ -157,31 +155,26 @@ bool StateClient::validate() {
   const int UTC_diff = 7199; // The time difference between the two timestamps (1h59m59s) constant due to SNTP sync.
   const int validation_threshold = 1; // The threshold (in seconds) between send and receive.
 
-  std::int32_t time;
-  std::int32_t timeNowSec;
-  std::uint32_t timeNowNanoSec;
+  /*std::int32_t time;
   if (last_recv_msg_->getData("timestamp", time)) {
-    rclcpp::Time(timeNowSec,timeNowNanoSec,RCL_SYSTEM_TIME);
-    if (time - timeNowSec - UTC_diff > validation_threshold ||
-        time - timeNowSec - UTC_diff < -validation_threshold) {
+    if (time - ros::Time::now().toSec() - UTC_diff > validation_threshold ||
+        time - ros::Time::now().toSec() - UTC_diff < -validation_threshold) {
       return false;
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), 
-                          " Message validation error: Time difference between COMAU CONTROLLER and ROS MASTER is over "
-                          << validation_threshold);
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), " Message validation error: Time difference between COMAU CONTROLLER and ROS MASTER is over "
+              << validation_threshold);
     } else {
       return true;
     }
   } else {
     return false;
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), 
-                        " Message validation error: COMAU CONTROLLER timestamp could not parsed correctly");
-  }
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger(params_ptr_->log_tag), " Message validation error: COMAU CONTROLLER timestamp could not parsed correctly");
+  }*/
+  return true;
 }
 
 void StateClient::callback(std::future<void> exit_signal) {
-  RCLCPP_INFO_STREAM(rclcpp::get_logger(params_ptr_->log_tag), 
-                    " Receiving callback starting for host ip : " << params_ptr_->server_ip_address << ":"
-                    << params_ptr_->server_port);
+  RCLCPP_INFO_STREAM(rclcpp::get_logger(params_ptr_->log_tag), " Receiving callback starting for host ip : " << params_ptr_->server_ip_address << ":"
+                      << params_ptr_->server_port);
 
   // TODO remove try to connect it is not working with the current server
   while (exit_signal.wait_for(std::chrono::milliseconds(1)) == std::future_status::timeout) {
@@ -200,7 +193,8 @@ void StateClient::callback(std::future<void> exit_signal) {
     } else {
       try {
         receive(std::chrono::seconds(1));
-        if (!validate()) {
+        //if (!validate()) 
+        {
           // TODO uncomment the line below when validate is fully tested
           // is_connected_ = false;
         }
