@@ -175,7 +175,7 @@ template <typename T> std::ostream &operator<<(std::ostream &os, const std::vect
 template <class T> T toRad(const T &degree_elem) {
   T rad_elem;
 
-    rad_elem = degree_elem * M_PI / 180;
+    rad_elem = (double)(degree_elem * M_PI / 180);
   return rad_elem;
 }
 
@@ -189,7 +189,7 @@ template <class T> T toRad(const T &degree_elem) {
 template <class T> T toMeter(const T &mm_elem) {
   T m_elem;
 
-    m_elem = mm_elem * 0.001;
+    m_elem = (double)(mm_elem * 0.001);
   return m_elem;
 }
 

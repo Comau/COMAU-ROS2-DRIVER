@@ -1,116 +1,113 @@
 cmake_minimum_required(VERSION 3.8)
 project(comau_driver)
 
+# Default to C++17
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 17)
+endif()
+
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wno-unused-parameter)
 endif()
 
-# check c++17 / c++11 / c++0x / c++14
-
+# check c++17 / c++11 / c++0x
 include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag("-std=c++17" COMPILER_SUPPORTS_CXX17)
-check_cxx_compiler_flag("-std=c++11" COMPILER_SUPPORTS_CXX11)
 check_cxx_compiler_flag("-std=c++14" COMPILER_SUPPORTS_CXX14)
+check_cxx_compiler_flag("-std=c++11" COMPILER_SUPPORTS_CXX11)
 check_cxx_compiler_flag("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
-
 if(COMPILER_SUPPORTS_CXX17)
-  message(STATUS "CCompile with C++17 support")
-  add_compile_options(-std=c++17)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+    message(STATUS "C++11 support: OK (-std=c++17)")
 elseif(COMPILER_SUPPORTS_CXX14)
-  message(STATUS "Compile with c++14 support")
-  add_compile_options(-std=c++14) 
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+    message(STATUS "C++11 support: OK (-std=c++14)")
 elseif(COMPILER_SUPPORTS_CXX11)
-  message(STATUS "Compile with c++11 support")
-  add_compile_options(-std=c++11)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+    message(STATUS "C++11 support: OK (-std=c++11)")
 elseif(COMPILER_SUPPORTS_CXX0X)
-  message(STATUS "Compile with c++0x support")
-  add_compile_options(-std=c++0x)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+    message(STATUS "C++11 support: OK (-std=c++0x)")
 else()
-  message(FATAL_ERROR "Il compilatore ${CMAKE_CXX_COMPILER} has no C++ support. Please use a different C++ compiler. Suggested solution: update the pkg build-essential ")
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 endif()
 
 # find dependencies
-
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(pluginlib REQUIRED)
-find_package(comau_tcp_interface REQUIRED) 
+find_package(comau_tcp_interface REQUIRED)
 #find_package(rosparam_shortcuts REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system)
+
+include_directories(
+ include
+ ${catkin_INCLUDE_DIRS}
+ ${Boost_INCLUDE_DIRS}
+)
+
 # Comau Driver
-
-add_library(
-    ${PROJECT_NAME}
-    SHARED
-    src/comau_driver.cpp)
- 
-target_include_directories(
-       ${PROJECT_NAME}
-       PUBLIC
-       include   
- 	 ${catkin_INCLUDE_DIRS}
- 	 ${Boost_INCLUDE_DIRS}
- 	 ${comau_tcp_interface_INCLUDE_DIRS})
- 
-#necessario per compilazione 	        
-ament_target_dependencies( 
-      ${PROJECT_NAME} 
-      rclcpp
-      pluginlib
-      comau_tcp_interface
-#     rosparam_shortcuts
-      Boost) 
-
-ament_export_include_directories(
-      include)
-      
-ament_export_libraries(
-      ${PROJECT_NAME})
-      
-ament_export_dependencies(   
-      rclcpp
-      pluginlib 
-      include
-      comau_tcp_interface
-      Boost)
-#   rosparam_shortcuts
- 
+add_library(comau_driver
+  src/comau_driver.cpp
+)
+ament_export_targets(comau_driver HAS_LIBRARY_TARGET)
 target_link_libraries(
-  ${PROJECT_NAME}
-  ${rclcpp_LIBRARIES}
+  comau_driver
   ${catkin_LIBRARIES}
-  ${comau_tcp_interface_LIBRARIES})
+)
+ament_target_dependencies(
+  comau_driver
+  comau_tcp_interface
+  rclcpp
+  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+  ${catkin_EXPORTED_TARGETS}
+)
 
+install(TARGETS comau_driver
+  ARCHIVE DESTINATION lib/${PROJECT_NAME}
+  LIBRARY DESTINATION lib/${PROJECT_NAME}
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
+)
 install(
-        TARGETS
-        ${PROJECT_NAME}
-        ARCHIVE DESTINATION lib/${PROJECT_NAME}
-  	LIBRARY DESTINATION lib/${PROJECT_NAME}
-  	RUNTIME DESTINATION bin/${PROJECT_NAME})
- 
-install(
-    DIRECTORY include/${PROJECT_NAME}/
-    DESTINATION include)
+  TARGETS comau_driver
+  EXPORT comau_driver
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+  RUNTIME DESTINATION bin
+  INCLUDES DESTINATION include
+)
 
-# Install header files
+install(DIRECTORY include/
+  DESTINATION include
+)
+
+## Mark cpp header files for installation
 install(DIRECTORY include/${PROJECT_NAME}/
- DESTINATION include/${PROJECT_NAME}
-  FILES_MATCHING PATTERN "*.hpp")
+  DESTINATION include)
+install(DIRECTORY include/${PROJECT_NAME}/
+        DESTINATION share/${PROJECT_NAME}
+        FILES_MATCHING PATTERN "*.h"
+        PATTERN ".svn" EXCLUDE
+)
+ament_export_include_directories(include)
+ament_export_libraries(comau_driver)
+ament_export_dependencies(
+  rclcpp
+  pluginlib
+  #joint_limits_interface
+  #rosparam_shortcuts
+  Boost
+)
 
-# uncomment the following section in order to fill in
-# further dependencies manually.
-# find_package(<dependency> REQUIRED)
+add_executable(comau_driver_node src/comau_driver_node.cpp src/comau_driver.cpp)
+ament_target_dependencies(comau_driver_node rclcpp comau_tcp_interface ament_cmake pluginlib Boost)
 
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  # the following line skips the linter which checks for copyrights
-  # comment the line when a copyright and license is added to all source files
-   #set(ament_cmake_copyright_FOUND TRUE)
-  # the following line skips cpplint (only works in a git repo)
-  # comment the line when this package is in a git repo and when
-  # a copyright and license is added to all source files
- # set(ament_cmake_cpplint_FOUND TRUE)
-  ament_lint_auto_find_test_dependencies()
-endif()
+install(
+  TARGETS
+  comau_driver_node
+  comau_driver
+  DESTINATION lib/${PROJECT_NAME}
+)
 
 ament_package()
+

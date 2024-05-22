@@ -15,7 +15,6 @@
 #include <cmath>
 #include <cstring>
 #include <string>
-
 // ROS
 #include "rclcpp/rclcpp.hpp"
 

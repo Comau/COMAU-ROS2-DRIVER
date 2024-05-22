@@ -11,6 +11,8 @@
 
 #include "comau_handlers/execute_cartesian_trajectory_handler.hpp"
 
+using namespace std::chrono_literals;
+
 namespace comau_action_handlers {
 
 ExecuteCartesianTrajectoryHandler::ExecuteCartesianTrajectoryHandler(
@@ -20,11 +22,13 @@ ExecuteCartesianTrajectoryHandler::ExecuteCartesianTrajectoryHandler(
 
 ExecuteCartesianTrajectoryHandler::~ExecuteCartesianTrajectoryHandler() {
   //as_ptr_.reset();
+  action_server_.reset();
   if (action_active_) {
     result_->action_result.success = false;
     result_->action_result.millis_passed = feedback_->action_feedback.millis_passed;
     result_->action_result.status = comau_msgs::msg::ActionResultStatusConstants::CANCELLED;
-    goal_handle_->canceled(result_);//as_ptr_->setPreempted(result_);
+    //as_ptr_->setPreempted(result_);
+    goal_handle_->canceled(result_);
   }
 }
 
@@ -33,19 +37,13 @@ bool ExecuteCartesianTrajectoryHandler::initialize(bool use_state_server, bool u
   use_robot_server_ = use_robot_server;
   use_arm1_server_ = use_arm1_server;
 
-  feedback_ = std::make_shared<ExecuteCartesianTrajectory::Feedback>();
-  result_ = std::make_shared<ExecuteCartesianTrajectory::Result>();
-
-  RCLCPP_INFO_STREAM(rclcpp::get_logger(action_name_), " tarting up the ExecuteCartesianTrajectoryActionServer ...  ");
-
   using namespace std::placeholders;
-  
-  this->ExecuteCartesianTrajectoryActionServer = rclcpp_action::create_server<ExecuteCartesianTrajectory>(nh_,
-                                                                action_name_,
-                                                                std::bind(&ExecuteCartesianTrajectoryHandler::handle_goal, this, _1, _2),
-                                                                std::bind(&ExecuteCartesianTrajectoryHandler::handle_cancel, this, _1),
-                                                                std::bind(&ExecuteCartesianTrajectoryHandler::handle_accepted, this, _1));
-
+  RCLCPP_INFO_STREAM(rclcpp::get_logger(action_name_), "Starting up the ExecuteCartesianTrajectoryActionServer ...  ");
+  this->action_server_ = rclcpp_action::create_server<comau_msgs::action::ExecuteCartesianTrajectory>(nh_,
+                                                                                                  action_name_,
+                                                                                                  std::bind(&ExecuteCartesianTrajectoryHandler::handle_goal, this, _1, _2),
+                                                                                                  std::bind(&ExecuteCartesianTrajectoryHandler::handle_cancel, this, _1),
+                                                                                                  std::bind(&ExecuteCartesianTrajectoryHandler::handle_accepted, this, _1));
   /*try {
     as_ptr_.reset(new ExecuteCartesianTrajectoryActionServer(
         nh_, action_name_, boost::bind(&ExecuteCartesianTrajectoryHandler::executeCallback, this, _1), false));
@@ -56,36 +54,59 @@ bool ExecuteCartesianTrajectoryHandler::initialize(bool use_state_server, bool u
     return false;
   }*/
 
-  RCLCPP_INFO_STREAM(rclcpp::get_logger(action_name_), " Ready to receive goals!  ");
+  RCLCPP_INFO_STREAM(rclcpp::get_logger(action_name_), "Ready to receive goals!  ");
   return true;
+}
+
+rclcpp_action::GoalResponse ExecuteCartesianTrajectoryHandler::handle_goal(const rclcpp_action::GoalUUID & uuid, std::shared_ptr<const comau_msgs::action::ExecuteCartesianTrajectory::Goal> goal)
+{
+    RCLCPP_INFO(rclcpp::get_logger(action_name_), "Received goal request with cartesian trajectory ");
+    (void)uuid;
+    return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
+}
+
+rclcpp_action::CancelResponse ExecuteCartesianTrajectoryHandler::handle_cancel(const std::shared_ptr<rclcpp_action::ServerGoalHandle<comau_msgs::action::ExecuteCartesianTrajectory>> &goal_handle)
+{
+  RCLCPP_INFO(rclcpp::get_logger(action_name_), "Received request to cancel goal-trajectory");
+  (void)goal_handle;
+  return rclcpp_action::CancelResponse::ACCEPT;
+}
+
+void ExecuteCartesianTrajectoryHandler::handle_accepted(const std::shared_ptr<rclcpp_action::ServerGoalHandle<comau_msgs::action::ExecuteCartesianTrajectory>> &goal_handle)
+{
+  using namespace std::placeholders;
+  // this needs to return quickly to avoid blocking the executor, so spin up a new thread
+  std::thread{std::bind(&ExecuteCartesianTrajectoryHandler::executeCallback, this, _1), goal_handle}.detach();
 }
 
 geometry_msgs::msg::PoseStamped
 ExecuteCartesianTrajectoryHandler::changePoseFrame(const std::string &target_frame,
                                                    const geometry_msgs::msg::PoseStamped &goal_pose) {
   //tf2_ros::Buffer br;
-  std::shared_ptr<tf2_ros::TransformListener> tfl{nullptr};
   std::unique_ptr<tf2_ros::Buffer> br;
+  std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr};
   br = std::make_unique<tf2_ros::Buffer>(nh_->get_clock());
-  //br.setUsingDedicatedThread(true); CHECK
-  //tf2_ros::TransformListener tf2_listener(br);
-  tfl = std::make_shared<tf2_ros::TransformListener>(*br);
+  tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*br);
+  //br.setUsingDedicatedThread(true);
+  tf2_ros::TransformListener tf2_listener(*br);
   geometry_msgs::msg::TransformStamped transform;
   geometry_msgs::msg::PoseStamped transformed_pose;
 
   try {
-    transform = br->lookupTransform(target_frame, goal_pose.header.frame_id, nh_->get_clock()->now());
+    rclcpp::Time now = nh_->get_clock()->now();
+    transform = br->lookupTransform(target_frame, goal_pose.header.frame_id, now,1s);//, ros::Duration(1.0));
     tf2::doTransform(goal_pose, transformed_pose, transform);
-    //RCLCPP_INFO_STREAM(nh_->get_logger(action_name_), "Change transform pose to..   " << transformed_pose); CHECK
+    RCLCPP_INFO_STREAM(rclcpp::get_logger(action_name_),"Change transform pose to..   " << transformed_pose.pose.position.x);/*ANDY*/
     return transformed_pose;
   } catch (tf2::LookupException &e) {
-    RCLCPP_ERROR(rclcpp::get_logger(action_name_), e.what());
+    RCLCPP_ERROR(rclcpp::get_logger(action_name_),"[%s] %s", action_name_.c_str(), e.what());
     transformed_pose.header.frame_id = "tool_controller";
     return transformed_pose;
   }
 }
 
-trajectoryf_t ExecuteCartesianTrajectoryHandler::parseCartesianTrajectoryGoal(std::shared_ptr<const comau_msgs::action::ExecuteCartesianTrajectory::Goal> goal) {
+trajectoryf_t ExecuteCartesianTrajectoryHandler::parseCartesianTrajectoryGoal(
+    const std::shared_ptr<const comau_msgs::action::ExecuteCartesianTrajectory::Goal> goal) {
   trajectoryf_t pose_traj;
 
   for (comau_msgs::msg::CartesianPoseStamped cart_pose : goal->trajectory)
@@ -146,7 +167,7 @@ trajectoryf_t ExecuteCartesianTrajectoryHandler::parseCartesianTrajectoryGoal(st
     else
     {
       comau_node.lin_vel   = robot_ptr_->getDefaultLinVel();
-      RCLCPP_WARN_STREAM(nh_->get_logger()," Linear velocity is set as default value: " << comau_node.lin_vel);
+      RCLCPP_WARN_STREAM(rclcpp::get_logger(action_name_),"Linear velocity is set as default value: " << comau_node.lin_vel);
     }
 
     if (cart_pose.seg_ovr)
@@ -173,7 +194,7 @@ trajectoryf_t ExecuteCartesianTrajectoryHandler::parseCartesianTrajectoryGoal(st
     }
     else
     {
-      RCLCPP_WARN_STREAM(nh_->get_logger()," Unknown Move Type: " << type << ". JOINT type is set as default value.");
+      RCLCPP_WARN_STREAM(rclcpp::get_logger(action_name_),"Unknown Move Type: " << type << ". JOINT type is set as default value.");
       comau_node.move_type = comau_driver::MoveType::JOINT;
     }
     pose_traj.push_back(comau_node);
@@ -182,43 +203,24 @@ trajectoryf_t ExecuteCartesianTrajectoryHandler::parseCartesianTrajectoryGoal(st
   return pose_traj;
 }
 
-rclcpp_action::GoalResponse ExecuteCartesianTrajectoryHandler::handle_goal(
-  const rclcpp_action::GoalUUID & uuid,
-  std::shared_ptr<const ExecuteCartesianTrajectory::Goal> goal)
-{
-  RCLCPP_INFO(nh_->get_logger(), "Received goal request");
-  (void)uuid;
-  return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
-}
-
-rclcpp_action::CancelResponse ExecuteCartesianTrajectoryHandler::handle_cancel(
-  const std::shared_ptr<GoalHandleExecuteCartesianTrajectory> goal_handle)
-{
-  RCLCPP_INFO(nh_->get_logger(), "Received request to cancel goal");
-  (void)goal_handle;
-  return rclcpp_action::CancelResponse::ACCEPT;
-}
- 
-void ExecuteCartesianTrajectoryHandler::handle_accepted(const std::shared_ptr<GoalHandleExecuteCartesianTrajectory> goal_handle)
-{
-  using namespace std::placeholders;
-  // this needs to return quickly to avoid blocking the executor, so spin up a new thread
-  std::thread{std::bind(&ExecuteCartesianTrajectoryHandler::executeCallback, this, _1), goal_handle_}.detach();
-}
-
-void ExecuteCartesianTrajectoryHandler::executeCallback(const std::shared_ptr<GoalHandleExecuteCartesianTrajectory> goal) {
-  double start_time = nh_->now().nanoseconds() / 1e-6; // to convert nanoseconds to milliseconds
+void ExecuteCartesianTrajectoryHandler::executeCallback(const std::shared_ptr<rclcpp_action::ServerGoalHandle<comau_msgs::action::ExecuteCartesianTrajectory>> &goal_handle) {
+  RCLCPP_INFO(rclcpp::get_logger(action_name_), "Executing goal");
+  double start_time = rclcpp::Clock{RCL_ROS_TIME}.now().nanoseconds();//double start_time = ros::Time::now().toNSec() / 1e-6; // to convert nanoseconds to milliseconds
   action_active_ = false;
+  goal_handle_ = goal_handle;
+  feedback_ = std::make_shared<comau_msgs::action::ExecuteCartesianTrajectory::Feedback>();
+  result_   = std::make_shared<comau_msgs::action::ExecuteCartesianTrajectory::Result>();
   if (robot_status_ == RobotStatus::READY && allow_async_) {
-    RCLCPP_INFO(nh_->get_logger(), ": Parsing Cartesian trajectory %s", action_name_.c_str());
-    goal_cartesian_trajectory_ = parseCartesianTrajectoryGoal(goal->get_goal());
+    const auto goal = goal_handle->get_goal();
+    RCLCPP_INFO(rclcpp::get_logger(action_name_),"[%s]: Parsing Cartesian trajectory", action_name_.c_str());
+    goal_cartesian_trajectory_ = parseCartesianTrajectoryGoal(goal);
     if (use_arm1_server_)
       robot_ptr_->writeTrajectoryCommand(goal_cartesian_trajectory_,
                                          comau_driver::ControlMode::MODE_CARTESIAN_TRAJECTORY);
     action_active_ = true;
-    RCLCPP_INFO(nh_->get_logger(), ": Received trajectory sended for execution %s", action_name_.c_str());
+    RCLCPP_INFO(rclcpp::get_logger(action_name_),"[%s]: Received trajectory sended for execution", action_name_.c_str());
   } else {
-    RCLCPP_WARN(nh_->get_logger(), ": Robot is not in READY status. We are stopping - resetting %s", action_name_.c_str());
+    RCLCPP_WARN(rclcpp::get_logger(action_name_),"[%s]: Robot is not in READY status. We are stopping - resetting", action_name_.c_str());
     /*
     if (use_robot_server_ && allow_async_)
       robot_ptr_->resetPDL();
@@ -227,26 +229,25 @@ void ExecuteCartesianTrajectoryHandler::executeCallback(const std::shared_ptr<Go
     result_->action_result.millis_passed = feedback_->action_feedback.millis_passed;
     result_->action_result.success = false;
 
-    //as_ptr_->setAborted(result_);
-    goal->abort(result_);
+    goal_handle->abort(result_);
     return;
   }
 
   while (action_active_) {
 
-    if (goal->is_canceling() || !rclcpp::ok()) { // CANCELLED as_ptr_->isPreemptRequested() 
-      RCLCPP_INFO(nh_->get_logger(), ": Trajectory execution Preempted %s", action_name_.c_str());
+    if (goal_handle->is_canceling() || !rclcpp::ok()) { // CANCELLED
+      RCLCPP_INFO(rclcpp::get_logger(action_name_), "[%s]: Trajectory execution Preempted", action_name_.c_str());
       if (use_state_server_)
         result_->action_result.success = false;
       result_->action_result.millis_passed = feedback_->action_feedback.millis_passed;
       result_->action_result.status = comau_msgs::msg::ActionResultStatusConstants::CANCELLED;
       if (use_robot_server_)
         robot_ptr_->cancelMotionPDL();
-      //as_ptr_->setPreempted(result_);
-      goal->canceled(result_);
+      goal_handle->canceled(result_);
+
       return;
     } else if (robot_status_ == RobotStatus::SUCCEEDED) { // SUCCEEDED
-      RCLCPP_INFO(nh_->get_logger(), ": Trajectory execution Succeeded %s", action_name_.c_str());
+      RCLCPP_INFO(rclcpp::get_logger(action_name_), "[%s]: Trajectory execution Succeeded", action_name_.c_str());
 
       result_->action_result.status = comau_msgs::msg::ActionResultStatusConstants::SUCCESS;
       result_->action_result.success = true;
@@ -257,45 +258,42 @@ void ExecuteCartesianTrajectoryHandler::executeCallback(const std::shared_ptr<Go
       */
       while (robot_status_ == RobotStatus::SUCCEEDED) /* Wait for the READY status to Ack the motion command */
       {
-        //ros::Duration(0.002).sleep();
         rclcpp::sleep_for(rclcpp::Duration::from_seconds(0.002).to_chrono<std::chrono::nanoseconds>());
       }
-      //as_ptr_->setSucceeded(result_);
-      goal->succeed(result_);
+      goal_handle->succeed(result_);
+
       return;
     } else if (robot_status_ == RobotStatus::ERROR) { // ERROR
       //ROS_ERROR("[%s]: Unexpected error, closing action server", action_name_.c_str());
       //
-      //result_.action_result.status = comau_msgs::ActionResultStatusConstants::OPERATIONAL_EXCEPTION;
-      //result_.action_result.millis_passed = feedback_.action_feedback.millis_passed;
-      //result_.action_result.success = false;
+      //result_->action_result.status = comau_msgs::msg::ActionResultStatusConstants::OPERATIONAL_EXCEPTION;
+      //result_->action_result.millis_passed = feedback_->action_feedback.millis_passed;
+      //result_->action_result.success = false;
       ///*
       //if (use_robot_server_)
       //  robot_ptr_->resetPDL();
       //*/
-      //as_ptr_->setAborted(result_);
+      //goal_handle->abort(result_);
       //
       //return;
     } else if (robot_status_ == RobotStatus::TERMINATE) { // TERMINATE
-      RCLCPP_INFO(nh_->get_logger(), ": Action terminated, canceling Trajectory execution %s", action_name_.c_str());
+      RCLCPP_INFO(rclcpp::get_logger(action_name_), "[%s]: Action terminated, canceling Trajectory execution", action_name_.c_str());
 
       result_->action_result.status = comau_msgs::msg::ActionResultStatusConstants::OPERATIONAL_EXCEPTION;
       result_->action_result.millis_passed = feedback_->action_feedback.millis_passed;
       result_->action_result.success = false;
-      //as_ptr_->setAborted(result_);
-      goal->abort(result_);
+      goal_handle->abort(result_);
 
       return;
     } else if (robot_status_ == RobotStatus::MOVING) { // MOVING
 
-      RCLCPP_DEBUG(nh_->get_logger(), " Trajectory execution is active %s", action_name_.c_str());
-      feedback_->action_feedback.millis_passed = uint((nh_->now().nanoseconds() / 1e-6) - start_time);
+      RCLCPP_DEBUG(rclcpp::get_logger(action_name_), "[%s]: Trajectory execution is active", action_name_.c_str());
+      feedback_->action_feedback.millis_passed = uint((rclcpp::Clock{RCL_ROS_TIME}.now().nanoseconds() / 1e-6) - start_time);
 
-      //as_ptr_->publishFeedback(feedback_);
-      goal->publish_feedback(feedback_);
+      goal_handle->publish_feedback(feedback_);
     }
 
-    rclcpp::sleep_for(rclcpp::Duration::from_seconds(0.001).to_chrono<std::chrono::nanoseconds>());//check
+    rclcpp::sleep_for(rclcpp::Duration::from_seconds(0.001).to_chrono<std::chrono::nanoseconds>());
   }
 }
 

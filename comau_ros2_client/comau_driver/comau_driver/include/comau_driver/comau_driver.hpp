@@ -1,21 +1,22 @@
 /**
- * @file comau_driver.hpp
+ * @file comau_driver.h
  * @author Laboratory for Manufacturing Systems & Automation (LMS) - University of Patras
  * @brief The ROS node that publishes the robot information
  * @version 0.1
  * @date 25-02-2020
+ *
  * @copyright (c) 2020 Laboratory for Manufacturing Systems & Automation (LMS) - University of Patras
+ *
  */
 
-#ifndef COMAU_DRIVER_H
-#define COMAU_DRIVER_H
+#ifndef COMAU_DRIVER_HPP
+#define COMAU_DRIVER_HPP
 
-#include <rclcpp/rclcpp.hpp>
 #include "comau_tcp_interface/comau_robot_client.hpp"
 #include "comau_tcp_interface/comau_state_client.hpp"
 #include "comau_tcp_interface/comau_tcp_interface.hpp"
 #include <boost/scoped_ptr.hpp>
-//#include <vector>
+#include <rclcpp/rclcpp.hpp>
 
 using namespace comau_tcp_interface;
 using namespace comau_tcp_interface::utils;
@@ -33,6 +34,7 @@ enum class ControlMode {
   MODE_CARTESIAN_TRAJECTORY
 };
 
+
 class MoveType{
 public:
   inline static const uint32_t JOINT    = 10;
@@ -45,13 +47,13 @@ public:
  * @brief This is the main class for interfacing the Robot controller.
  * It sets up all the neacessary socket connections and handles the data exchange with the robot.
  */
-class ComauRobot : public rclcpp::Node {
+class ComauRobot {
 public:
   /**
    * @brief Construct a new Comau Robot object
    * @param nh global ROS NodeHandle
    */
-  ComauRobot(rclcpp::NodeOptions options);
+  ComauRobot(rclcpp::Node::SharedPtr &nh);
   /**
    * @brief Destroy the Comau Robot object
    */
@@ -80,7 +82,7 @@ public:
    * @brief Get the Joint State using the state client
    * @param joint_position current joint positions
    */
-  void getJointPosition(std::vector<double> &joint_position, uint32_t &num_robot_joints, std::vector<long int> &jnt_type);
+  void getJointPosition(std::vector<double> &joint_position, uint32_t &num_robot_joints, std::vector<int> &jnt_type);
   /**
    * @brief Get the End Effector Position using the state client
    * @param ee_position current end effector position
@@ -90,22 +92,22 @@ public:
    * @brief Get the DIN pins
    * @param pins_in vector holding the DIN pins
    */
-  void getPinsIN(std::vector<long int> &pins_in);
+  void getPinsIN(std::vector<int> &pins_in);
   /**
    * @brief Get the DIN pins state
    * @param pins_state_in vector holding the DIN pins state
    */
-  void getPinsStatesIN(std::vector<long int> &pins_state_in);
+  void getPinsStatesIN(std::vector<int> &pins_state_in);
   /**
    * @brief Get the DOUT pins
    * @param pins_out vector holding the DOUT pins
    */
-  void getPinsOUT(std::vector<long int> &pins_out);
+  void getPinsOUT(std::vector<int> &pins_out);
   /**
    * @brief Get the DOUT pins state
    * @param pins_state_out vector holding the DOUT pins state
    */
-  void getPinsStatesOUT(std::vector<long int> &pins_state_out);
+  void getPinsStatesOUT(std::vector<int> &pins_state_out);
   /**
    * @brief Get the current Timestamp
    *
@@ -259,7 +261,7 @@ public:
   boost::shared_ptr<comau_tcp_interface::RobotClient> robot_client_ptr_; /**< RobotClient object */
   boost::shared_ptr<comau_tcp_interface::RobotClient> arm1_client_ptr_;  /**< Arm1Client object */
   boost::shared_ptr<comau_tcp_interface::StateClient> state_client_ptr_; /**< StateClient object */
-  std::vector<long int> jnt_cmd_type_;                     /**< Joint TYPE for Command*/
+  std::vector<int> jnt_cmd_type_;                     /**< Joint TYPE for Command*/
   uint32_t num_cmd_joints_;
   
 private:
@@ -284,8 +286,8 @@ private:
   comau_tcp_interface::utils::vector6i_t  pins_state_in_;       /**< DIN states */
   comau_tcp_interface::utils::vector6i_t  pins_state_out_;      /**< DOUT states */
   comau_tcp_interface::utils::vector10i_t jnt_type_;            /**< Joint TYPE */
-  std::vector<long int> din_pins_;                                  /**< DIN pins */
-  std::vector<long int> dout_pins_;                                 /**< DOUT pins */
+  std::vector<int> din_pins_;                                  /**< DIN pins */
+  std::vector<int> dout_pins_;                                 /**< DOUT pins */
 
   // Joint/cartesian default linear velocity
   double default_linear_velocity_;

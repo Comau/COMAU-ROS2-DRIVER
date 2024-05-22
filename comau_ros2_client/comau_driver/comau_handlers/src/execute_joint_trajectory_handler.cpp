@@ -11,25 +11,27 @@
 
 #include "comau_handlers/execute_joint_trajectory_handler.hpp"
 
+using namespace std::chrono_literals;
 using namespace comau_tcp_interface;
 using namespace comau_tcp_interface::utils;
 
 namespace comau_action_handlers {
 
 ExecuteJointTrajectoryHandler::ExecuteJointTrajectoryHandler(
-    const rclcpp::Node::SharedPtr& nh, const rclcpp::Node::SharedPtr& nh_local, const std::string &name,
+    const rclcpp::Node::SharedPtr &nh, const rclcpp::Node::SharedPtr &nh_local, const std::string &name,
     const boost::shared_ptr<comau_driver::ComauRobot> &robot_ptr)
     : nh_(nh), nh_local_(nh_local), action_name_(std::move(name)), robot_ptr_(robot_ptr) {}
 
 ExecuteJointTrajectoryHandler::~ExecuteJointTrajectoryHandler() {
   //as_ptr_.reset();
-  //goal_handle->reset();
+  action_server_.reset();
   urdf_model_ptr_.reset();
   if (action_active_) {
     result_->action_result.success = false;
     result_->action_result.millis_passed = feedback_->action_feedback.millis_passed;
     result_->action_result.status = comau_msgs::msg::ActionResultStatusConstants::CANCELLED;
-    goal_handle_->canceled(result_);//as_ptr_->setPreempted(result_);
+    //as_ptr_->setPreempted(result_);
+    goal_handle_->canceled(result_);
   }
 }
 
@@ -40,52 +42,101 @@ bool ExecuteJointTrajectoryHandler::initialize(bool use_state_server, bool use_r
 
   urdf_number_of_joints_ = 0;
 
-  feedback_ = std::make_shared<ExecuteJointTrajectory::Feedback>();
-  result_ = std::make_shared<ExecuteJointTrajectory::Result>();
-
   if (!loadJointLimits(nh_, "robot_description")) {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(action_name_), " Error at loadJointLimits function");
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger(action_name_), "Error at loadJointLimits function");
     return false;
   }
-  RCLCPP_INFO_STREAM(rclcpp::get_logger(action_name_), " Starting up the ExecuteJointTrajectoryActionServer ...  ");
 
   using namespace std::placeholders;
-  
-  this->ExecuteJointTrajectoryActionServer = rclcpp_action::create_server<ExecuteJointTrajectory>(nh_,
-                                                                action_name_,
-                                                                std::bind(&ExecuteJointTrajectoryHandler::handle_goal, this, _1, _2),
-                                                                std::bind(&ExecuteJointTrajectoryHandler::handle_cancel, this, _1),
-                                                                std::bind(&ExecuteJointTrajectoryHandler::handle_accepted, this, _1));
-  /*try {
+  RCLCPP_INFO_STREAM(rclcpp::get_logger(action_name_), "Starting up the ExecuteJointTrajectoryActionServer ...  ");
+  this->action_server_ = rclcpp_action::create_server<comau_msgs::action::ExecuteJointTrajectory>(nh_,
+                                                                                                  action_name_,
+                                                                                                  std::bind(&ExecuteJointTrajectoryHandler::handle_goal, this, _1, _2),
+                                                                                                  std::bind(&ExecuteJointTrajectoryHandler::handle_cancel, this, _1),
+                                                                                                  std::bind(&ExecuteJointTrajectoryHandler::handle_accepted, this, _1));
+  /*RCLCPP_INFO_STREAM(rclcpp::get_logger(action_name_), " Starting up the ExecuteJointTrajectoryActionServer ...  ");
+  try {
     as_ptr_.reset(new ExecuteJointTrajectoryActionServer(
-        nh_, action_name_, std::bind(&ExecuteJointTrajectoryHandler::executeCallback, this, _1), false));
+        nh_, action_name_, boost::bind(&ExecuteJointTrajectoryHandler::executeCallback, this, _1), false));
     as_ptr_->start();
   } catch (...) {
     RCLCPP_ERROR_STREAM(rclcpp::get_logger(action_name_), " ExecuteJointTrajectoryActionServer cannot not start.");
     return false;
   }*/
 
-  RCLCPP_INFO_STREAM(rclcpp::get_logger(action_name_), " Ready to receive goals!  ");
+  RCLCPP_INFO_STREAM(rclcpp::get_logger(action_name_), "Ready to receive goals!  ");
   return true;
 }
 
-bool ExecuteJointTrajectoryHandler::loadJointLimits(const rclcpp::Node::SharedPtr& nh, std::string param_name) {
+rclcpp_action::GoalResponse ExecuteJointTrajectoryHandler::handle_goal(const rclcpp_action::GoalUUID & uuid, std::shared_ptr<const comau_msgs::action::ExecuteJointTrajectory::Goal> goal)
+{
+    RCLCPP_INFO(rclcpp::get_logger(action_name_), "Received goal request with joint trajectory ");
+    (void)uuid;
+    return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
+}
+
+rclcpp_action::CancelResponse ExecuteJointTrajectoryHandler::handle_cancel(const std::shared_ptr<rclcpp_action::ServerGoalHandle<comau_msgs::action::ExecuteJointTrajectory>> &goal_handle)
+{
+  RCLCPP_INFO(rclcpp::get_logger(action_name_), "Received request to cancel goal-trajectory");
+  (void)goal_handle;
+  return rclcpp_action::CancelResponse::ACCEPT;
+}
+
+void ExecuteJointTrajectoryHandler::handle_accepted(const std::shared_ptr<rclcpp_action::ServerGoalHandle<comau_msgs::action::ExecuteJointTrajectory>> &goal_handle)
+{
+  using namespace std::placeholders;
+  // this needs to return quickly to avoid blocking the executor, so spin up a new thread
+  std::thread{std::bind(&ExecuteJointTrajectoryHandler::executeCallback, this, _1), goal_handle}.detach();
+}
+
+bool ExecuteJointTrajectoryHandler::loadJointLimits(const rclcpp::Node::SharedPtr &nh, std::string param_name) {
   std::string urdf_string;
   urdf_model_ptr_.reset(new urdf::Model());
 
+  std::shared_ptr<rclcpp::SyncParametersClient> parameters_client_;
+  parameters_client_ = std::make_shared<rclcpp::SyncParametersClient>(nh, "/robot_state_publisher");
+  while (!parameters_client_->wait_for_service(1s))
+  {
+    if (!rclcpp::ok())
+    {
+      RCLCPP_ERROR(rclcpp::get_logger(action_name_), "Interrupted while waiting for the service. Exiting.");
+      return false;
+    }
+      RCLCPP_INFO(rclcpp::get_logger(action_name_), "Service not available, waiting again...");
+  }
+
   // Search and wait for robot_description on param server
   while (urdf_string.empty() && rclcpp::ok()) {
-    std::string search_param_name;
-    if (nh->get_parameter(search_param_name, urdf_string)){//nh.searchParam(param_name, search_param_name)) {
+
+    auto parameters = parameters_client_->get_parameters({ param_name });
+    for (auto& parameter : parameters)
+    {
+      if (parameter.get_name() ==  param_name)
+      {
+        RCLCPP_INFO_STREAM(rclcpp::get_logger(action_name_), " Found URDF model on the ROS "
+                             "param server at location: " << nh->get_namespace() << param_name);
+        urdf_string = parameter.value_to_string();
+        break;
+      } else {
+      RCLCPP_INFO_STREAM(rclcpp::get_logger(action_name_), " Waiting for model URDF on the ROS "
+                             "param server at location: " << nh->get_namespace() << param_name);
+      }
+    }
+    /*std::string search_param_name;
+    urdf_string = nh->get_parameter(param_name).as_string();
+    RCLCPP_INFO_STREAM(rclcpp::get_logger(action_name_), " Found URDF model on the ROS "
+                             "param server at location: "
+                          << nh->get_namespace() << search_param_name);
+    if (nh->search(param_name,search_param_name)){//nh.searchParam(param_name, search_param_name)) {
       RCLCPP_INFO_STREAM(rclcpp::get_logger(action_name_), " Found URDF model on the ROS "
                              "param server at location: "
                           << nh->get_namespace() << search_param_name);
-      //nh.get_parameter(search_param_name, urdf_string);
+      urdf_string = nh->get_parameter(search_param_name).as_string();
     } else {
-      RCLCPP_INFO_STREAM(rclcpp::get_logger(action_name_), "  Waiting for model URDF on the ROS "
+      RCLCPP_INFO_STREAM(rclcpp::get_logger(action_name_), " Waiting for model URDF on the ROS "
                              "param server at location: "
                           << nh->get_namespace() << param_name);
-    }
+    }*/
     usleep(100000);
   }
 
@@ -93,7 +144,7 @@ bool ExecuteJointTrajectoryHandler::loadJointLimits(const rclcpp::Node::SharedPt
     RCLCPP_ERROR_STREAM(rclcpp::get_logger(action_name_), " Unable to load URDF model with param string : " << urdf_string);
     return false;
   } else {
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(action_name_), " Received URDF from param server");
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(action_name_), " Received URDF from param server with Name:" << urdf_model_ptr_->getName());
   }
 
   // Get limits from URDF
@@ -103,7 +154,7 @@ bool ExecuteJointTrajectoryHandler::loadJointLimits(const rclcpp::Node::SharedPt
   }
 
   for (auto joint : urdf_model_ptr_->joints_) {
-    
+
     // Limits datastructures
     //joint_limits_interface::JointLimits joint_limits; // Position
     joint_limits::JointLimits joint_limits; // Position
@@ -112,7 +163,9 @@ bool ExecuteJointTrajectoryHandler::loadJointLimits(const rclcpp::Node::SharedPt
       return false;
     }
     std::string j_limits = joint.first.c_str();//joint.second
-    if (joint_limits::get_joint_limits(j_limits, nh, joint_limits)) {
+    //RCLCPP_WARN_STREAM(rclcpp::get_logger(action_name_), "joint.first::: " << joint.first.c_str() << " j_has_limits::: " << joint_limits.has_position_limits);
+    if (joint_limits::get_joint_limits(j_limits, nh, joint_limits)) 
+    {
       RCLCPP_INFO_STREAM(rclcpp::get_logger(action_name_), " " << joint.first << " has URDF position limits ["
                           << joint_limits.min_position << ", " << joint_limits.max_position << "]");
 
@@ -133,37 +186,38 @@ bool ExecuteJointTrajectoryHandler::loadJointLimits(const rclcpp::Node::SharedPt
 }
 
 joint_trajectoryf_t
-ExecuteJointTrajectoryHandler::parseJointTrajectoryGoal(std::shared_ptr<const ExecuteJointTrajectory::Goal> goal) {
+ExecuteJointTrajectoryHandler::parseJointTrajectoryGoal(const std::shared_ptr<const comau_msgs::action::ExecuteJointTrajectory::Goal> goal) {
   joint_trajectoryf_t joint_traj;
-
+  RCLCPP_WARN_STREAM(rclcpp::get_logger(action_name_), "Joint Trajectory");
   for (comau_msgs::msg::JointPose joints_goal : goal->trajectory)
   {
 
     /* The goal must have a dimension equal to the configured joints  */
     if (joints_goal.positions.size() < robot_ptr_->num_cmd_joints_)
     {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("Joint Position Size"), " Some command joint poses are missing, check the goal dimension.");
+      RCLCPP_WARN_STREAM(rclcpp::get_logger(action_name_),"Some command joint poses are missing, check the goal dimension.");
       valid_goal_ = false;
       return joint_traj;
     }
-
+  
     comau_tcp_interface::utils::joint_traj_node joint_node;
     vector10f_t joint_values_array;
-    for (size_t i = 0; i < joints_goal.positions.size(); i++) {
+    for (size_t i = 0; i < joints_goal.positions.size(); i++) 
+    {
       // Convert RADS to DEGREES
       switch (robot_ptr_->jnt_cmd_type_.at(i))
       {
       case 0:
-        //RCLCPP_INFO_STREAM("Joint_"<< i+1 << ": " << robot_ptr_->jnt_cmd_type_[i] << " revolute.");
+        //ROS_INFO_STREAM("Joint_"<< i+1 << ": " << robot_ptr_->jnt_cmd_type_[i] << " revolute.");
         std::cout << "joints_goal.positions.at(" << i << ") [deg] = " << joints_goal.positions.at(i) * 180 / M_PI << std::endl;
         joint_values_array.at(i) = (static_cast<float>(joints_goal.positions.at(i) * 180 / M_PI));
         break;
       case 1:
-        //RCLCPP_INFO_STREAM("Joint_"<< i+1 << ": " << robot_ptr_->jnt_cmd_type_[i] << " linear.");
+        //ROS_INFO_STREAM("Joint_"<< i+1 << ": " << robot_ptr_->jnt_cmd_type_[i] << " linear.");
         std::cout << "joints_goal.positions.at(" << i << ") [mm] = " << joints_goal.positions.at(i) * 1000 << std::endl;
         joint_values_array.at(i) =(static_cast<float>(joints_goal.positions.at(i) * 1000));
         break;
-      default: /* No error */
+      default:  /* No error */
         break;
       }
     }
@@ -201,20 +255,20 @@ ExecuteJointTrajectoryHandler::parseJointTrajectoryGoal(std::shared_ptr<const Ex
     }
     else
     {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("Unknown Move Type: "), type << ". JOINT type is set as default value.");
+      RCLCPP_WARN_STREAM(rclcpp::get_logger(action_name_), " Unknown Move Type: " << type << ". JOINT type is set as default value.");
       joint_node.move_type = comau_driver::MoveType::JOINT;
     }
 
     joint_traj.push_back(joint_node);
   }
-
   return joint_traj;
 }
 
 
 bool ExecuteJointTrajectoryHandler::validateJointLimits(vector10f_t joint_values_array) {
 
-  for (size_t joint_id = 0; joint_id < joint_values_array.size(); joint_id++) {
+  for (size_t joint_id = 0; joint_id < joint_values_array.size(); joint_id++) 
+  {
     valid_goal_ = true;
 
     switch (robot_ptr_->jnt_cmd_type_.at(joint_id))
@@ -223,9 +277,9 @@ bool ExecuteJointTrajectoryHandler::validateJointLimits(vector10f_t joint_values
         if (joint_values_array[joint_id] * (M_PI / 180) > joint_position_upper_limits_[joint_id] ||
             joint_values_array[joint_id] * (M_PI / 180) < joint_position_lower_limits_[joint_id]) {
           valid_goal_ = false;
-          RCLCPP_WARN_STREAM(rclcpp::get_logger(action_name_), " Trajectory contains an out of limits goal at joint " << joint_id + 1
+          RCLCPP_WARN_STREAM(rclcpp::get_logger(action_name_)," Trajectory contains an out of limits goal at joint " << joint_id + 1
                               << ". Please check robot limits.");
-          RCLCPP_WARN_STREAM(rclcpp::get_logger(action_name_), " Joint " << joint_id + 1 << " : " << joint_values_array[joint_id] * (M_PI / 180)
+          RCLCPP_WARN_STREAM(rclcpp::get_logger(action_name_)," Joint " << joint_id + 1 << " : " << joint_values_array[joint_id] * (M_PI / 180)
                               << " does not belong to interval [" << joint_position_lower_limits_[joint_id] << ", " << joint_position_upper_limits_[joint_id] << "]");
           return valid_goal_;
         }
@@ -234,9 +288,9 @@ bool ExecuteJointTrajectoryHandler::validateJointLimits(vector10f_t joint_values
         if (joint_values_array[joint_id] * (0.001) > joint_position_upper_limits_[joint_id] ||
             joint_values_array[joint_id] * (0.001) < joint_position_lower_limits_[joint_id]) {
           valid_goal_ = false;
-          RCLCPP_WARN_STREAM(rclcpp::get_logger(action_name_), " Trajectory contains an out of limits goal at joint " << joint_id + 1
+          RCLCPP_WARN_STREAM(rclcpp::get_logger(action_name_)," Trajectory contains an out of limits goal at joint " << joint_id + 1
                               << ". Please check robot limits.");
-          RCLCPP_WARN_STREAM(rclcpp::get_logger(action_name_), " Joint " << joint_id + 1 << " : " << joint_values_array[joint_id] * (0.001)
+          RCLCPP_WARN_STREAM(rclcpp::get_logger(action_name_)," Joint " << joint_id + 1 << " : " << joint_values_array[joint_id] * (0.001)
                               << " does not belong to interval [" << joint_position_lower_limits_[joint_id] << ", " << joint_position_upper_limits_[joint_id] << "]");
           return valid_goal_;
         }
@@ -249,50 +303,32 @@ bool ExecuteJointTrajectoryHandler::validateJointLimits(vector10f_t joint_values
   return valid_goal_;
 }
 
-rclcpp_action::GoalResponse ExecuteJointTrajectoryHandler::handle_goal(
-  const rclcpp_action::GoalUUID & uuid,
-  std::shared_ptr<const ExecuteJointTrajectory::Goal> goal)
-{
-  RCLCPP_INFO(nh_->get_logger(), "Received goal request");
-  (void)uuid;
-  return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
-}
-
-rclcpp_action::CancelResponse ExecuteJointTrajectoryHandler::handle_cancel(
-  const std::shared_ptr<GoalHandleExecuteJointTrajectory> goal_handle)
-{
-  RCLCPP_INFO(nh_->get_logger(), "Received request to cancel goal");
-  (void)goal_handle;
-  return rclcpp_action::CancelResponse::ACCEPT;
-}
- 
-void ExecuteJointTrajectoryHandler::handle_accepted(const std::shared_ptr<GoalHandleExecuteJointTrajectory> goal_handle)
-{
-  using namespace std::placeholders;
-  // this needs to return quickly to avoid blocking the executor, so spin up a new thread
-  std::thread{std::bind(&ExecuteJointTrajectoryHandler::executeCallback, this, _1), goal_handle_}.detach();
-}
-
-void ExecuteJointTrajectoryHandler::executeCallback(const std::shared_ptr<GoalHandleExecuteJointTrajectory> goal) {
-  double start_time = nh_->now().nanoseconds();//rclcpp::Time::now().toNSec() / 1e-6; // to convert nanoseconds to milliseconds
+void ExecuteJointTrajectoryHandler::executeCallback(const std::shared_ptr<rclcpp_action::ServerGoalHandle<comau_msgs::action::ExecuteJointTrajectory>> &goal_handle) {
+  RCLCPP_INFO(rclcpp::get_logger(action_name_), "Executing goal");
+  double start_time = rclcpp::Clock{RCL_ROS_TIME}.now().nanoseconds();//double start_time = ros::Time::now().toNSec() / 1e-6; // to convert nanoseconds to milliseconds
   action_active_ = false;
+  goal_handle_ = goal_handle;
+  feedback_ = std::make_shared<comau_msgs::action::ExecuteJointTrajectory::Feedback>();
+  result_   = std::make_shared<comau_msgs::action::ExecuteJointTrajectory::Result>();
+
   if (robot_status_ == RobotStatus::READY && allow_async_) {
-    goal_joint_trajectory_ = parseJointTrajectoryGoal(goal->get_goal());
+    const auto goal = goal_handle->get_goal();
+    goal_joint_trajectory_ = parseJointTrajectoryGoal(goal);
+    //goal_joint_trajectory_ = parseJointTrajectoryGoal(goal);
     if (valid_goal_) {
       if (use_arm1_server_)
         robot_ptr_->writeJointTrajectoryCommand(goal_joint_trajectory_, comau_driver::ControlMode::MODE_JOINT_TRAJECTORY);
       action_active_ = true;
-      RCLCPP_INFO(rclcpp::get_logger(action_name_.c_str()), " Received trajectory sended for execution");
+      RCLCPP_INFO(rclcpp::get_logger(action_name_),"[%s]: Received trajectory sended for execution", action_name_.c_str());
     } else {
       result_->action_result.status = comau_msgs::msg::ActionResultStatusConstants::OPERATIONAL_EXCEPTION;
       result_->action_result.millis_passed = feedback_->action_feedback.millis_passed;
       result_->action_result.success = false;
-      //as_ptr_->setAborted(result_);
-      goal->abort(result_);
+      goal_handle->abort(result_);
       return;
     }
   } else {
-    RCLCPP_WARN(rclcpp::get_logger(action_name_.c_str()), " Robot is not in READY status. We are stopping - resetting");
+    RCLCPP_WARN(rclcpp::get_logger(action_name_),": Robot is not in READY status. We are stopping - resetting");
     /*
     if (use_robot_server_ && allow_async_)
       robot_ptr_->resetPDL();
@@ -301,25 +337,24 @@ void ExecuteJointTrajectoryHandler::executeCallback(const std::shared_ptr<GoalHa
     result_->action_result.millis_passed = feedback_->action_feedback.millis_passed;
     result_->action_result.success = false;
 
-    //as_ptr_->setAborted(result_);
-    goal->abort(result_);
+    goal_handle->abort(result_);
     return;
   }
 
   while (action_active_) {
 
-    if (goal->is_canceling() || !rclcpp::ok()) { // CANCELLED
-      RCLCPP_INFO(rclcpp::get_logger(action_name_.c_str()), " Trajectory execution Preempted");
+    if (goal_handle->is_canceling()|| !rclcpp::ok()) { // CANCELLED
+      RCLCPP_INFO(rclcpp::get_logger(action_name_), "[%s]: Trajectory execution Preempted", action_name_.c_str());
       result_->action_result.success = false;
       result_->action_result.millis_passed = feedback_->action_feedback.millis_passed;
       result_->action_result.status = comau_msgs::msg::ActionResultStatusConstants::CANCELLED;
       if (use_robot_server_)
         robot_ptr_->cancelMotionPDL();
-      //as_ptr_->setPreempted(result_);
-      goal->canceled(result_);
+      goal_handle->canceled(result_);
+
       return;
     } else if (robot_status_ == RobotStatus::SUCCEEDED) { // SUCCEEDED
-      RCLCPP_INFO(rclcpp::get_logger(action_name_.c_str()), " Trajectory execution Succeeded");
+      RCLCPP_INFO(rclcpp::get_logger(action_name_), " [%s]: Trajectory execution Succeeded", action_name_.c_str());
 
       result_->action_result.status = comau_msgs::msg::ActionResultStatusConstants::SUCCESS;
       result_->action_result.success = true;
@@ -332,12 +367,13 @@ void ExecuteJointTrajectoryHandler::executeCallback(const std::shared_ptr<GoalHa
       {
         rclcpp::sleep_for(rclcpp::Duration::from_seconds(0.002).to_chrono<std::chrono::nanoseconds>());
       }
-      goal->succeed(result_);
+      goal_handle->succeed(result_);
 
       return;
-    } else if (robot_status_ == RobotStatus::ERROR) { // ERROR
-      // RCLCPP_ERROR("[%s]: Unexpected error, closing action server", action_name_.c_str());
-      // result_.action_result.status = comau_msgs::msg::ActionResultStatusConstants::OPERATIONAL_EXCEPTION;
+    } else if (robot_status_ == RobotStatus::ERROR) {
+      // ERROR
+      // ROS_ERROR("[%s]: Unexpected error, closing action server", action_name_.c_str());
+      // result_.action_result.status = comau_msgs::ActionResultStatusConstants::OPERATIONAL_EXCEPTION;
       // result_.action_result.millis_passed = feedback_.action_feedback.millis_passed;
       // result_.action_result.success = false;
       // /*
@@ -347,23 +383,22 @@ void ExecuteJointTrajectoryHandler::executeCallback(const std::shared_ptr<GoalHa
       // as_ptr_->setAborted(result_);
       // return;
     } else if (robot_status_ == RobotStatus::TERMINATE) { // TERMINATE
-      RCLCPP_INFO(rclcpp::get_logger(action_name_.c_str()), " Action terminated, canceling Trajectory execution");
+      RCLCPP_INFO(rclcpp::get_logger(action_name_), "[%s]: Action terminated, canceling Trajectory execution", action_name_.c_str());
 
       result_->action_result.status = comau_msgs::msg::ActionResultStatusConstants::OPERATIONAL_EXCEPTION;
       result_->action_result.millis_passed = feedback_->action_feedback.millis_passed;
       result_->action_result.success = false;
-      //as_ptr_->setAborted(result_);
-      goal->abort(result_);
-
+      goal_handle->abort(result_);
       return;
     } else if (robot_status_ == RobotStatus::MOVING) { // MOVING
       // MOVING
-      RCLCPP_DEBUG(rclcpp::get_logger(action_name_.c_str()), " Trajectory execution is active");
-      feedback_->action_feedback.millis_passed = uint((nh_->now().nanoseconds() / 1e-6) - start_time);
-      goal->publish_feedback(feedback_);
+      RCLCPP_DEBUG(rclcpp::get_logger(action_name_), "[%s]: Trajectory execution is active", action_name_.c_str());
+      feedback_->action_feedback.millis_passed = uint((rclcpp::Clock{RCL_ROS_TIME}.now().nanoseconds() / 1e-6) - start_time);
+      goal_handle->publish_feedback(feedback_);
     }
-    rclcpp::sleep_for(rclcpp::Duration::from_seconds(0.001).to_chrono<std::chrono::nanoseconds>());//check
+    rclcpp::sleep_for(rclcpp::Duration::from_seconds(0.001).to_chrono<std::chrono::nanoseconds>());
   }
+  goal_handle_ = goal_handle;
 }
 
 void ExecuteJointTrajectoryHandler::set_status(char &status) {
@@ -374,3 +409,5 @@ void ExecuteJointTrajectoryHandler::set_allow_async(const bool &allow_async) {
 }
 
 } // namespace comau_action_handlers
+
+//RCLCPP_COMPONENTS_REGISTER_NODE(comau_action_handlers::ExecuteJointTrajectoryHandler)
