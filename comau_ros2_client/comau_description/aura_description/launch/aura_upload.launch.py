@@ -1,76 +1,111 @@
 import os
-import xacro
 from launch import LaunchDescription
+from launch.substitutions import FindExecutable
 from launch.actions import DeclareLaunchArgument
+from launch_ros.parameter_descriptions import ParameterValue
+from launch.substitutions import LaunchConfiguration, Command
 from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
 
-    robot_name_arg = DeclareLaunchArgument(
-      name='robot/name',
-      default_value='aura',
-    )
-        
-    pos_x_arg = DeclareLaunchArgument(
-      name='pos_x',
-      default_value='0.0',
-    )
-        
-    pos_y_arg = DeclareLaunchArgument(
-      name='pos_y',
-      default_value='0.0',
-    )
+  # Path to the .xacro file
+  xacro_file_path = os.path.join(
+    get_package_share_directory('aura_description'),
+    'robots',
+    'aura_robot.urdf.xacro'
+  )
 
-    pos_z_arg = DeclareLaunchArgument(
-      name='pos_z',
-      default_value='0.0',
-    )
+  # Define the launch argument for pos_z
+  pos_x_arg = 'pos_x'
+  pos_y_arg = 'pos_y'
+  pos_z_arg = 'pos_z'
+  roll_arg  = 'roll'
+  pitch_arg = 'pitch'
+  yaw_arg   = 'yaw'
 
-    roll_arg = DeclareLaunchArgument(
-      name='roll',
-      default_value='0.0',
-    )
-        
-    pitch_arg = DeclareLaunchArgument(
-      name='pitch',
-      default_value='0.0',
-    )
+  robot_name_arg = 'robot_name'
+  use_mimic_arg = 'use_mimic'
 
-    yaw_arg = DeclareLaunchArgument(
-      name='yaw',
-      default_value='0.0',
-    )
+  declare_pos_x_cmd = DeclareLaunchArgument(
+    pos_x_arg,
+    default_value='0.0',
+    description='The x position of the robot'
+  )
 
-#      ***********     To Do ******************* 
-    #transmission_hw_interface_arg = DeclareLaunchArgument(
-    #  name='transmission_hw_interface',
-    #  default_value='',  #TO-DO 
-    # #default="hardware_interface/PositionJointInterface"  ros1 
-    #)
+  declare_pos_y_cmd = DeclareLaunchArgument(
+    pos_y_arg,
+    default_value='0.0',
+    description='The y position of the robot'
+  )        
 
-    use_mimic_arg = DeclareLaunchArgument(
-      name='use_mimic',
-      default_value='false',
-      description='Loads urdf with mimic joint if true',
-    )
-    
-    #xacro_file_path= os.path.join(get_package_share_directory('aura_description'),'robots/aura_robot.urdf.xacro'),
-        
-    xacro_file = os.path.join(get_package_share_directory('aura_description'), 'robots', 'aura_robot.urdf.xacro')    
-    robot_description_config = xacro.process_file(xacro_file)
-    robot_description = robot_description_config.toxml()
+  declare_pos_z_cmd = DeclareLaunchArgument(
+    pos_z_arg,
+    default_value='5.0',
+    description='The z position of the robot'
+  )
 
-    #print(robot_description)
-    
+  declare_roll_cmd = DeclareLaunchArgument(
+    roll_arg,
+    default_value='0.0',
+    description='The roll of the robot'
+  )
 
+  declare_pitch_cmd = DeclareLaunchArgument(
+    pitch_arg,
+    default_value='0.0',
+    description='The pitch of the robot'
+  )        
 
-    return LaunchDescription([
-      robot_name_arg,  
-      pos_x_arg,
-      pos_y_arg,
-      pos_z_arg,
-      roll_arg,
-      pitch_arg,
-      yaw_arg,
-      use_mimic_arg
-    ])
+  declare_yaw_cmd = DeclareLaunchArgument(
+    yaw_arg,
+    default_value='0.0',
+    description='The yaw of the robot'
+  )
+
+  declare_robot_name_cmd = DeclareLaunchArgument(
+    robot_name_arg,
+    default_value='aura',
+  )
+
+  declare_use_mimic_cmd = DeclareLaunchArgument(
+    use_mimic_arg,
+    default_value='false',
+    description='Loads urdf with mimic joint if true',
+  )
+
+  #    ***********     TO DO    ******************* 
+  # transmission_hw_interface_arg = DeclareLaunchArgument(
+  # name='transmission_hw_interface',
+  # default_value='',  
+  # default="hardware_interface/PositionJointInterface"  
+  #)
+
+  # Get the values from the launch argument
+  pos_x = LaunchConfiguration(pos_x_arg)
+  pos_y = LaunchConfiguration(pos_y_arg)
+  pos_z = LaunchConfiguration(pos_z_arg)
+  roll  = LaunchConfiguration(roll_arg)
+  pitch = LaunchConfiguration(pitch_arg)
+  yaw   = LaunchConfiguration(yaw_arg)
+
+  robot_name = LaunchConfiguration(robot_name_arg)
+  use_mimic = LaunchConfiguration(use_mimic_arg)
+
+  robot_description = Command([
+    FindExecutable(name='xacro'), ' ',
+    xacro_file_path, ' ', 
+  ])
+
+  # Command to interprete robot_description as a string
+  robot_description_param = ParameterValue(robot_description, value_type=str)
+
+  return LaunchDescription([
+    declare_pos_x_cmd,
+    declare_pos_y_cmd,
+    declare_pos_z_cmd,
+    declare_roll_cmd,
+    declare_pitch_cmd,
+    declare_yaw_cmd,
+    declare_robot_name_cmd,
+    declare_use_mimic_cmd 
+  ])
