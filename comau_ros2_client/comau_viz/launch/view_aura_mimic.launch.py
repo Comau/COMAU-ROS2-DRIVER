@@ -1,49 +1,73 @@
 import os
-import xacro
-from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
 from launch_ros.actions import Node
+from launch import LaunchDescription
+from launch_ros.parameter_descriptions import ParameterValue
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.substitutions import FindExecutable,LaunchConfiguration, Command
 from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
-    xacro_file = os.path.join(get_package_share_directory('aura_description'), 'robots', 'aura_robot.urdf.xacro')    
-    assert os.path.exists(xacro_file), "The aura_robot.urdf.xacro doesnt exist in "+str(xacro_file)
 
-    robot_description_config = xacro.process_file(xacro_file)
-    robot_desc = robot_description_config.toxml()
+    # Path to the .xacro file    
+    xacro_file_path = os.path.join(
+      get_package_share_directory('aura_description'),
+      'robots',
+      'aura_robot.urdf.xacro'
+    )
+   
+    # Set use_mimic = true 
+    use_mimic_arg = 'use_mimic'  
 
-    #print(robot_desc)
+    declare_use_mimic_cmd = DeclareLaunchArgument(
+     'use_mimic_arg',
+     default_value='true',
+     )
+    
+    robot_description = Command([
+      FindExecutable(name='xacro'), ' ',
+      xacro_file_path, ' ', 
+     'use_mimic:=', LaunchConfiguration(use_mimic_arg)     
+    ])
+
+    # Command to interprete robot_description as a string
+    robot_description_param = ParameterValue(robot_description, value_type=str)
+
+    # Include the launch file 
+    aura_upload_launch = IncludeLaunchDescription(
+      PythonLaunchDescriptionSource(
+        os.path.join(get_package_share_directory('aura_description'),'launch/aura_upload.launch.py')
+      ),
+    )
+
+    # Robot state publisher
+    robot_state_publisher_node = Node(
+      package='robot_state_publisher',
+      executable='robot_state_publisher',
+      name='robot_state_publisher',
+      output='screen',
+      parameters=[{'robot_description': robot_description_param}]
+    )
+
+    # Joint state publisher
+    joint_state_publisher_node = Node(
+      package='joint_state_publisher',
+      executable='joint_state_publisher',
+      name='joint_state_publisher',
+      parameters=[{'robot_description': robot_description_param}]
+    )
+
+    # RViz
+    rviz_node = Node(
+      package='rviz2',
+      executable='rviz2',
+      name='rviz2',
+      output='screen'
+    )
 
     return LaunchDescription([
-        DeclareLaunchArgument(
-            'use_sim_time',
-            default_value='true'),
-
-        Node(
-            package="robot_state_publisher",
-            executable="robot_state_publisher",
-            name="robot_state_publisher",
-            parameters=[
-                {"robot_description": robot_desc}],
-            output="screen"),
-            
-        Node(
-            package='joint_state_publisher',
-            executable='joint_state_publisher',
-            name='joint_state_publisher',
-            parameters=[
-                {"robot_description": robot_desc}],
-          ),
-
-        Node(
-            package='rviz2',
-            executable='rviz2',
-            name='rviz2',
-            output='screen')
-            
-    #    Node(
-    #        package='joint_state_publisher_gui',
-    #        executable='joint_state_publisher_gui',
-    #        name='joint_state_publisher_gui',
-    #      )
-    ])
+      aura_upload_launch,
+      robot_state_publisher_node,
+      joint_state_publisher_node,
+      rviz_node       
+    ])    
