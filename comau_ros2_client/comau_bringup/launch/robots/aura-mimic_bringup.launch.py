@@ -3,17 +3,11 @@ import xacro
 from launch_ros.actions import Node
 from launch import LaunchDescription
 from launch.substitutions import LaunchConfiguration
-from launch.actions import (DeclareLaunchArgument, IncludeLaunchDescription)
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from ament_index_python import get_package_share_directory
 
 def generate_launch_description():
-   
-    ns_arg = DeclareLaunchArgument(
-        name='ns',
-        default_value='/',
-        description='Namespace'
-    )
 
     robot_description_file_arg = DeclareLaunchArgument(
        name='robot_description_file',
@@ -40,13 +34,11 @@ def generate_launch_description():
                         'launch/common/comau_common.launch.py')),
         launch_arguments={
             'robot_description_file': LaunchConfiguration('robot_description_file'), 
-            'use_mimic':LaunchConfiguration('use_mimic'),
-            'ns': LaunchConfiguration('ns')
+            'use_mimic':LaunchConfiguration('use_mimic')
         }.items(),   
     )
 
     return LaunchDescription([
-     ns_arg,
      robot_description_file_arg,
      use_mimic_arg,
      comau_common_launch,

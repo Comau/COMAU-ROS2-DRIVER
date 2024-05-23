@@ -13,12 +13,6 @@ def generate_launch_description():
     xacro_file_path = os.path.join(get_package_share_directory('racer5-0-80_description'), 'robots', 'racer5-0-80_robot.urdf.xacro')
     robot_description_config = xacro.process_file(xacro_file_path)
     xml = robot_description_config.toxml()    
-   
-    ns_arg = DeclareLaunchArgument(
-        name='ns',
-        default_value='/',
-        description='Namespace'
-    )
 
     robot_description_file_arg = DeclareLaunchArgument(
        name='robot_description_file',
@@ -33,13 +27,11 @@ def generate_launch_description():
             os.path.join(get_package_share_directory('comau_bringup'),
                         'launch/common/comau_common.launch.py')),
         launch_arguments={
-            'robot_description_file': LaunchConfiguration('robot_description_file'), 
-            'ns': LaunchConfiguration('ns')
+            'robot_description_file': LaunchConfiguration('robot_description_file')
         }.items(),   
     )
 
     return LaunchDescription([
-      ns_arg,
       robot_description_file_arg,
       comau_common_launch,
 

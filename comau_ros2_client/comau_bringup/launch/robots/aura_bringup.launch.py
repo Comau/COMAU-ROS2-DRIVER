@@ -14,12 +14,6 @@ def generate_launch_description():
     robot_description_config = xacro.process_file(xacro_file_path)
     xml = robot_description_config.toxml()
 
-    ns_arg = DeclareLaunchArgument(
-        name='ns',
-        default_value='/',
-        description='Namespace'
-    )
-
     robot_description_file_arg = DeclareLaunchArgument(
        name='robot_description_file',
        default_value=os.path.join(get_package_share_directory('aura_description'),
@@ -41,7 +35,6 @@ def generate_launch_description():
         launch_arguments={
             'robot_description_file': LaunchConfiguration('robot_description_file'), 
             'use_mimic':LaunchConfiguration('use_mimic'),
-            'ns': LaunchConfiguration('ns')
         }.items(),   
     )
 
@@ -53,7 +46,6 @@ def generate_launch_description():
         )
     
     return LaunchDescription([
-      ns_arg,
       robot_description_file_arg,
       use_mimic_arg,
       comau_common_launch, 
