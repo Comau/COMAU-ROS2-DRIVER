@@ -32,6 +32,7 @@ install(
     src
     config
     launch 
+    test
   DESTINATION share/${PROJECT_NAME})
 
 # necessario per compilazione 	        
@@ -53,11 +54,8 @@ ament_export_dependencies(
 
 if(BUILD_TESTING)
   find_package(ament_cmake_pytest REQUIRED)
+  ament_add_pytest_test(comau_bringup test/test_bringup.launch.py)
 endif()
 
 ament_package()
 
-
-
-
- 
