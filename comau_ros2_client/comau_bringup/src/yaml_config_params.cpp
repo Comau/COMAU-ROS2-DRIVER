@@ -3,6 +3,7 @@
 class MainNode : public rclcpp::Node {
   public: 
   MainNode() : Node("load_param_node", rclcpp::NodeOptions()) {
+
      // declare parameter and default value config/transforms
      declare_parameter("parallel_joint_fix", false); 
 
@@ -133,6 +134,7 @@ class MainNode : public rclcpp::Node {
 };
   int main(int argc, char **argv) {
   rclcpp::init(argc, argv);
+
   rclcpp::spin(std::make_shared<MainNode>());
   rclcpp::shutdown();
   return 0;

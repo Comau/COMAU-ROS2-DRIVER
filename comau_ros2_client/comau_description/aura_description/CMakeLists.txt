@@ -45,6 +45,7 @@ install(
     urdf 
     rviz 
     src
+    test
   DESTINATION share/${PROJECT_NAME})
 
 
