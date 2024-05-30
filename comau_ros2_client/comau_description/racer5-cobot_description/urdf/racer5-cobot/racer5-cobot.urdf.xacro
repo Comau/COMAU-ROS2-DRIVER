@@ -21,6 +21,7 @@
         <inertia ixx="0.05293" ixy="1.9878E-05" ixz="-0.0043586" iyy="0.060873" iyz="5.4713E-06" izz="0.042672" />
       </inertial>
       <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
         <geometry>
           <mesh filename="package://racer5-cobot_description/meshes/racer5-cobot/base_link.STL" />
         </geometry>
@@ -41,7 +42,7 @@
         <inertia ixx="0.0559481276260512" ixy="9.66643445883554E-05" ixz="-0.00417556460736672" iyy="0.0332098630782273" iyz="1.37699311238088E-05" izz="0.0442971694125322" />
       </inertial>
       <visual>
-        <origin xyz="0 0 0" rpy="0 0 0" />
+        <origin xyz="0 0 -0.050" rpy="0 0 0" />
         <geometry>
           <mesh filename="package://racer5-cobot_description/meshes/racer5-cobot/Link1.STL" />
         </geometry>
@@ -56,10 +57,10 @@
     </link>
     
     <joint name="${prefix}joint_1" type="revolute">
-      <origin xyz="0 0 0.1895" rpy="0 0 0" />
+      <origin xyz="0 0 0.242" rpy="0 0 0" />
       <parent link="base_link" />
       <child link="link_1" />
-      <axis xyz="0 0 1" />
+      <axis xyz="0 0 -1" />
       <limit lower="-2.966" upper="2.966" effort="100000.00" velocity="20.00" />
     </joint>
     
@@ -85,11 +86,11 @@
     </link>
     
     <joint name="${prefix}joint_2" type="revolute">
-      <origin xyz="0.05 0 0.1755" rpy="0 0 0" />
+      <origin xyz="0.05 0 0.123" rpy="0 0 0" />
       <parent link="link_1" />
       <child link="link_2" />
-      <axis xyz="0 -1 0" />
-      <limit lower="-1.99" upper="1.116" effort="100000.00" velocity="20.00" />
+      <axis xyz="0 1 0" />
+      <limit lower="-1.116" upper="1.99" effort="100000.00" velocity="20.00" />
     </joint>
 
     <link name="${prefix}link_3">
@@ -99,7 +100,7 @@
         <inertia ixx="0.00685071381057224" ixy="0.000112640516973671" ixz="0.00186954281902629" iyy="0.00785316794831617" iyz="-0.000111709680917981" izz="0.00558392288230563" />
       </inertial>
       <visual>
-        <origin xyz="0 0 0" rpy="0 0 0" />
+        <origin xyz="0 0 0" rpy="0 0 3.14" />
         <geometry>
           <mesh filename="package://racer5-cobot_description/meshes/racer5-cobot/Link3.STL" />
         </geometry>
@@ -114,10 +115,10 @@
     </link>
     
     <joint name="${prefix}joint_3" type="revolute">
-      <origin xyz="0 0 0.37" rpy="0 0 0" />
+      <origin xyz="0 0 0.37" rpy="0 0 3.14" />
       <parent link="link_2" />
       <child link="link_3" />
-      <axis xyz="0 -1 0" />
+      <axis xyz="0 1 0" />
       <limit lower="-2.62" upper="1.483" effort="100000.00" velocity="20.00" />
     </joint>
     
@@ -128,7 +129,7 @@
         <inertia ixx="0.00636789477652846" ixy="-2.81769690428589E-06" ixz="-7.62862065969977E-05" iyy="0.00700400581464894" iyz="-3.84855032438523E-05" izz="0.00283764341486332" />
       </inertial>
       <visual>
-        <origin xyz="0 0 0" rpy="0 0 0" />
+        <origin xyz="0 0 0" rpy="0 0 3.14" />
         <geometry>
           <mesh filename="package://racer5-cobot_description/meshes/racer5-cobot/Link4.STL" />
         </geometry>
@@ -143,7 +144,7 @@
     </link>
    
     <joint name="${prefix}joint_4" type="revolute">
-      <origin xyz="-0.049998 0 0.121" rpy="0 0 0" />
+      <origin xyz="0.05 0 0.0" rpy="0 0 0" />
       <parent link="link_3" />
       <child link="link_4" />
       <axis xyz="0 0 -1" />
@@ -172,7 +173,7 @@
     </link>
     
     <joint name="${prefix}joint_5" type="revolute">
-      <origin xyz="0 0 0.26494" rpy="0 0 0" />
+      <origin xyz="0 0 0.38594" rpy="0 0 0" />
       <parent link="link_4" />
       <child link="link_5" />
       <axis xyz="0 -1 0" />
@@ -202,12 +203,12 @@
       </collision>
     </link>
 
-    <joint name="${prefix}joint_6" type="revolute"> <!--"continuous"-->
-      <origin xyz="0 0 0.0665" rpy="0 0 0" />
+    <joint name="${prefix}joint_6" type="revolute">
+      <origin xyz="0 0 0.08" rpy="0 0 0" />
       <parent link="link_5" />
       <child link="link_6" />
       <axis xyz="0 0 -1" />
-      <limit lower="-47.10" upper="47.10" effort="100000.00" velocity="20.00" />
+      <limit lower="-100" upper="100" effort="100000.00" velocity="20.00" />
     </joint>
 
     <link name="${prefix}ee_link">
@@ -219,7 +220,7 @@
     </link>
 
     <joint name="${prefix}joint_ee_link" type="fixed">
-      <origin xyz="0.0 0.0 0.0" rpy="0 0 0.0"/>
+      <origin xyz="0.0 0.0 0.0" rpy="0 0 3.14"/>
       <parent link="link_6"/>
       <child link="ee_link"/>
       <axis xyz="0 0 0"/>
