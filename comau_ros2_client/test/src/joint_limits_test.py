@@ -93,16 +93,118 @@ class YourTestClass(unittest.TestCase):
                    "joint_3_1_5" ,  
                 ],
                 "expected_joint_limits": {             
-                   "joint_1": {'lower': -3.1416, 'upper': 3.1416, 'effort': 100, 'velocity': 1.75},
-                   "joint_2": {'lower': -0.34907, 'upper': 1.4835, 'effort': 70, 'velocity': 1.48},   
+                   "joint_1":  {'lower': -3.1416, 'upper': 3.1416, 'effort': 100, 'velocity': 1.75},
+                   "joint_2":  {'lower': -0.34907, 'upper': 1.4835, 'effort': 70, 'velocity': 1.48},   
                    "joint_2m": {'lower': -3.8397, 'upper': -0.87267, 'effort': 70, 'velocity': 1.48},   
                    "joint_3":  {'lower': -3.8397, 'upper': -0.87267, 'effort': 100, 'velocity': 1.75},
-                   "joint_4": {'lower': -3.1416, 'upper': 3.1416, 'effort': 100, 'velocity': 2.27},
-                   "joint_5": {'lower': -3.1416, 'upper': 3.1416, 'effort': 100, 'velocity': 2.44},
-                   "joint_6": {'lower': -3.1416, 'upper': 3.1416, 'effort': 70, 'velocity': 3.32},
+                   "joint_4":  {'lower': -3.1416, 'upper': 3.1416, 'effort': 100, 'velocity': 2.27},
+                   "joint_5":  {'lower': -3.1416, 'upper': 3.1416, 'effort': 100, 'velocity': 2.44},
+                   "joint_6":  {'lower': -3.1416, 'upper': 3.1416, 'effort': 70, 'velocity': 3.32},
                 }
-             }
-            
+             },
+
+             {       
+                "robot_name": "racer5-0-80",
+                "urdf_file_path": os.path.join(get_package_share_directory('racer5-0-80_description'), 'urdf', 'racer5-0-80', 'racer5-0-80_robot.urdf'),
+                "expected_joint_count": 8,
+                "expected_joints": [
+                   "joint_1",
+                   "joint_2",
+                   "joint_3",
+                   "joint_4",
+                   "joint_5",
+                   "joint_6",
+                   "joint_ee_link",
+                   "world_joint", 
+                ],
+                "expected_joint_limits": {             
+                   "joint_1": {'lower': -2.966, 'upper': 2.966, 'effort': 100000.00, 'velocity': 20.00},
+                   "joint_2": {'lower': -1.99, 'upper': 1.116, 'effort': 100000.00, 'velocity': 20.00},    
+                   "joint_3": {'lower': -2.62, 'upper': 1.483, 'effort': 100000.00, 'velocity': 20.00},
+                   "joint_4": {'lower': -3.49, 'upper': 3.49, 'effort': 100, 'velocity': 20.00},
+                   "joint_5": {'lower': -1.83, 'upper': 1.83, 'effort': 100000.00, 'velocity': 20.00},
+                   "joint_6": {'lower': -47.10, 'upper': 47.10, 'effort': 100000.00, 'velocity': 20.00},
+                }
+             },  
+
+             {       
+                "robot_name": "racer5-cobot",
+                "urdf_file_path": os.path.join(get_package_share_directory('racer5-cobot_description'), 'urdf', 'racer5-cobot', 'racer5-cobot_robot.urdf'),
+                "expected_joint_count": 8,
+                "expected_joints": [
+                   "joint_1",
+                   "joint_2",
+                   "joint_3",
+                   "joint_4",
+                   "joint_5",
+                   "joint_6",
+                   "joint_ee_link",
+                   "world_joint", 
+                ],
+                "expected_joint_limits": {             
+                   "joint_1": {'lower': -2.966, 'upper': 2.966, 'effort': 100000.00, 'velocity': 20.00},
+                   "joint_2": {'lower': -1.116, 'upper': 1.99, 'effort': 100000.00, 'velocity': 20.00},    
+                   "joint_3": {'lower': -2.62, 'upper': 1.483, 'effort': 100000.00, 'velocity': 20.00},
+                   "joint_4": {'lower': -3.49, 'upper': 3.49, 'effort': 100000.00, 'velocity': 20.00},
+                   "joint_5": {'lower': -1.83, 'upper': 1.83, 'effort': 100000.00, 'velocity': 20.00},
+                   "joint_6": {'lower': -100, 'upper': 100, 'effort': 100000.00, 'velocity': 20.00},
+                }
+             },           
+
+             {       
+                "robot_name": "racer5-cobot-rail",
+                "urdf_file_path": os.path.join(get_package_share_directory('racer5-cobot-rail_description'), 'urdf', 'racer5-cobot', 'racer5-cobot-rail_robot.urdf'),
+                "expected_joint_count": 10,
+                "expected_joints": [
+                   "joint_1",
+                   "joint_2",
+                   "joint_3",
+                   "joint_4",
+                   "joint_5",
+                   "joint_6",
+                   "joint_7",
+                   "rail_joint",
+                   "joint_ee_link",
+                   "world_joint", 
+                ],
+                "expected_joint_limits": {             
+                   "joint_1": {'lower': -2.966, 'upper': 2.966, 'effort': 100000.00, 'velocity': 20.00},
+                   "joint_2": {'lower': -1.116, 'upper': 1.99, 'effort': 100000.00, 'velocity': 20.00},    
+                   "joint_3": {'lower': -2.62, 'upper': 1.483, 'effort': 100000.00, 'velocity': 20.00},
+                   "joint_4": {'lower': -3.49, 'upper': 3.49, 'effort': 100000.00, 'velocity': 20.00},
+                   "joint_5": {'lower': -1.83, 'upper': 1.83, 'effort': 100000.00, 'velocity': 20.00},
+                   "joint_6": {'lower': -3.14, 'upper': 3.14, 'effort': 100000.00, 'velocity': 20.00},
+                   "joint_7": {'lower': -3.14, 'upper': 3.14, 'effort': 100000.00, 'velocity': 20.00},
+                   "rail_joint": {'lower': -0.0, 'upper': 2.0, 'effort': 100000.00, 'velocity': 20.00},
+              
+                }                
+             }, 
+
+             {       
+                "robot_name": "racer7-14",
+                "urdf_file_path": os.path.join(get_package_share_directory('racer7-14_description'), 'urdf', 'racer7-14', 'racer7-14_robot.urdf'),
+                "expected_joint_count": 8,
+                "expected_joints": [
+                   "joint_1",
+                   "joint_2",
+                   "joint_3",
+                   "joint_4",
+                   "joint_5",
+                   "joint_6",
+                   "joint_ee_link",
+                   "world_joint", 
+                ],
+                "expected_joint_limits": {             
+                   "joint_1": {'lower': -2.8797932658, 'upper': 2.8797932658, 'effort': 10000.00, 'velocity': 20.00},
+                   "joint_2": {'lower': -1.4835298642, 'upper': 2.7052603406, 'effort': 10000.00, 'velocity': 20.00},    
+                   "joint_3": {'lower': -2.9321531434, 'upper': 0.0, 'effort': 10000.00, 'velocity': 20.00},
+                   "joint_4": {'lower': -3.6651914292, 'upper': 6.6651914292, 'effort': 10000.00, 'velocity': 20.00},
+                   "joint_5": {'lower': -2.3561944902, 'upper': 2.3561944902, 'effort': 10000.00, 'velocity': 20.00},
+                   "joint_6": {'lower': -47.1238898, 'upper': 47.1238898, 'effort': 10000.00, 'velocity': 20.00},
+                }
+
+                
+             }, 
         ]
         
         cls.passed_robots_joint_number = []
@@ -161,10 +263,10 @@ class YourTestClass(unittest.TestCase):
                         expected = robot_info["expected_joint_limits"][joint.name]
                         actual = joint.limit
                 try:
-                    self.assertAlmostEqual(actual.lower, expected['lower'], places=2, msg=f"Lower limit mismatch for the robot {robot_info['robot_name']} - joint {joint.name}")
-                    self.assertAlmostEqual(actual.upper, expected['upper'], places=2, msg=f"Upper limit mismatch for the robot {robot_info['robot_name']} - joint {joint.name}")
-                    self.assertAlmostEqual(actual.effort, expected['effort'], places=2, msg=f"Effort limit mismatch for the robot {robot_info['robot_name']} - joint {joint.name}")
-                    self.assertAlmostEqual(actual.velocity, expected['velocity'], places=2, msg=f"Velocity limit mismatch for the robot {robot_info['robot_name']} - joint {joint.name}")
+                    self.assertAlmostEqual(actual.lower, expected['lower'], places=3, msg=f"Lower limit mismatch for the robot {robot_info['robot_name']} - joint {joint.name}")
+                    self.assertAlmostEqual(actual.upper, expected['upper'], places=3, msg=f"Upper limit mismatch for the robot {robot_info['robot_name']} - joint {joint.name}")
+                    self.assertAlmostEqual(actual.effort, expected['effort'], places=3, msg=f"Effort limit mismatch for the robot {robot_info['robot_name']} - joint {joint.name}")
+                    self.assertAlmostEqual(actual.velocity, expected['velocity'], places=3, msg=f"Velocity limit mismatch for the robot {robot_info['robot_name']} - joint {joint.name}")
                 
                     self.passed_robots_joint_limits.append(robot_info["robot_name"])
                 
