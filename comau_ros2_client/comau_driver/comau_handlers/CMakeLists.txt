@@ -83,8 +83,6 @@ add_library(comau_handlers
 ament_export_targets(comau_handlers HAS_LIBRARY_TARGET)
 
 target_link_libraries(comau_handlers
-                      rclcpp
-                      std_msgs
                       ${catkin_LIBRARIES}
 )
 

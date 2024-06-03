@@ -67,12 +67,12 @@ int main(int argc, char **argv) {
             rclcpp::sleep_for(rclcpp::Duration::from_seconds(2).to_chrono<std::chrono::nanoseconds>());
             //if (state_client->getLastMessage(*msg)) 
             {
-             // RCLCPP_INFO_STREAM(rclcpp::get_logger("comau_state_client_node"),"Still Connected." << msg->toString());
+            RCLCPP_INFO_STREAM(rclcpp::get_logger("comau_state_client_node"),"Still Connected.");
             } 
            // else 
-            {
+            /*{
               RCLCPP_ERROR_STREAM(rclcpp::get_logger("comau_state_client_node")," Could not get Last Message Package");
-            }
+            }*/
           }
           //RCLCPP_INFO_STREAM(msg.toString());
         }

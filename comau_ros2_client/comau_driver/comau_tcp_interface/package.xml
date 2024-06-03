@@ -18,6 +18,8 @@
   <depend>comau_msgs</depend>
   <depend>pluginlib</depend>
 
+  <test_depend>ament_cmake_gtest</test_depend>
+
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <rosdoc config="doc/rosdoc.yaml" />

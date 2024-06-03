@@ -129,4 +129,18 @@ ament_export_dependencies(
 ament_export_include_directories(
   include
 )
+
+if(BUILD_TESTING)
+find_package(ament_cmake_gtest REQUIRED)
+ament_add_gtest(${PROJECT_NAME}_tutorial_test test/tutorial_test.cpp)
+target_include_directories(${PROJECT_NAME}_tutorial_test PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+ament_target_dependencies(${PROJECT_NAME}_tutorial_test
+  std_msgs
+)
+target_link_libraries(${PROJECT_NAME}_tutorial_test comau_tcp_interface)
+endif()
+
 ament_package()

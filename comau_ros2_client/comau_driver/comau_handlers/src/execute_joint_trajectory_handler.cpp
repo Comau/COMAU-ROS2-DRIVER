@@ -42,10 +42,10 @@ bool ExecuteJointTrajectoryHandler::initialize(bool use_state_server, bool use_r
 
   urdf_number_of_joints_ = 0;
 
-  if (!loadJointLimits(nh_, "robot_description")) {
+  /*if (!loadJointLimits(nh_, "robot_description")) {
     RCLCPP_ERROR_STREAM(rclcpp::get_logger(action_name_), "Error at loadJointLimits function");
     return false;
-  }
+  } ANDY */
 
   using namespace std::placeholders;
   RCLCPP_INFO_STREAM(rclcpp::get_logger(action_name_), "Starting up the ExecuteJointTrajectoryActionServer ...  ");

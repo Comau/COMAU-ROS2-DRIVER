@@ -18,7 +18,7 @@ find_package(nj4-170-29_description REQUIRED)
 find_package(nj130-26_description REQUIRED)
 find_package(nj220_description REQUIRED)
 find_package(racer5-0-80_description REQUIRED)
-find_package(racer5-0-80_description REQUIRED)
+find_package(racer5-cobot_description REQUIRED)
 find_package(racer5-cobot-rail_description REQUIRED)
 find_package(racer7-14_description REQUIRED)
 
