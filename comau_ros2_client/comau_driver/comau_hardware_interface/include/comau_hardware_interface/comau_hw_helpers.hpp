@@ -68,116 +68,6 @@ void ComauHardwareInterface::publishRobotStatus() {
     }
   }
 }
-/*
-void ComauHardwareInterface::publishErrorValue() {
-  const std::vector<uint32_t> error_codes = {comau_tcp_interface::ErrorValue::ERR_TCP_UNDEFINED,
-                                             comau_tcp_interface::ErrorValue::ERR_TCP_CONN_STATE,
-                                             comau_tcp_interface::ErrorValue::ERR_TCP_CONN_ROBOT,
-                                             comau_tcp_interface::ErrorValue::ERR_TCP_CONN_ARM,  
-                                             comau_tcp_interface::ErrorValue::ERR_TCP_READ,
-                                             comau_tcp_interface::ErrorValue::ERR_TCP_WRITE_CMD,
-                                             comau_tcp_interface::ErrorValue::ERR_TCP_WRITE_MOTION,
-                                             comau_tcp_interface::ErrorValue::ERR_TCP_DISCONN_STATE,
-                                             comau_tcp_interface::ErrorValue::ERR_TCP_DISCONN_ROBOT,    
-                                             comau_tcp_interface::ErrorValue::ERR_TCP_DISCONN_ARM,
-                                             comau_tcp_interface::ErrorValue::ERR_SAFETY_GATE,
-                                             comau_tcp_interface::ErrorValue::ERR_WRONG_MOTION};
-  uint32_t code = error_value_clientcode_;
-  if (server_error_pub_) 
-  {
-    if (server_error_pub_->trylock())
-    {
-      server_error_pub_->msg_.code = code;
-      server_error_pub_->msg_.error_msg.clear();
-
-      for ( size_t i = 0; i < error_codes.size(); i++ )
-      {
-        switch (code & error_codes.at(i))
-        {
-          case comau_tcp_interface::ErrorValue::ERR_TCP_UNDEFINED:
-            server_error_pub_->msg_.error_msg.push_back(comau_msgs::msg::ComauServerError::ERR_TCP_UNDEFINED);
-            break;
-          case comau_tcp_interface::ErrorValue::ERR_TCP_CONN_STATE:
-            server_error_pub_->msg_.error_msg.push_back(comau_msgs::msg::ComauServerError::ERR_TCP_CONN_STATE);
-            break;
-          case comau_tcp_interface::ErrorValue::ERR_TCP_CONN_ROBOT:
-            server_error_pub_->msg_.error_msg.push_back(comau_msgs::msg::ComauServerError::ERR_TCP_CONN_ROBOT);
-            break;
-          case comau_tcp_interface::ErrorValue::ERR_TCP_CONN_ARM:
-            server_error_pub_->msg_.error_msg.push_back(comau_msgs::msg::ComauServerError::ERR_TCP_CONN_ARM);
-            break;
-          case comau_tcp_interface::ErrorValue::ERR_TCP_READ:
-            server_error_pub_->msg_.error_msg.push_back(comau_msgs::msg::ComauServerError::ERR_TCP_READ);
-            break;
-          case comau_tcp_interface::ErrorValue::ERR_TCP_WRITE_CMD:
-            server_error_pub_->msg_.error_msg.push_back(comau_msgs::msg::ComauServerError::ERR_TCP_WRITE_CMD);
-            break;
-          case comau_tcp_interface::ErrorValue::ERR_TCP_WRITE_MOTION:
-            server_error_pub_->msg_.error_msg.push_back(comau_msgs::msg::ComauServerError::ERR_TCP_WRITE_MOTION);
-            break;
-          case comau_tcp_interface::ErrorValue::ERR_TCP_DISCONN_STATE:
-            server_error_pub_->msg_.error_msg.push_back(comau_msgs::msg::ComauServerError::ERR_TCP_DISCONN_STATE);
-            break;
-          case comau_tcp_interface::ErrorValue::ERR_TCP_DISCONN_ROBOT:
-            server_error_pub_->msg_.error_msg.push_back(comau_msgs::msg::ComauServerError::ERR_TCP_DISCONN_ROBOT);
-            break;
-          case comau_tcp_interface::ErrorValue::ERR_TCP_DISCONN_ARM:
-            server_error_pub_->msg_.error_msg.push_back(comau_msgs::msg::ComauServerError::ERR_TCP_DISCONN_ARM);
-            break;
-          case comau_tcp_interface::ErrorValue::ERR_SAFETY_GATE:
-            server_error_pub_->msg_.error_msg.push_back(comau_msgs::msg::ComauServerError::ERR_SAFETY_GATE);
-            break;
-          case comau_tcp_interface::ErrorValue::ERR_WRONG_MOTION:
-            server_error_pub_->msg_.error_msg.push_back(comau_msgs::msg::ComauServerError::ERR_WRONG_MOTION);
-            break;
-          default:
-            break;
-        } 
-      }
-      server_error_pub_->unlockAndPublish();
-    }
-  }
-}
-
-void ComauHardwareInterface::publishOperationMode() {
-  
-  if (server_operation_mode_pub_) 
-  {
-    if (server_operation_mode_pub_->trylock())
-    {
-
-      if ((stsSelector_ & 0x00001) == 1)
-      {
-        server_operation_mode_pub_->msg_.status_selector_key = "T1";
-      }else if( (stsSelector_ & 0x00002) == 2 )
-      { 
-        server_operation_mode_pub_->msg_.status_selector_key = "AUTO";
-      }else if( (stsSelector_ & 0x00004) == 4 )
-      { 
-        server_operation_mode_pub_->msg_.status_selector_key = "Extern";
-      } else {
-        server_operation_mode_pub_->msg_.status_selector_key = "NONE";
-      }
-      
-      if( (stsSelector_ & 0x00008) == 8 )
-      { 
-        server_operation_mode_pub_->msg_.drive_on = true;
-      } else {
-        server_operation_mode_pub_->msg_.drive_on = false;
-      }
-
-      if( (stsSelector_ & 0x00010) == 16 )
-      { 
-        server_operation_mode_pub_->msg_.start = true;
-      } else {
-        server_operation_mode_pub_->msg_.start = false;
-      }
-
-      server_operation_mode_pub_->unlockAndPublish();
-    }
-  }
-}
-
 
 void ComauHardwareInterface::errorParser(uint32_t error_value)
 {
@@ -265,6 +155,76 @@ void ComauHardwareInterface::errorParser(uint32_t error_value)
   return;
 }
 
+void ComauHardwareInterface::publishErrorValue() {
+  const std::vector<uint32_t> error_codes = {comau_tcp_interface::ErrorValue::ERR_TCP_UNDEFINED,
+                                             comau_tcp_interface::ErrorValue::ERR_TCP_CONN_STATE,
+                                             comau_tcp_interface::ErrorValue::ERR_TCP_CONN_ROBOT,
+                                             comau_tcp_interface::ErrorValue::ERR_TCP_CONN_ARM,  
+                                             comau_tcp_interface::ErrorValue::ERR_TCP_READ,
+                                             comau_tcp_interface::ErrorValue::ERR_TCP_WRITE_CMD,
+                                             comau_tcp_interface::ErrorValue::ERR_TCP_WRITE_MOTION,
+                                             comau_tcp_interface::ErrorValue::ERR_TCP_DISCONN_STATE,
+                                             comau_tcp_interface::ErrorValue::ERR_TCP_DISCONN_ROBOT,    
+                                             comau_tcp_interface::ErrorValue::ERR_TCP_DISCONN_ARM,
+                                             comau_tcp_interface::ErrorValue::ERR_SAFETY_GATE,
+                                             comau_tcp_interface::ErrorValue::ERR_WRONG_MOTION};
+  uint32_t code = error_value_clientcode_;
+  if (server_error_pub_) 
+  {
+    if (server_error_pub_->trylock())
+    {
+      server_error_pub_->msg_.code = code;
+      server_error_pub_->msg_.error_msg.clear();
+
+      for ( size_t i = 0; i < error_codes.size(); i++ )
+      {
+        switch (code & error_codes.at(i))
+        {
+          case comau_tcp_interface::ErrorValue::ERR_TCP_UNDEFINED:
+            server_error_pub_->msg_.error_msg.push_back(comau_msgs::msg::ComauServerError::ERR_TCP_UNDEFINED);
+            break;
+          case comau_tcp_interface::ErrorValue::ERR_TCP_CONN_STATE:
+            server_error_pub_->msg_.error_msg.push_back(comau_msgs::msg::ComauServerError::ERR_TCP_CONN_STATE);
+            break;
+          case comau_tcp_interface::ErrorValue::ERR_TCP_CONN_ROBOT:
+            server_error_pub_->msg_.error_msg.push_back(comau_msgs::msg::ComauServerError::ERR_TCP_CONN_ROBOT);
+            break;
+          case comau_tcp_interface::ErrorValue::ERR_TCP_CONN_ARM:
+            server_error_pub_->msg_.error_msg.push_back(comau_msgs::msg::ComauServerError::ERR_TCP_CONN_ARM);
+            break;
+          case comau_tcp_interface::ErrorValue::ERR_TCP_READ:
+            server_error_pub_->msg_.error_msg.push_back(comau_msgs::msg::ComauServerError::ERR_TCP_READ);
+            break;
+          case comau_tcp_interface::ErrorValue::ERR_TCP_WRITE_CMD:
+            server_error_pub_->msg_.error_msg.push_back(comau_msgs::msg::ComauServerError::ERR_TCP_WRITE_CMD);
+            break;
+          case comau_tcp_interface::ErrorValue::ERR_TCP_WRITE_MOTION:
+            server_error_pub_->msg_.error_msg.push_back(comau_msgs::msg::ComauServerError::ERR_TCP_WRITE_MOTION);
+            break;
+          case comau_tcp_interface::ErrorValue::ERR_TCP_DISCONN_STATE:
+            server_error_pub_->msg_.error_msg.push_back(comau_msgs::msg::ComauServerError::ERR_TCP_DISCONN_STATE);
+            break;
+          case comau_tcp_interface::ErrorValue::ERR_TCP_DISCONN_ROBOT:
+            server_error_pub_->msg_.error_msg.push_back(comau_msgs::msg::ComauServerError::ERR_TCP_DISCONN_ROBOT);
+            break;
+          case comau_tcp_interface::ErrorValue::ERR_TCP_DISCONN_ARM:
+            server_error_pub_->msg_.error_msg.push_back(comau_msgs::msg::ComauServerError::ERR_TCP_DISCONN_ARM);
+            break;
+          case comau_tcp_interface::ErrorValue::ERR_SAFETY_GATE:
+            server_error_pub_->msg_.error_msg.push_back(comau_msgs::msg::ComauServerError::ERR_SAFETY_GATE);
+            break;
+          case comau_tcp_interface::ErrorValue::ERR_WRONG_MOTION:
+            server_error_pub_->msg_.error_msg.push_back(comau_msgs::msg::ComauServerError::ERR_WRONG_MOTION);
+            break;
+          default:
+            break;
+        } 
+      }
+      server_error_pub_->unlockAndPublish();
+    }
+  }
+}
+
 void ComauHardwareInterface::publishEndEffectorPose() {
 
   ee_transform_.header.stamp = rclcpp::Clock{RCL_ROS_TIME}.now();
@@ -309,6 +269,50 @@ void ComauHardwareInterface::publishIOPins() {
   }
 }
 
+void ComauHardwareInterface::publishOperationMode() {
+  
+  if (server_operation_mode_pub_) 
+  {
+    if (server_operation_mode_pub_->trylock())
+    {
+
+      if ((stsSelector_ & 0x00001) == 1)
+      {
+        server_operation_mode_pub_->msg_.status_selector_key = "T1";
+      }else if( (stsSelector_ & 0x00002) == 2 )
+      { 
+        server_operation_mode_pub_->msg_.status_selector_key = "AUTO";
+      }else if( (stsSelector_ & 0x00004) == 4 )
+      { 
+        server_operation_mode_pub_->msg_.status_selector_key = "Extern";
+      } else {
+        server_operation_mode_pub_->msg_.status_selector_key = "NONE";
+      }
+      
+      if( (stsSelector_ & 0x00008) == 8 )
+      { 
+        server_operation_mode_pub_->msg_.drive_on = true;
+      } else {
+        server_operation_mode_pub_->msg_.drive_on = false;
+      }
+
+      if( (stsSelector_ & 0x00010) == 16 )
+      { 
+        server_operation_mode_pub_->msg_.start = true;
+      } else {
+        server_operation_mode_pub_->msg_.start = false;
+      }
+
+      server_operation_mode_pub_->unlockAndPublish();
+    }
+  }
+}
+
+void ComauHardwareInterface::copyVector(const std::vector<double> &src, std::vector<double> &dest) {
+  for (size_t i = 0; i < src.size(); i++)
+    dest.at(i) = src.at(i);
+}
+/*
 //void ComauHardwareInterface::publishSnsTrkType() {
 //  if (sns_trk_type_pub_) {
 //    if (sns_trk_type_pub_->trylock()) {
@@ -322,10 +326,7 @@ bool ComauHardwareInterface::shouldResetControllers() {
   return false;
 }
 
-void ComauHardwareInterface::copyVector(const std::vector<double> &src, std::vector<double> &dest) {
-  for (size_t i = 0; i < src.size(); i++)
-    dest.at(i) = src.at(i);
-}
+
 
 bool ComauHardwareInterface::ifZero(const std::vector<double> &vec) {
   for (double val : vec)
