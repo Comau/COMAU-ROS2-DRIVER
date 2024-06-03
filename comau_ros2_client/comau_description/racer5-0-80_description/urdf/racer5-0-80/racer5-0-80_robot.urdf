@@ -6,8 +6,8 @@
 <robot name="racer5-0-80">
   <!-- 
     Author: LMS
-   -->
-  <controller_plugin_gazebo/>
+   
+  <controller_plugin_gazebo/>-->
   <!-- 
     Author: LMS
    -->
@@ -108,11 +108,7 @@
       </material>
     </visual>
     <collision>
-      <surface>
-        <contact>
-          <collide_bitmask>0x01</collide_bitmask>
-        </contact>
-      </surface>
+
       <geometry>
         <mesh filename="package://racer5-0-80_description/meshes/racer5-0-80/base_link.STL"/>
       </geometry>
@@ -134,11 +130,7 @@
       </material>
     </visual>
     <collision>
-      <surface>
-        <contact>
-          <collide_bitmask>0x10</collide_bitmask>
-        </contact>
-      </surface>
+
       <geometry>
         <mesh filename="package://racer5-0-80_description/meshes/racer5-0-80/Link1.STL"/>
       </geometry>
@@ -167,11 +159,7 @@
       </material>
     </visual>
     <collision>
-      <surface>
-        <contact>
-          <collide_bitmask>0x10</collide_bitmask>
-        </contact>
-      </surface>
+
       <geometry>
         <mesh filename="package://racer5-0-80_description/meshes/racer5-0-80/Link2.STL"/>
       </geometry>
@@ -200,11 +188,7 @@
       </material>
     </visual>
     <collision>
-      <surface>
-        <contact>
-          <collide_bitmask>0x01</collide_bitmask>
-        </contact>
-      </surface>
+
       <geometry>
         <mesh filename="package://racer5-0-80_description/meshes/racer5-0-80/Link3.STL"/>
       </geometry>
@@ -233,11 +217,7 @@
       </material>
     </visual>
     <collision>
-      <surface>
-        <contact>
-          <collide_bitmask>0x01</collide_bitmask>
-        </contact>
-      </surface>
+
       <geometry>
         <mesh filename="package://racer5-0-80_description/meshes/racer5-0-80/Link4.STL"/>
       </geometry>
@@ -266,11 +246,7 @@
       </material>
     </visual>
     <collision>
-      <surface>
-        <contact>
-          <collide_bitmask>0x10</collide_bitmask>
-        </contact>
-      </surface>
+
       <geometry>
         <mesh filename="package://racer5-0-80_description/meshes/racer5-0-80/Link5.STL"/>
       </geometry>
@@ -301,11 +277,7 @@
       </material>
     </visual>
     <collision>
-      <surface>
-        <contact>
-          <collide_bitmask>0x01</collide_bitmask>
-        </contact>
-      </surface>
+
       <geometry>
         <mesh filename="package://racer5-0-80_description/meshes/racer5-0-80/Link6.STL"/>
       </geometry>
