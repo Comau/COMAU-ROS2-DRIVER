@@ -28,11 +28,18 @@ def generate_launch_description():
     # 'pos_z_arg',
     # default_value='',
     # )
+
+    use_mimic_arg = 'use_mimic'    
+    declare_use_mimic_cmd = DeclareLaunchArgument(
+    'use_mimic_arg',
+    default_value='',
+    )
     
     robot_description = Command([
       FindExecutable(name='xacro'), ' ',
       xacro_file_path, ' ', 
-    # 'pos_z:=', LaunchConfiguration(pos_z_arg)     
+    # 'pos_z:=', LaunchConfiguration(pos_z_arg)  
+     'use_mimic:=', LaunchConfiguration(use_mimic_arg)
     ])
 
     # Command to interprete robot_description as a string
