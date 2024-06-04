@@ -44,6 +44,7 @@ CallbackReturn ComauHardwareInterface::on_init(const hardware_interface::Hardwar
   /*ft_states_.assign(6, 0);
   ft_command_.assign(6, 0);*/
 
+  // services
   thread_service_ = nh_->create_service<comau_msgs::srv::OpenConnection>("tcpip_conn_manager", [&](const comau_msgs::srv::OpenConnection::Request::SharedPtr req, 
                                  comau_msgs::srv::OpenConnection::Response::SharedPtr resp)
                                  {
@@ -55,6 +56,31 @@ CallbackReturn ComauHardwareInterface::on_init(const hardware_interface::Hardwar
                                     }
                                     req_prev->open_connection = req->open_connection;
                                     resp->success;
+                                 });
+  setMoveflyParams_service_ = nh_->create_service<comau_msgs::srv::SetMoveFlyParams>("set_movefly_params", [&](const comau_msgs::srv::SetMoveFlyParams::Request::SharedPtr req, 
+                                 comau_msgs::srv::SetMoveFlyParams::Response::SharedPtr resp)
+                                 {
+                                    if (use_robot_server_){
+                                      robot_ptr_->setMoveflyParams(req->threshold, req->lin_velocity, req->fly_dist);
+                                    }
+                                    resp->success = true;
+                                 });
+  setIO_service_ = nh_->create_service<comau_msgs::srv::SetIO>("set_io", [&](const comau_msgs::srv::SetIO::Request::SharedPtr req, 
+                                 comau_msgs::srv::SetIO::Response::SharedPtr resp)
+                                 {
+                                    if (use_robot_server_){
+                                      resp->success = robot_ptr_->setIO(req->pin, req->state);
+                                    }
+                                    resp->success;
+                                 });
+  /*setSnsTrkParams_service_  =
+      nh_.advertiseService("/set_sensor_tracking_params", &ComauHardwareInterface::setSnsTrkParams_routine, this);*/
+  setArmState_service_ = nh_->create_service<comau_msgs::srv::SetArmState>("set_arm_state", [&](const comau_msgs::srv::SetArmState::Request::SharedPtr req, 
+                                 comau_msgs::srv::SetArmState::Response::SharedPtr resp)
+                                 {
+                                    if (use_robot_server_)
+                                      robot_ptr_->setArmState(req->arm_state);
+                                    resp->success = true;
                                  });
 
   // Initialize Robot driver
@@ -132,18 +158,20 @@ CallbackReturn ComauHardwareInterface::on_init(const hardware_interface::Hardwar
   }
 
   //publishers
-  robot_sts_pub_ = nh_->create_publisher<comau_msgs::msg::ComauRobotStatus>("robot_status", rclcpp::SystemDefaultsQoS());
   try {
-    robot_status_pub_ = std::make_unique<comau_msgs::msg::ComauRobotStatus>(robot_sts_pub_);
+    robot_status_pub_.reset(
+      new realtime_tools::RealtimePublisher<comau_msgs::msg::ComauRobotStatus>(nh_->create_publisher<comau_msgs::msg::ComauRobotStatus>(
+    "robot_status", rclcpp::SystemDefaultsQoS())));
     } catch (const std::exception & e) {
       fprintf(
       stderr, "Exception thrown during publisher creation at configure stage with message : %s \n",
       e.what());
     return CallbackReturn::ERROR;
   }
-  /*try {
-    server_error_pub_ = std::make_unique<comau_msgs::msg::ComauServerError>(
-                        nh_->create_publisher<comau_msgs::msg::ComauServerError>("server_error", rclcpp::SystemDefaultsQoS()));
+  try {
+    server_error_pub_.reset(
+      new realtime_tools::RealtimePublisher<comau_msgs::msg::ComauServerError>(nh_->create_publisher<comau_msgs::msg::ComauServerError>(
+        "server_error", rclcpp::SystemDefaultsQoS())));
   } catch (const std::exception & e) {
     fprintf(
       stderr, "Exception thrown during publisher creation at configure stage with message : %s \n",
@@ -151,8 +179,9 @@ CallbackReturn ComauHardwareInterface::on_init(const hardware_interface::Hardwar
     return CallbackReturn::ERROR;
   }
   try {
-    server_operation_mode_pub_ = std::make_unique<comau_msgs::msg::ComauOperationMode>(
-                        nh_->create_publisher<comau_msgs::msg::ComauOperationMode>("robot_operation_mode", rclcpp::SystemDefaultsQoS()));
+    server_operation_mode_pub_.reset(
+      new realtime_tools::RealtimePublisher<comau_msgs::msg::ComauOperationMode>(nh_->create_publisher<comau_msgs::msg::ComauOperationMode>(
+        "robot_operation_mode", rclcpp::SystemDefaultsQoS())));
   } catch (const std::exception & e) {
     fprintf(
       stderr, "Exception thrown during publisher creation at configure stage with message : %s \n",
@@ -160,8 +189,9 @@ CallbackReturn ComauHardwareInterface::on_init(const hardware_interface::Hardwar
     return CallbackReturn::ERROR;
   }
   try {
-    ee_pose_pub_ = std::make_unique<tf2_msgs::msg::TFMessage>(
-                        nh_->create_publisher<tf2_msgs::msg::TFMessage>("tf", rclcpp::SystemDefaultsQoS()));
+    ee_pose_pub_.reset(
+      new realtime_tools::RealtimePublisher<tf2_msgs::msg::TFMessage>(nh_->create_publisher<tf2_msgs::msg::TFMessage>(
+      "tf", rclcpp::SystemDefaultsQoS())));
   } catch (const std::exception & e) {
     fprintf(
       stderr, "Exception thrown during publisher creation at configure stage with message : %s \n",
@@ -169,8 +199,11 @@ CallbackReturn ComauHardwareInterface::on_init(const hardware_interface::Hardwar
     return CallbackReturn::ERROR;
   }
   try {
-    async_enable_pub_ = std::make_unique<std_msgs::msg::Bool>(
-                        nh_->create_publisher<std_msgs::msg::Bool>("async_enable", rclcpp::SystemDefaultsQoS()));
+    async_enable_pub_.reset(
+      new realtime_tools::RealtimePublisher<std_msgs::msg::Bool>(
+      nh_->create_publisher<std_msgs::msg::Bool>(
+      "async_enable", rclcpp::SystemDefaultsQoS())));
+  
   } catch (const std::exception & e) {
     fprintf(
       stderr, "Exception thrown during publisher creation at configure stage with message : %s \n",
@@ -178,8 +211,9 @@ CallbackReturn ComauHardwareInterface::on_init(const hardware_interface::Hardwar
     return CallbackReturn::ERROR;
   }
   try {
-    io_states_pub_ = std::make_unique<comau_msgs::msg::IOStates>(
-                        nh_->create_publisher<comau_msgs::msg::IOStates>("io_states", rclcpp::SystemDefaultsQoS()));
+    io_states_pub_.reset(
+      new realtime_tools::RealtimePublisher<comau_msgs::msg::IOStates>(
+        nh_->create_publisher<comau_msgs::msg::IOStates>("io_states", rclcpp::SystemDefaultsQoS())));
     io_states_pub_->msg_.digital_in_states.resize(6);
     io_states_pub_->msg_.digital_out_states.resize(6);
   } catch (const std::exception & e) {
@@ -187,7 +221,7 @@ CallbackReturn ComauHardwareInterface::on_init(const hardware_interface::Hardwar
       stderr, "Exception thrown during publisher creation at configure stage with message : %s \n",
       e.what());
     return CallbackReturn::ERROR;
-  }*/
+  }
   /*try {
     sns_trk_type_pub_ = std::make_unique<std_msgs::msg::Int32>(
                         nh_->create_publisher<std_msgs::msg::Int32>("sensor_tracking_type", rclcpp::SystemDefaultsQoS()));
@@ -266,6 +300,81 @@ return_type ComauHardwareInterface::read(const rclcpp::Time & time, const rclcpp
   for (auto i = 0ul; i < joint_position_command_.size(); i++)
   {
     joint_position_[i] = joint_position_command_[i];
+  }
+
+  if (!(use_state_server_ || use_robot_server_ || use_arm1_server_)) 
+  {
+    if (position_controller_running_)
+      copyVector(joint_position_command_, joint_position_);
+    return return_type::OK;
+  }
+
+  if (use_state_server_ && robot_ptr_->state_client_ptr_->is_connected_) {
+    if (robot_ptr_->readMessagePackage()) {
+      robot_ptr_->getTimeStamp(data_timestamp_);
+      robot_ptr_->getStatus(robot_status_);
+      robot_ptr_->getSensorType(sns_trk_type_);
+      robot_ptr_->getEePosition(ee_position_);
+      robot_ptr_->getPinsIN(pins_in_);
+      robot_ptr_->getPinsStatesIN(pins_state_in_);
+      robot_ptr_->getPinsOUT(pins_out_);
+      robot_ptr_->getPinsStatesOUT(pins_state_out_);
+      robot_ptr_->getError(error_value_);
+      robot_ptr_->getNumJoints(num_robot_joints_);
+      robot_ptr_->getJointType(jnt_type_);
+      robot_ptr_->getJointPosition(joint_position_, num_robot_joints_, jnt_type_);
+      robot_ptr_->getStsSelector(stsSelector_);
+
+      if(num_robot_joints_ > 0 && !initialization_)
+      {
+        if (num_robot_joints_ != num_joints_)
+          RCLCPP_WARN_STREAM(rclcpp::get_logger("comau_hw_interface"),"Warning - mismatch between real robot and urdf number of joints: " << "[" << num_robot_joints_ << ", " << num_joints_ << "]");
+
+        robot_ptr_->jnt_cmd_type_   = jnt_type_;
+        robot_ptr_->num_cmd_joints_ = num_robot_joints_;
+        initialization_ = true;
+      }
+
+      if ((robot_status_ == 'T') || (robot_status_ == 'C') || (robot_status_ == 'R') || (robot_status_ == 'M') ||
+          (robot_status_ == 'I') || (robot_status_ == 'P') || (robot_status_ == 'S') || (robot_status_ == 'E') )
+      {
+        packet_read_ = true;
+        if (error_value_ != error_value_prev_)
+        {
+          RCLCPP_WARN_STREAM(rclcpp::get_logger("comau_hw_interface"),"Error from server: " << error_value_);
+          errorParser(error_value_);
+          publishErrorValue();
+
+          /*  Get server reset */
+          if (error_value_prev_ > 0 && error_value_prev_ < KI_ERR_STATE_MAX && error_value_ == 0)
+            robot_reset_ = true;
+
+          error_value_prev_ = error_value_;          
+        }
+        publishRobotStatus();
+        publishEndEffectorPose();
+        publishIOPins();
+        //publishSnsTrkType();
+        publishOperationMode();
+        execute_joints_handler_ptr->set_status(robot_status_);
+        execute_joints_handler_ptr->set_allow_async(robot_ptr_->checkAllowAsync());
+        execute_cartesian_handler_ptr->set_status(robot_status_);
+        execute_cartesian_handler_ptr->set_allow_async(robot_ptr_->checkAllowAsync());
+
+        invalidMsgCount_ = 0;   
+      }
+      else
+      {
+        RCLCPP_WARN_STREAM(rclcpp::get_logger("comau_hw_interface"),"Invalid state msg: " << robot_status_);
+        //std::cout << "Server error:      " << error_value_  << std::endl;
+        invalidMsgCount_ ++; // counter to restart the connection
+        if (robot_ptr_->state_client_ptr_->is_connected_ && invalidMsgCount_ > 2) // VE_ADD : sistema la visibilit� di is_connected_ e state_client_ptr_ che � stata cambiata
+        {
+          RCLCPP_WARN_STREAM(rclcpp::get_logger("comau_hw_interface"),"Restart state_client");
+          robot_ptr_->state_client_ptr_->is_connected_ = false;
+        }
+      }     
+    }
   }
 
   return return_type::OK;

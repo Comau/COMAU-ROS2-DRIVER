@@ -179,7 +179,6 @@ class HARDWARE_INTERFACE_PUBLIC ComauHardwareInterface : public hardware_interfa
     // publishers
     std::unique_ptr<realtime_tools::RealtimePublisher<std_msgs::msg::Bool>> async_enable_pub_;
     using StatePublisher = realtime_tools::RealtimePublisher<comau_msgs::msg::ComauRobotStatus>;
-    rclcpp::Publisher<comau_msgs::msg::ComauRobotStatus>::SharedPtr robot_sts_pub_;
     std::unique_ptr<StatePublisher> robot_status_pub_; /**< ROS status publisher see ComauRobotStatus.msg */
     std::unique_ptr<realtime_tools::RealtimePublisher<comau_msgs::msg::ComauServerError>>
         server_error_pub_; /**< ROS error publisher see ComauServerError.msg */
