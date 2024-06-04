@@ -116,7 +116,7 @@ class YourTestClass(unittest.TestCase):
                "joint_1": {'lower': -3.14,  'upper': 3.14,  'effort': 10000.00, 'velocity': 20.0},
                "joint_2": {'lower': -1.309, 'upper': 1.658, 'effort': 10000.00, 'velocity': 20.0},   
                "joint_3": {'lower': -1.396, 'upper': 1.238, 'effort': 10000.00, 'velocity': 20.0},   
-               "joint_4": {'lower': -3.14,  'upper': 3.14, 'effort': 10000.00, 'velocity': 20.0},
+               "joint_4": {'lower': -3.14,  'upper': 3.14,  'effort': 10000.00, 'velocity': 20.0},
                "joint_5": {'lower': -2.182, 'upper': 2.182, 'effort': 10000.00, 'velocity': 20.0},
                "joint_6": {'lower': -3.14,  'upper': 3.14,  'effort': 10000.00, 'velocity': 20.0},
              }
@@ -222,7 +222,7 @@ class YourTestClass(unittest.TestCase):
           }, 
       ]
       
-      # Inizializzazione liste
+      # Initialize lists
       cls.passed_robots_joint_number = []
       cls.passed_robots_joint_limits = []
 
@@ -232,33 +232,33 @@ class YourTestClass(unittest.TestCase):
   def test_joint_number(self):
     for robot_info in self.robot_data:
         with self.subTest(robot_info["robot_name"]):
-          all_tests_passed = True  # Variabile di controllo    
+          all_tests_passed = True   
           robot = URDF.from_xml_file(robot_info["urdf_file_path"])
           found_joints = [joint.name for joint in robot.joints]
   
-          # Verifica se il numero di giunti trovati corrisponde al numero atteso
+          # Check if the number of joints found matches the expected_joint_count
           try:
               self.assertEqual(len(found_joints), robot_info["expected_joint_count"],
-                               f"Il NUMERO di giunti trovati nel file URDF per il robot {robot_info['robot_name']} non corrisponde al numero atteso di giunti.")
+                               f" The NUMBER of joints found in the URDF file for robot {robot_info['robot_name']} does not match the expected number of joints.”")
           except AssertionError as error:
-              print(f"  *****     TEST FALLITO per il robot {robot_info['robot_name']}: {error}    *****")
+              print(f"  *****     TEST FAILED for robot {robot_info['robot_name']}: {error}    *****")
               all_tests_passed = False 
 
-          # Verifica che ciascun giunto atteso sia presente nei giunti trovati
+          # Verify that each expected joint is present in the joints found
           for joint in robot_info["expected_joints"]:
               with self.subTest(joint=joint):
                   if joint not in found_joints:
-                      print(f"Il GIUNTO {joint} ATTESO NON è stato TROVATO nel file URDF del robot {robot_info['robot_name']}")
-                      all_tests_passed = False  # Imposta la variabile di controllo su False se il test fallisce
+                      print(f" The EXPECTED {joint} was NOT FOUND in the URDF file of the robot {robot_info['robot_name']}")
+                      all_tests_passed = False 
   
-          # Verifica che tutti i giunti nel file URDF siano presenti tra quelli attesi
+          # Verify that all joints in the URDF are in the list of expected_joints
           for joint in found_joints:
               with self.subTest(joint=joint):
                   if joint not in robot_info["expected_joints"]:
-                      print(f"Il GIUNTO {joint} trovato nel file URDF del robot {robot_info['robot_name']} NON è tra quelli ATTESI.")
-                      all_tests_passed = False  # Imposta la variabile di controllo su False se il test fallisce
+                      print(f" The JOINT {joint} found in the URDF file of the robot {robot_info['robot_name']} is NOT among the EXPECTED ones.")
+                      all_tests_passed = False  
   
-          # Se tutti i controlli passano senza errori, aggiungi il nome del robot alla lista
+          # If there are no errors, add the robot name to the list.
           if all_tests_passed:
               self.passed_robots_joint_number.append(robot_info["robot_name"])
           else:
@@ -282,7 +282,7 @@ class YourTestClass(unittest.TestCase):
                     #self.passed_robots_joint_limits.append(robot_info["robot_name"])
                   
                   except AssertionError as error:
-                    print(f" *****     TEST FALLITO  per il robot {robot_info['robot_name']} - joint {joint.name}: {error}")
+                    print(f" *****     FAILED TEST for the robot {robot_info['robot_name']} - joint {joint.name}: {error}")
                     all_joints_passed = False
                     self.not_passed_robots_joint_limits.append(robot_info["robot_name"])
                   
@@ -291,19 +291,19 @@ class YourTestClass(unittest.TestCase):
 
   @classmethod
   def tearDownClass(cls):
-      print("Test sul numero di giunti completati per i seguenti robot:")
+      print("Joint number tests completed for the following robots:" )
       for robot_name in cls.passed_robots_joint_number:
           print(f"- {robot_name}")
   
-      print("Test sui limiti di giunto completati per i seguenti robot:")
+      print("Joint limit tests completed for the following robots:")
       for robot_name in cls.passed_robots_joint_limits:
           print(f"- {robot_name}")  
           
-      print("Test fallito sul numero di giunto per i seguenti robot:")
+      print("Failed joint number test for the following robots:")
       for robot_name in cls.not_passed_robots_joint_number:
           print(f"- {robot_name}")
   
-      print("Test fallito sui limiti di giunto per i seguenti robot:")
+      print("Failed test on joint limits for the following robots:")
       for robot_name in cls.not_passed_robots_joint_limits:
           print(f"- {robot_name}")              
 
