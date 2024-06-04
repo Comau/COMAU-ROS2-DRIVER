@@ -49,6 +49,8 @@ set(HW_IF_INCLUDE_DEPENDS
   kdl_parser
   rclcpp
   controller_interface
+  controller_manager
+  controller_manager_msgs
   realtime_tools
   trajectory_msgs
   tf2

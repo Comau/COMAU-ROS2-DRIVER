@@ -16,6 +16,8 @@
   <depend>rclcpp</depend>
   <depend>rcpputils</depend>
   <depend>control_msgs</depend>
+  <depend>controller_manager</depend>
+  <depend>controller_manager_msgs</depend>
   <depend>controller_interface</depend>
   <depend>hardware_interface</depend>
   <depend>pluginlib</depend>
@@ -28,7 +30,6 @@
   <depend>urdf</depend>
   <depend>trajectory_msgs</depend>
   <depend>tf2_geometry_msgs</depend>
-  <depend>controller_manager</depend>
   <depend>joint_state_broadcaster</depend>
   <depend>joint_trajectory_controller</depend>
   <depend>robot_state_publisher</depend>

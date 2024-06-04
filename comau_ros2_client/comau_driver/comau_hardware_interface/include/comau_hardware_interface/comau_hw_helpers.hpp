@@ -312,6 +312,10 @@ void ComauHardwareInterface::copyVector(const std::vector<double> &src, std::vec
   for (size_t i = 0; i < src.size(); i++)
     dest.at(i) = src.at(i);
 }
+void ComauHardwareInterface::closeComauDriver() {
+  if (use_robot_server_)
+    robot_ptr_->~ComauRobot();
+}
 /*
 //void ComauHardwareInterface::publishSnsTrkType() {
 //  if (sns_trk_type_pub_) {
@@ -465,11 +469,6 @@ void ComauHardwareInterface::setArmState_routine(const std::shared_ptr<comau_msg
   if (use_robot_server_)
     robot_ptr_->setArmState(req->arm_state);
   resp->success = true;
-}
-
-void ComauHardwareInterface::closeComauDriver() {
-  if (use_robot_server_)
-    robot_ptr_->~ComauRobot();
 }
 */
 }
