@@ -6,8 +6,8 @@
 <robot name="nj220">
   <!-- 
     Author: LMS
-   -->
-  <controller_plugin_gazebo/>
+   
+  <controller_plugin_gazebo/>-->
   <transmission name="joint_1_trans">
     <type>transmission_interface/SimpleTransmission</type>
     <joint name="joint_1">
