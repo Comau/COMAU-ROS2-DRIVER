@@ -71,8 +71,7 @@ foreach(Dependency IN ITEMS ${HW_IF_INCLUDE_DEPENDS})
   find_package(${Dependency} REQUIRED)
 endforeach()
 
-add_library(
-  comau_hardware_interface
+add_library(comau_hardware_interface
   src/comau_robot_interface_node.cpp
   src/comau_hw_interface.cpp
   src/comau_hw_control_loop.cpp
@@ -141,6 +140,23 @@ install(
   comau_hardware_interface
   DESTINATION lib/${PROJECT_NAME}
 )
+
+install(
+  DIRECTORY description/ros2_control description/urdf
+  DESTINATION share/comau_hardware_interface
+)
+install(
+  DIRECTORY config
+  DESTINATION share/comau_hardware_interface
+)
+
+install(
+  DIRECTORY 
+    src
+    config
+    launch 
+   # test
+  DESTINATION share/${PROJECT_NAME})
 
 #target_compile_features(comau_hardware_interface PUBLIC cxx_std_17)
 #target_include_directories(comau_hardware_interface PUBLIC

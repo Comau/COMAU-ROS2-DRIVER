@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro" name="racer5_cobot">
+
+  <!-- Import r6bot macro -->
+  <!--xacro:include filename="$(find comau_hardware_interface_description)/urdf/racer5_cobot_description.urdf.xacro"/-->
+
+  <!-- create link fixed to the "world" -->
+  <link name="world"/>
+
+  <!--xacro:racer5_cobot_description/-->
+
+  <!-- Import r6bot ros2_control description -->
+  <xacro:include filename="$(find comau_hardware_interface)/ros2_control/racer5_cobot.ros2_control.xacro" />
+  <xacro:racer5_cobot_ros2_control name="racer5_cobot"/>
+
+</robot>

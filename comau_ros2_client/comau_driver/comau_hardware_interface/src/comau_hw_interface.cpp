@@ -290,7 +290,7 @@ std::vector<hardware_interface::CommandInterface> ComauHardwareInterface::export
 return_type ComauHardwareInterface::read(const rclcpp::Time & time, const rclcpp::Duration & period)
 {
   // TODO(pac48) set sensor_states_ values from subscriber
-
+  RCLCPP_WARN_STREAM(rclcpp::get_logger("comau_hw_interface"),"READ");/* ANDY */
   for (auto i = 0ul; i < joint_velocities_command_.size(); i++)
   {
     joint_velocities_[i] = joint_velocities_command_[i];

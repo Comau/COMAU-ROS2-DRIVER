@@ -26,10 +26,10 @@ int main(int argc, char** argv)
   rclcpp::init(argc, argv);
 
   std::shared_ptr<rclcpp::Node> nh_ = std::make_shared<rclcpp::Node>("comau_hardware_control_loop");
-  nh_->declare_parameter("loop_hz", 500);
+  nh_->declare_parameter("loop_hz", 500.0);
   nh_->declare_parameter("cycle_time_error_threshold", 0.025);
-  c_hw_control_loop_ptr->loop_hz_ = nh_->get_parameter("loop_hz").as_double();
-  c_hw_control_loop_ptr->cycle_time_error_threshold_ = nh_->get_parameter("cycle_time_error_threshold").as_double();
+  /*c_hw_control_loop_ptr->loop_hz_ = nh_->get_parameter("loop_hz").as_double();
+  c_hw_control_loop_ptr->cycle_time_error_threshold_ = nh_->get_parameter("cycle_time_error_threshold").as_double();*/
 
   // create executor
   std::shared_ptr<rclcpp::Executor> e = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
@@ -50,6 +50,8 @@ int main(int argc, char** argv)
     // for calculating the measured period of the loop
     rclcpp::Time previous_time = controller_manager->now();
 
+    /*ANDY UPDATE PERIOD AS DESIRED */
+
     while (rclcpp::ok()) {
       // calculate measured period
       auto const current_time = controller_manager->now();
@@ -58,9 +60,9 @@ int main(int argc, char** argv)
 
       // execute update loop
       controller_manager->read(controller_manager->now(), measured_period);
-      controller_manager->update(controller_manager->now(), measured_period);
+      //controller_manager->update(controller_manager->now(), measured_period);
       controller_manager->write(controller_manager->now(), measured_period);
-
+      RCLCPP_WARN(controller_manager->get_logger(), "Cycle");
       // wait until we hit the end of the period
       next_iteration_time += period;
       std::this_thread::sleep_until(next_iteration_time);

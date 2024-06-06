@@ -39,8 +39,6 @@
 
 namespace comau_hardware_control_loop
 {
-// Used to convert seconds elapsed to nanoseconds
-static const double BILLION = 1000000000.0;
 
 class ComauHWControlLoop : public controller_interface::ControllerInterface
 {
@@ -135,6 +133,6 @@ protected:
       {"velocity", &joint_velocity_state_interface_}};
 };
 
-}  // namespace ros2_control_demo_example_7
+}  // namespace comau_hardware_control_loop
 
 #endif  // ROS2_CONTROL_DEMO_EXAMPLE_7__R6BOT_CONTROLLER_HPP_

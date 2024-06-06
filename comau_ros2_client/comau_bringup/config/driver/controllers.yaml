@@ -6,7 +6,7 @@ controller_manager:
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
 
-    r6bot_controller:
+    comau_hardware_control_loop:
       type: comau_hardware_control_loop/ComauHWControlLoop
 
 

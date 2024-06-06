@@ -252,15 +252,19 @@ void ExecuteCartesianTrajectoryHandler::executeCallback(const std::shared_ptr<rc
       result_->action_result.status = comau_msgs::msg::ActionResultStatusConstants::SUCCESS;
       result_->action_result.success = true;
       result_->action_result.millis_passed = feedback_->action_feedback.millis_passed;
+      feedback_->action_feedback.success = result_->action_result.success;
       /* After motion is correctly executed, the server clean the traj then the reset cmd is not necessary
       if (use_robot_server_)
         robot_ptr_->resetPDL();
       */
-      while (robot_status_ == RobotStatus::SUCCEEDED) /* Wait for the READY status to Ack the motion command */
+      goal_handle->succeed(result_);
+      goal_handle->publish_feedback(feedback_);
+      /*
+      while (robot_status_ == RobotStatus::SUCCEEDED)
       {
         rclcpp::sleep_for(rclcpp::Duration::from_seconds(0.002).to_chrono<std::chrono::nanoseconds>());
       }
-      goal_handle->succeed(result_);
+      goal_handle->succeed(result_);*/
 
       return;
     } else if (robot_status_ == RobotStatus::ERROR) { // ERROR
@@ -288,13 +292,15 @@ void ExecuteCartesianTrajectoryHandler::executeCallback(const std::shared_ptr<rc
     } else if (robot_status_ == RobotStatus::MOVING) { // MOVING
 
       RCLCPP_DEBUG(rclcpp::get_logger(action_name_), "[%s]: Trajectory execution is active", action_name_.c_str());
+      feedback_->action_feedback.success = false;
       feedback_->action_feedback.millis_passed = uint((rclcpp::Clock{RCL_ROS_TIME}.now().nanoseconds() / 1e-6) - start_time);
-
+      feedback_->action_feedback.status = robot_status_;
       goal_handle->publish_feedback(feedback_);
     }
 
     rclcpp::sleep_for(rclcpp::Duration::from_seconds(0.001).to_chrono<std::chrono::nanoseconds>());
   }
+  goal_handle_ = goal_handle;
 }
 
 void ExecuteCartesianTrajectoryHandler::set_status(char &status) {

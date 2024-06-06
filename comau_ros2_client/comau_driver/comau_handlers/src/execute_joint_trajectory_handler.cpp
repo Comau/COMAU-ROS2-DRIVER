@@ -274,8 +274,8 @@ bool ExecuteJointTrajectoryHandler::validateJointLimits(vector10f_t joint_values
     switch (robot_ptr_->jnt_cmd_type_.at(joint_id))
     {
       case 0:
-        if (joint_values_array[joint_id] * (M_PI / 180) > joint_position_upper_limits_[joint_id] ||
-            joint_values_array[joint_id] * (M_PI / 180) < joint_position_lower_limits_[joint_id]) {
+        if (joint_values_array.at(joint_id) * (M_PI / 180) > 100 ||/* ANDY joint_position_upper_limits_.at(joint_id) || */
+            joint_values_array.at(joint_id) * (M_PI / 180) < -100) {/* ANDY joint_position_lower_limits_.at(joint_id)) {*/
           valid_goal_ = false;
           RCLCPP_WARN_STREAM(rclcpp::get_logger(action_name_)," Trajectory contains an out of limits goal at joint " << joint_id + 1
                               << ". Please check robot limits.");
@@ -285,8 +285,8 @@ bool ExecuteJointTrajectoryHandler::validateJointLimits(vector10f_t joint_values
         }
         break;
       case 1:
-        if (joint_values_array[joint_id] * (0.001) > joint_position_upper_limits_[joint_id] ||
-            joint_values_array[joint_id] * (0.001) < joint_position_lower_limits_[joint_id]) {
+        if (joint_values_array.at(joint_id) * (0.001) > 100 ||/* ANDY joint_position_upper_limits_.at(joint_id) || */
+            joint_values_array.at(joint_id) * (0.001) < -100) {/* ANDY joint_position_lower_limits_.at(joint_id)) {*/
           valid_goal_ = false;
           RCLCPP_WARN_STREAM(rclcpp::get_logger(action_name_)," Trajectory contains an out of limits goal at joint " << joint_id + 1
                               << ". Please check robot limits.");
@@ -343,7 +343,7 @@ void ExecuteJointTrajectoryHandler::executeCallback(const std::shared_ptr<rclcpp
 
   while (action_active_) {
 
-    if (goal_handle->is_canceling()|| !rclcpp::ok()) { // CANCELLED
+    if (goal_handle->is_canceling() || !rclcpp::ok()) { // CANCELLED
       RCLCPP_INFO(rclcpp::get_logger(action_name_), "[%s]: Trajectory execution Preempted", action_name_.c_str());
       result_->action_result.success = false;
       result_->action_result.millis_passed = feedback_->action_feedback.millis_passed;
@@ -359,15 +359,19 @@ void ExecuteJointTrajectoryHandler::executeCallback(const std::shared_ptr<rclcpp
       result_->action_result.status = comau_msgs::msg::ActionResultStatusConstants::SUCCESS;
       result_->action_result.success = true;
       result_->action_result.millis_passed = feedback_->action_feedback.millis_passed;
+      feedback_->action_feedback.success = result_->action_result.success;
       /* After motion is correctly executed, the server clean the traj then the reset cmd is not necessary
       if (use_robot_server_)
         robot_ptr_->resetPDL();
       */
-      while (robot_status_ == RobotStatus::SUCCEEDED) /* Wait for the READY status to Ack the motion command */
+      
+      goal_handle->succeed(result_);
+      goal_handle->publish_feedback(feedback_);
+      /*while (robot_status_ == RobotStatus::SUCCEEDED)
       {
         rclcpp::sleep_for(rclcpp::Duration::from_seconds(0.002).to_chrono<std::chrono::nanoseconds>());
-      }
-      goal_handle->succeed(result_);
+      }*/
+      
 
       return;
     } else if (robot_status_ == RobotStatus::ERROR) {
@@ -393,7 +397,9 @@ void ExecuteJointTrajectoryHandler::executeCallback(const std::shared_ptr<rclcpp
     } else if (robot_status_ == RobotStatus::MOVING) { // MOVING
       // MOVING
       RCLCPP_DEBUG(rclcpp::get_logger(action_name_), "[%s]: Trajectory execution is active", action_name_.c_str());
+      feedback_->action_feedback.success = false;
       feedback_->action_feedback.millis_passed = uint((rclcpp::Clock{RCL_ROS_TIME}.now().nanoseconds() / 1e-6) - start_time);
+      feedback_->action_feedback.status = robot_status_;
       goal_handle->publish_feedback(feedback_);
     }
     rclcpp::sleep_for(rclcpp::Duration::from_seconds(0.001).to_chrono<std::chrono::nanoseconds>());
