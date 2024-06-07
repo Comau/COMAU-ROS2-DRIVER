@@ -16,7 +16,8 @@
 #include "comau_handlers/execute_cartesian_trajectory_handler.hpp"
 
 namespace trajectory_handler {
-
+using CartTraj           = comau_msgs::action::ExecuteCartesianTrajectory;
+using GoalHandleCartTraj = rclcpp_action::ClientGoalHandle<CartTraj>;
 /**
  * @brief The ComauHardwareInterface class handles the interface between the ROS system and the main
  * driver. It contains the read and write methods of the main control loop and registers various ROS
@@ -60,6 +61,16 @@ public:
 
   // Update funcion called with loop_hz_ rate
   void update();
+
+  void sendCartTraj();
+
+  void send_goal();
+
+  void goal_response_callback(const GoalHandleCartTraj::SharedPtr & goal_handle);
+
+  void feedback_callback(GoalHandleCartTraj::SharedPtr, const std::shared_ptr<const CartTraj::Feedback> feedback);
+
+  void result_callback(const GoalHandleCartTraj::WrappedResult & result);
   
   /*void publishEndEffectorPose();
   
@@ -104,6 +115,9 @@ public:
 
   std::unique_ptr<comau_action_handlers::ExecuteCartesianTrajectoryHandler>
       execute_cartesian_handler_ptr; /**< Object for asynchronous cartesian trajectory action server */
+
+  rclcpp_action::Client<comau_msgs::action::ExecuteCartesianTrajectory>::SharedPtr client_ptr_;
+  rclcpp::TimerBase::SharedPtr timer_;
 
 protected:
   

@@ -13,6 +13,9 @@
 
 namespace trajectory_handler {
 
+using CartTraj           = comau_msgs::action::ExecuteCartesianTrajectory;
+using GoalHandleCartTraj = rclcpp_action::ClientGoalHandle<CartTraj>;
+
 TrajectoryHandler::TrajectoryHandler(rclcpp::Node::SharedPtr &nh) : name_("execute_trajectory_handler"), nh_(nh) 
 {
   
@@ -107,6 +110,89 @@ bool TrajectoryHandler::init() {
 
   return true;
 } // namespace comau_hardware_interface
+
+void TrajectoryHandler::sendCartTraj()
+{
+  RCLCPP_WARN_STREAM(nh_->get_logger(),"Sending Cartesian Trajectory...");
+
+  this->client_ptr_ = rclcpp_action::create_client<comau_msgs::action::ExecuteCartesianTrajectory>(nh_,"execute_cartesian_trajectory_handler");
+  
+  TrajectoryHandler::send_goal();
+/* 
+  auto result = client_ptr_->async_get_result(goal_handle.get());
+
+  if (result.get().code == rclcpp_action::ResultCode::SUCCEEDED)
+  {
+    RCLCPP_WARN_STREAM(nh_->get_logger(),"SUCCEDED!");
+  }
+*/
+}
+
+void TrajectoryHandler::send_goal()
+{
+  using namespace std::placeholders;
+  RCLCPP_WARN_STREAM(nh_->get_logger(),"send_goal");
+
+  if (!this->client_ptr_->wait_for_action_server(std::chrono::seconds(5))) 
+  {
+    RCLCPP_ERROR(nh_->get_logger(), "Action server not available after waiting");
+  }
+  RCLCPP_WARN(nh_->get_logger(), "Action server available");
+  comau_msgs::action::ExecuteCartesianTrajectory::Goal goal_msg;
+  comau_msgs::msg::CartesianPoseStamped                homeCartesianPose;
+
+  homeCartesianPose.header.frame_id = "base_link";
+  homeCartesianPose.x               =  0.400;
+  homeCartesianPose.y               =  0.0;
+  homeCartesianPose.z               =  0.700;
+  homeCartesianPose.roll            =  0.0;
+  homeCartesianPose.pitch           =  1.5707;
+  homeCartesianPose.yaw             =  0.0;
+  goal_msg.trajectory.push_back(homeCartesianPose);
+
+  RCLCPP_INFO(nh_->get_logger(), "Sending goal");
+
+  /*auto send_goal_options = rclcpp_action::Client<CartTraj>::SendGoalOptions();
+  send_goal_options.goal_response_callback =
+    std::bind(&goal_response_callback, this, _1);
+  send_goal_options.feedback_callback =
+    std::bind(&feedback_callback, this, _1, _2);
+  send_goal_options.result_callback =
+    std::bind(&result_callback, this, _1);*/
+  this->client_ptr_->async_send_goal(goal_msg);//, send_goal_options);
+}
+
+void TrajectoryHandler::goal_response_callback(const GoalHandleCartTraj::SharedPtr & goal_handle)
+{
+  if (!goal_handle) {
+    RCLCPP_ERROR(nh_->get_logger(), "Goal was rejected by server");
+  } else {
+    RCLCPP_INFO(nh_->get_logger(), "Goal accepted by server, waiting for result");
+  }
+}
+
+void TrajectoryHandler::feedback_callback(GoalHandleCartTraj::SharedPtr, const std::shared_ptr<const CartTraj::Feedback> feedback)
+{
+  RCLCPP_INFO_STREAM(nh_->get_logger(),"FEEDBACK:" << feedback->action_feedback.success);
+}
+
+void TrajectoryHandler::result_callback(const GoalHandleCartTraj::WrappedResult & result)
+{
+  switch (result.code)
+  {
+    case rclcpp_action::ResultCode::SUCCEEDED:
+      break;
+    case rclcpp_action::ResultCode::ABORTED:
+      RCLCPP_ERROR(nh_->get_logger(), "Goal was aborted");
+      return;
+    case rclcpp_action::ResultCode::CANCELED:
+      RCLCPP_ERROR(nh_->get_logger(), "Goal was canceled");
+      return;
+    default:
+      RCLCPP_ERROR(nh_->get_logger(), "Unknown result code");
+      return;
+  }
+}
 
 void TrajectoryHandler::printVector(const std::vector<double> &vec) {
   RCLCPP_INFO(nh_->get_logger(), "Vector : %f %f %f %f %f %f", vec[0], vec[1], vec[2], vec[3], vec[4], vec[5]);
