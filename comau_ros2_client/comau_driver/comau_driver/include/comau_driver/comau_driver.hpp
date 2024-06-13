@@ -272,8 +272,7 @@ private:
   comau_tcp_interface::utils::MessagePackage *msg;                       /**< State message */
   comau_tcp_interface::ComauTcpInterfaceParameters state_params_, robot_params_, arm1_params_; /**< Net parameters */
   bool parallel_link_fix_; /**< Parameter for parallel link transformation */
-  bool allow_async_ =
-      false;     /**< Parameter indicating if the robot is in a mode ready to receive asynchronous trajectories */
+  bool allow_async_ = false;     /**< Parameter indicating if the robot is in a mode ready to receive asynchronous trajectories */
   bool verbose_; /**< Parameter for verbose messages */
   
   bool communication_initialized_ = false; /*ANDY VER if true the initialized and start commands are sent to the server*/

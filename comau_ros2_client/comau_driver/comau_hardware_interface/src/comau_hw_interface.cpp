@@ -32,7 +32,7 @@ CallbackReturn ComauHardwareInterface::on_init(const hardware_interface::Hardwar
   nh_->declare_parameter("use_arm1_server", true);
   use_arm1_server_ = nh_->get_parameter("use_arm1_server").as_bool();
   nh_->declare_parameter("verbose", true);
-  verbose_ = nh_->get_parameter("use_arm1_server").as_bool();
+  verbose_ = nh_->get_parameter("verbose").as_bool();
 
   // robot has 6 joints and 2 interfaces
   joint_position_.assign(NUM_JOINTS_MAX, 0);

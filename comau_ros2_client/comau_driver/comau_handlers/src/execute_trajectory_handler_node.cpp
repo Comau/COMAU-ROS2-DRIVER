@@ -22,8 +22,8 @@ boost::shared_ptr<trajectory_handler::TrajectoryHandler> c_exec_handler_ptr;
 std::shared_ptr<rclcpp::Node> nh;
 
 int startTrajAction = 0;
-int exitParam;
-char robot_status_;
+
+/*TO DO closeComauDriver ANDY */
 
 void signalHandler(int signum) 
 {
@@ -35,58 +35,36 @@ void signalHandler(int signum)
 
 int main(int argc, char **argv) {
   rclcpp::init(argc, argv);
-  
-  bool connectionEstablished = 0;
 
-  //boost::shared_ptr<action_cpp::JointTrajectoryActionClient> c_exec_traj_handler_ptr;
   nh = std::make_shared<rclcpp::Node>("execute_trajectory_handler_node");
-  nh->declare_parameter("exit",0);
+
   nh->declare_parameter("start_traj_action",0);
-  rclcpp::Rate loop_rate(500);
+  nh->declare_parameter("loop_hz", 500.0);
+  nh->declare_parameter("cycle_time_error_threshold", 0.025);
+  
   // register signal SIGINT and signal handler
   signal(SIGINT, signalHandler);
-  // Create the hardware interface
+
+  // Create the interface
   c_exec_handler_ptr.reset(new trajectory_handler::TrajectoryHandler(nh));
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("trajectory_handler"), " New Session:");
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("trajectory_handler"), "New Session:");
+  c_exec_handler_ptr->loop_hz_ = nh->get_parameter("loop_hz").as_double();
+  rclcpp::Rate loop_rate(c_exec_handler_ptr->loop_hz_);
+  c_exec_handler_ptr->cycle_time_error_threshold_ = nh->get_parameter("cycle_time_error_threshold").as_double();
   if (!c_exec_handler_ptr->init()) {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("trajectory_handler"), " Could not correctly initialize robot. Exiting");
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("trajectory_handler"), "Could not correctly initialize robot. Exiting");
     rclcpp::shutdown();
   }
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("trajectory_handler"), " HW interface initialized");
-  /*auto trajectory_goal = comau_msgs::action::ExecuteJointTrajectory::Goal();
-  trajectory_goal.trajectory = {0,0,-1.57,0,0,0};*/
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("trajectory_handler"), "HW interface initialized");
+
   while (rclcpp::ok())
   {
-    exitParam = nh->get_parameter("exit").as_int();
     startTrajAction = nh->get_parameter("start_traj_action").as_int();
 
-    if(connectionEstablished == 0)
-    {
-      RCLCPP_INFO_STREAM(rclcpp::get_logger("trajectory_handler"), " Connection Established...");
-      connectionEstablished = 1;
-    }
-    rclcpp::sleep_for(rclcpp::Duration::from_seconds(1).to_chrono<std::chrono::nanoseconds>());
-    c_exec_handler_ptr->read();
-    robot_status_ = c_exec_handler_ptr->publishRobotStatus();
-    rclcpp::sleep_for(rclcpp::Duration::from_seconds(1).to_chrono<std::chrono::nanoseconds>());
-    if ((robot_status_ == 'T') || (robot_status_ == 'C') || (robot_status_ == 'R') || (robot_status_ == 'M') ||
-        (robot_status_ == 'I') || (robot_status_ == 'P') || (robot_status_ == 'S') || (robot_status_ == 'E') )
-    {
-      c_exec_handler_ptr->execute_joints_handler_ptr->set_status(robot_status_);
-      c_exec_handler_ptr->execute_joints_handler_ptr->set_allow_async(true);
-      c_exec_handler_ptr->execute_cartesian_handler_ptr->set_status(robot_status_);
-      c_exec_handler_ptr->execute_cartesian_handler_ptr->set_allow_async(true);
+    c_exec_handler_ptr->update();
 
-      c_exec_handler_ptr->update();
-    }
-    else
-    {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("trajectory_handler"), "Invalid state msg: " << robot_status_);
-    }
-    /* TEST RCLCPP_INFO_STREAM(rclcpp::get_logger("trajectory_handler"), " RobotStatus: [%s]" << c_exec_handler_ptr->robot_status_);*/
     if(startTrajAction == 1)
     {
-      /*c_exec_traj_handler_ptr.reset(new action_cpp::JointTrajectoryActionClient());*/
       startTrajAction = 0;
       rclcpp::Parameter set_startTrajAction("start_traj_action", startTrajAction);
       nh->set_parameter(set_startTrajAction);
@@ -94,10 +72,6 @@ int main(int argc, char **argv) {
       c_exec_handler_ptr->sendCartTraj();
     }
 
-    if(exitParam == 1) {
-      
-      rclcpp::shutdown();
-    }
     rclcpp::spin_some(nh);
     loop_rate.sleep();
   }

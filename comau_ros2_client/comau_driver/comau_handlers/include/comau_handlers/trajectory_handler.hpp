@@ -14,6 +14,49 @@
 #include <comau_driver/comau_driver.hpp>
 #include "comau_handlers/execute_joint_trajectory_handler.hpp"
 #include "comau_handlers/execute_cartesian_trajectory_handler.hpp"
+#include "rclcpp_lifecycle/state.hpp"
+#include "rclcpp/macros.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include "realtime_tools/realtime_publisher.h"
+#include <comau_msgs/msg/comau_robot_status.hpp>
+#include <comau_msgs/msg/comau_server_error.hpp>
+#include <comau_msgs/msg/comau_operation_mode.hpp>
+#include <comau_msgs/msg/digital.hpp>
+#include <comau_msgs/msg/io_states.hpp>
+//#include <dynamic_reconfigure/server.h>
+#include <std_msgs/msg/bool.hpp>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <tf2_msgs/msg/tf_message.hpp>
+
+#include <comau_msgs/srv/open_connection.hpp>
+#include <comau_msgs/srv/set_move_fly_params.hpp>
+#include <comau_msgs/srv/set_arm_state.hpp>
+#include <comau_msgs/srv/set_io.hpp>
+#include <comau_msgs/srv/set_sns_trk_params.hpp>
+#include <std_msgs/msg/int32.hpp>
+#include <time.h>
+
+/* Server error value - server coding */
+#define KI_ERR_STATE_ACCEPT       0x00001 /* State  Server  error 15470 : Address already in use */
+#define KI_ERR_ROBOT_ACCEPT       0x00002 /* Robot  Server  error 15470 : Address already in use */
+#define KI_ERR_HANDLER_ACCEPT     0x00004 /* Motion Handler error 15470 : Address already in use */
+#define KI_ERR_STATE_WRITE        0x00008 /* State  Server  error 40033 : Error 15474 in write   */
+#define KI_ERR_ROBOT_READ_NCON    0x00010 /* Robot  Server  error 39990 : Error 15467 in read    */
+#define KI_ERR_HANDLER_READ_NCON  0x00020 /* Motion Handler error 39990 : Error 15467 in read    */
+#define KI_ERR_ROBOT_READ_DCON    0x00040 /* Robot  Server  error 39990 : Error 15468 in read    */
+#define KI_ERR_HANDLER_READ_DCON  0x00080 /* Motion Handler error 39990 : Error 15468 in read    */
+#define KI_ERR_ROBOT_READ_CANC    0x00100 /* Robot  Server  error 39991 */
+#define KI_ERR_HANDLER_READ_CANC  0x00200 /* Motion Handler error 39991 */
+#define KI_ERR_ROBOT_READ_TOUT    0x00400 /* Robot  Server  error 39992 */
+#define KI_ERR_HANDLER_READ_TOUT  0x00800 /* Motion Handler error 39992 */
+#define KI_ERR_STATE_DISCONNECT   0x01000 /* State  Server  error 30767 */
+#define KI_ERR_ROBOT_DISCONNECT   0x02000 /* Robot  Server  error 30767 */
+#define KI_ERR_HANDLER_DISCONNECT 0x04000 /* Motion Handler error 30767 */
+#define KI_ERR_STATE_SAFETY_GATE  0x08000 /* Safety Gate / External Emergency Stop */
+#define KI_ERR_STATE_WRONG_MOTION 0x10000 /* Program Execution Errors (36864-37191) */
+#define KI_ERR_ROBOT_ALARM        0x20000 /*  */
+#define KI_ERR_MOTION_DRIVEOFF    0x40000 /*  */
+#define KI_ERR_STATE_MAX          0x80000 /* Max error value - increase it if necessary */
 
 namespace trajectory_handler {
 using CartTraj           = comau_msgs::action::ExecuteCartesianTrajectory;
@@ -49,22 +92,40 @@ public:
    * @param time Current time
    * @param period Duration of current control loop iteration
    */
-  virtual void read();
   
-  virtual char publishRobotStatus();
+  void publishRobotStatus();
+
+  void errorParser(uint32_t error_value);
+
+  void publishErrorValue();
+
+  void publishEndEffectorPose();
+
+  void publishIOPins();
+
+  void publishOperationMode();
+
+  void async_enable_routine();
+
+  void copyVector(const std::vector<double> &src, std::vector<double> &dest);
+
+  void closeComauDriver();
   
-  virtual void write(double time, double period);
+  void read(double time, double period);
+
+  void write(double time, double period);
 
   bool holdConnection();
   
   void printVector(const std::vector<double> &vec);
 
-  // Update funcion called with loop_hz_ rate
   void update();
 
   void sendCartTraj();
 
   void send_goal();
+
+  void cancel_goal(); /* ANDY */
 
   void goal_response_callback(const GoalHandleCartTraj::SharedPtr & goal_handle);
 
@@ -72,42 +133,6 @@ public:
 
   void result_callback(const GoalHandleCartTraj::WrappedResult & result);
   
-  /*void publishEndEffectorPose();
-  
-  void publishIOPins();
-  
-  void publishRobotStatus();
-  
-  void publishOperationMode();
-  
-  void publishErrorValue();
-  
-  void publishSnsTrkType();
-  
-  bool holdConnection();
-  
-  void printVector(const std::vector<double> &vec);
-  
-  bool ifZero(const std::vector<double> &vec);
-  
-  void copyVector(const std::vector<double> &src, std::vector<double> &dest);
-  
-  bool shouldResetControllers();
-  
-  virtual bool prepareSwitch(const std::list<hardware_interface::ControllerInfo> &start_list,
-                             const std::list<hardware_interface::ControllerInfo> &stop_list) override;
-  
-  virtual void doSwitch(const std::list<hardware_interface::ControllerInfo> &start_list,
-                        const std::list<hardware_interface::ControllerInfo> &stop_list) override;
-
-  
-  bool checkControllerClaims(const std::set<std::string> &claimed_resources);
-  
-  bool isRobotProgramRunning() const;
-  
-  void closeComauDriver();
-  
-  void errorParser(uint32_t error_value);*/
   std::unique_ptr<comau_action_handlers::ExecuteJointTrajectoryHandler>
       execute_joints_handler_ptr;
 
@@ -117,21 +142,17 @@ public:
       execute_cartesian_handler_ptr; /**< Object for asynchronous cartesian trajectory action server */
 
   rclcpp_action::Client<comau_msgs::action::ExecuteCartesianTrajectory>::SharedPtr client_ptr_;
-  rclcpp::TimerBase::SharedPtr timer_;
+  
+  double desired_update_period_;
+  double elapsed_time_;
+  uint64_t loop_hz_;
+  double cycle_time_error_threshold_;
+  struct timespec last_time_;
+  struct timespec current_time_;
 
 protected:
-  
-  /*bool setIO_routine(comau_msgs::SetIO::Request &req, comau_msgs::SetIO::Response &res);
-  
-  bool threadConnections(comau_msgs::OpenConnection::Request &req, comau_msgs::OpenConnection::Response &res);
-  
-  bool setMoveflyParams_routine(comau_msgs::SetMoveFlyParams::Request &req, comau_msgs::SetMoveFlyParams::Response &res);
-  
-  bool setSnsTrkParams_routine(comau_msgs::SetSnsTrkParams::Request &req, comau_msgs::SetSnsTrkParams::Response &res);
-  
-  bool setArmState_routine(comau_msgs::SetArmState::Request &req, comau_msgs::SetArmState::Response &res);*/
 
-  std::string name_;                                      /**< Name of this class -> comau_hardware_interface */
+  std::string name_;                             
   rclcpp::Node::SharedPtr nh_, nh_priv_;
 
   // Configuration
@@ -161,7 +182,6 @@ protected:
   std::vector<std::string> joint_names_;
   std::vector<int> jnt_type_;
   uint32_t stsSelector_;
-  uint64_t loop_hz_;
   bool use_state_server_, use_robot_server_, use_arm1_server_;
   int32_t data_timestamp_;
   int32_t data_timestamp_prev_;
@@ -175,6 +195,25 @@ protected:
   bool packet_read_;
   bool verbose_;
   uint32_t invalidMsgCount_;
+  geometry_msgs::msg::TransformStamped ee_transform_; // TODO : change timestamp to ros::Time
+  tf2::Quaternion q;
+
+  // publishers
+  std::unique_ptr<realtime_tools::RealtimePublisher<std_msgs::msg::Bool>> async_enable_pub_;
+  std::unique_ptr<realtime_tools::RealtimePublisher<comau_msgs::msg::ComauRobotStatus>> robot_status_pub_;
+  std::unique_ptr<realtime_tools::RealtimePublisher<comau_msgs::msg::ComauServerError>> server_error_pub_;
+  std::unique_ptr<realtime_tools::RealtimePublisher<comau_msgs::msg::ComauOperationMode>> server_operation_mode_pub_;
+  std::unique_ptr<realtime_tools::RealtimePublisher<tf2_msgs::msg::TFMessage>> ee_pose_pub_;
+  std::unique_ptr<realtime_tools::RealtimePublisher<comau_msgs::msg::IOStates>> io_states_pub_;
+
+  // services
+  rclcpp::Service<comau_msgs::srv::SetMoveFlyParams>::SharedPtr setMoveflyParams_service_;
+  rclcpp::Service<comau_msgs::srv::SetIO>::SharedPtr setIO_service_;
+  rclcpp::Service<comau_msgs::srv::SetArmState>::SharedPtr setArmState_service_;
+  rclcpp::Service<comau_msgs::srv::OpenConnection>::SharedPtr thread_service_;
+
+  bool req_prev_open_connection;
+  bool print_server_not_connected;
 
   // comau action handlers
   const std::string execute_joint_server_name_     = "execute_joint_trajectory_handler";

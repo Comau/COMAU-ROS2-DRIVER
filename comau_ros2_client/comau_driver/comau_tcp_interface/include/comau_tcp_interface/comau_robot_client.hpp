@@ -175,15 +175,17 @@ public:
    * @return
    * @return
    */
-  bool openRobotThread(bool openRobot, bool success); /*ANDY*/
+  bool openRobotThread(bool openRobot, bool success); /* ANDY FOR TEST NODE */
   /**
    * @brief Returns the The Handler thread
    *
    * @return
    * @return
    */
-  bool openHandlerThread(bool openHandler, bool success); /*ANDY*/
-  bool openStateThread(bool openState, bool success); /*TEMP*/
+  bool openHandlerThread(bool openHandler, bool success); /* ANDY FOR TEST NODE */
+
+  bool openStateThread(bool openState, bool success); /* ANDY FOR TEST NODE */
+  
 private:
   /**
    * @brief Read the message and parse it into the MessagePackage last_recv_msg_
