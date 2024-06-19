@@ -96,11 +96,13 @@ ExecuteCartesianTrajectoryHandler::changePoseFrame(const std::string &target_fra
     rclcpp::Time now = nh_->get_clock()->now();
     transform = br->lookupTransform(target_frame, goal_pose.header.frame_id, now,1s);//, ros::Duration(1.0));
     tf2::doTransform(goal_pose, transformed_pose, transform);
-    RCLCPP_INFO_STREAM(rclcpp::get_logger(action_name_),"Change transform pose to..   " << transformed_pose.pose.position.x);/*ANDY*/
+    RCLCPP_INFO_STREAM(rclcpp::get_logger(action_name_),"Change transform pose...");
+    std::cout << "[" << transformed_pose.pose.position.x << ", " << transformed_pose.pose.position.y << ", " << transformed_pose.pose.position.z << ";" << std::endl;
+    std::cout << " " << transformed_pose.pose.orientation.x << ", " << transformed_pose.pose.orientation.y << ", " << transformed_pose.pose.orientation.z << ", " << transformed_pose.pose.orientation.w << "]" << std::endl;
     return transformed_pose;
   } catch (tf2::LookupException &e) {
     RCLCPP_ERROR(rclcpp::get_logger(action_name_),"[%s] %s", action_name_.c_str(), e.what());
-    transformed_pose.header.frame_id = "tool_controller";
+    transformed_pose.header.frame_id = "ee_link";//"tool_controller";
     return transformed_pose;
   }
 }

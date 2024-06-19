@@ -6,8 +6,8 @@
 <robot name="racer5-cobot">
   <!-- 
     Author: LMS
-   -->
-  <controller_plugin_gazebo/>
+   
+  <controller_plugin_gazebo/> -->
   <!-- 
     Author: LMS
    -->
@@ -109,11 +109,7 @@
       </material>
     </visual>
     <collision>
-      <surface>
-        <contact>
-          <collide_bitmask>0x01</collide_bitmask>
-        </contact>
-      </surface>
+
       <geometry>
         <mesh filename="package://racer5-cobot-rail_description/meshes/racer5-cobot/bridge.stl"/>
       </geometry>
@@ -138,11 +134,7 @@
       </material>
     </visual>
     <collision>
-      <surface>
-        <contact>
-          <collide_bitmask>0x01</collide_bitmask>
-        </contact>
-      </surface>
+
       <geometry>
         <mesh filename="package://racer5-cobot-rail_description/meshes/racer5-cobot/robot_rail_base.stl"/>
       </geometry>
@@ -165,11 +157,7 @@
       </material>
     </visual>
     <collision>
-      <surface>
-        <contact>
-          <collide_bitmask>0x01</collide_bitmask>
-        </contact>
-      </surface>
+
       <geometry>
         <mesh filename="package://racer5-cobot-rail_description/meshes/racer5-cobot/base_link.STL"/>
       </geometry>
@@ -191,11 +179,7 @@
       </material>
     </visual>
     <collision>
-      <surface>
-        <contact>
-          <collide_bitmask>0x10</collide_bitmask>
-        </contact>
-      </surface>
+
       <geometry>
         <mesh filename="package://racer5-cobot-rail_description/meshes/racer5-cobot/Link1.STL"/>
       </geometry>
@@ -217,11 +201,7 @@
       </material>
     </visual>
     <collision>
-      <surface>
-        <contact>
-          <collide_bitmask>0x10</collide_bitmask>
-        </contact>
-      </surface>
+
       <geometry>
         <mesh filename="package://racer5-cobot-rail_description/meshes/racer5-cobot/Link2.STL"/>
       </geometry>
@@ -243,11 +223,7 @@
       </material>
     </visual>
     <collision>
-      <surface>
-        <contact>
-          <collide_bitmask>0x01</collide_bitmask>
-        </contact>
-      </surface>
+
       <geometry>
         <mesh filename="package://racer5-cobot-rail_description/meshes/racer5-cobot/Link3.STL"/>
       </geometry>
@@ -269,11 +245,7 @@
       </material>
     </visual>
     <collision>
-      <surface>
-        <contact>
-          <collide_bitmask>0x01</collide_bitmask>
-        </contact>
-      </surface>
+
       <geometry>
         <mesh filename="package://racer5-cobot-rail_description/meshes/racer5-cobot/Link4.STL"/>
       </geometry>
@@ -295,11 +267,7 @@
       </material>
     </visual>
     <collision>
-      <surface>
-        <contact>
-          <collide_bitmask>0x10</collide_bitmask>
-        </contact>
-      </surface>
+
       <geometry>
         <mesh filename="package://racer5-cobot-rail_description/meshes/racer5-cobot/Link5.STL"/>
       </geometry>
@@ -323,11 +291,7 @@
       </material>
     </visual>
     <collision>
-      <surface>
-        <contact>
-          <collide_bitmask>0x01</collide_bitmask>
-        </contact>
-      </surface>
+
       <geometry>
         <mesh filename="package://racer5-cobot-rail_description/meshes/racer5-cobot/Link6.STL"/>
       </geometry>
@@ -351,11 +315,7 @@
       </material>
     </visual>
     <collision>
-      <surface>
-        <contact>
-          <collide_bitmask>0x01</collide_bitmask>
-        </contact>
-      </surface>
+
       <geometry>
         <mesh filename="package://racer5-cobot-rail_description/meshes/racer5-cobot/RivetGun_3_5.stl"/>
       </geometry>

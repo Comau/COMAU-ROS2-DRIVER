@@ -160,29 +160,30 @@ bool ComauRobot::setMoveflyParams(double &threshold, double &lin_velocity, doubl
 void ComauRobot::getJointPosition(std::vector<double> &joint_position, uint32_t &num_robot_joints, std::vector<int> &jnt_type) { /*ANDY vedere se fare un metodo per scegliere il tipo di giunto*/
   msg->getData("joint_position", joints_float_);
   if (parallel_link_fix_)
-    joints_float_.at(2) += joints_float_.at(1);
-  
+    joints_float_[2] += joints_float_[1];
   //joints_float_ = comau_tcp_interface::utils::toRad(joints_float_);
-  //joint_position.clear();
-  for(size_t si_i = 0; si_i < num_robot_joints; si_i++)
+  for(size_t si_i = 0; si_i < num_robot_joints; /*jnt_type_.size()*/ si_i++)
   {
     switch (jnt_type_.at(si_i))
     {
       case 0:
-        joint_position.at(si_i) = comau_tcp_interface::utils::toRad(joints_float_.at(si_i));
+        joints_float_.at(si_i) =  comau_tcp_interface::utils::toRad(joints_float_.at(si_i));
         //joint_position.push_back(joints_float_.at(si_i));
-        //joint_position.at(si_i) = joints_float_.at(si_i);
+        joint_position.at(si_i) = joints_float_.at(si_i);
         break;
       case 1:
-        joint_position.at(si_i) = comau_tcp_interface::utils::toMeter(joints_float_.at(si_i));
+        joints_float_.at(si_i) = comau_tcp_interface::utils::toMeter(joints_float_.at(si_i));
         //joint_position.push_back(joints_float_.at(si_i));
-        //joint_position.at(si_i) = joints_float_.at(si_i);
+        joint_position.at(si_i) = joints_float_.at(si_i);
         break;
-      default:
-        joint_position.at(si_i) = comau_tcp_interface::utils::toRad(joints_float_.at(si_i));
+      default: /* No error */
+        joints_float_.at(si_i) =  comau_tcp_interface::utils::toRad(joints_float_.at(si_i));
+        //joint_position.push_back(joints_float_.at(si_i));
+        joint_position.at(si_i) = joints_float_.at(si_i);
         break;
-    } 
+    }
   }
+  
   //joint_position.assign(joints_float_.begin(), joints_float_.end());
 }
 

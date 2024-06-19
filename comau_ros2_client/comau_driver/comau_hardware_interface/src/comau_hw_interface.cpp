@@ -310,7 +310,8 @@ return_type ComauHardwareInterface::read(const rclcpp::Time & time, const rclcpp
   }
 
   if (use_state_server_ && robot_ptr_->state_client_ptr_->is_connected_) {
-    if (robot_ptr_->readMessagePackage()) {
+    if (robot_ptr_->readMessagePackage()) 
+    {
       robot_ptr_->getTimeStamp(data_timestamp_);
       robot_ptr_->getStatus(robot_status_);
       robot_ptr_->getSensorType(sns_trk_type_);

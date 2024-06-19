@@ -6,8 +6,8 @@
 <robot name="racer7-14">
   <!-- 
     Author: LMS
-   -->
-  <controller_plugin_gazebo/>
+  
+  <controller_plugin_gazebo/> -->
   <!-- 
     Author: LMS
    -->
@@ -128,11 +128,7 @@
     </visual>
     <collision>
       <origin rpy="0 0 3.141592653589793" xyz="0 0 0"/>
-      <surface>
-        <contact>
-          <collide_bitmask>0x01</collide_bitmask>
-        </contact>
-      </surface>
+
       <geometry>
         <mesh filename="package://racer7-14_description/meshes/racer7-14/base_link.STL" scale="1.0 1.0 1.0"/>
       </geometry>
@@ -155,11 +151,7 @@
     </visual>
     <collision>
       <origin rpy="3.141592653589793 0 3.141592653589793" xyz="0 0 0"/>
-      <surface>
-        <contact>
-          <collide_bitmask>0x10</collide_bitmask>
-        </contact>
-      </surface>
+
       <geometry>
         <mesh filename="package://racer7-14_description/meshes/racer7-14/link1.STL" scale="1.0 1.0 1.0"/>
       </geometry>
@@ -190,11 +182,7 @@
     </visual>
     <collision>
       <origin rpy="0 3.141592653589793 0" xyz="0 0 0"/>
-      <surface>
-        <contact>
-          <collide_bitmask>0x01</collide_bitmask>
-        </contact>
-      </surface>
+
       <geometry>
         <mesh filename="package://racer7-14_description/meshes/racer7-14/link2.STL" scale="1.0 1.0 1.0"/>
       </geometry>
@@ -225,11 +213,7 @@
     </visual>
     <collision>
       <origin rpy="0 3.141592653589793 1.5707963267948966" xyz="0 0 0"/>
-      <surface>
-        <contact>
-          <collide_bitmask>0x01</collide_bitmask>
-        </contact>
-      </surface>
+
       <geometry>
         <mesh filename="package://racer7-14_description/meshes/racer7-14/link3.STL" scale="1.0 1.0 1.0"/>
       </geometry>
@@ -261,11 +245,7 @@
     </visual>
     <collision>
       <origin rpy="0 3.141592653589793 1.5707963267948966" xyz="0 0 0"/>
-      <surface>
-        <contact>
-          <collide_bitmask>0x01</collide_bitmask>
-        </contact>
-      </surface>
+ 
       <geometry>
         <mesh filename="package://racer7-14_description/meshes/racer7-14/link4.STL" scale="1.0 1.0 1.0"/>
       </geometry>
@@ -294,11 +274,7 @@
       </material>
     </visual>
     <collision>
-      <surface>
-        <contact>
-          <collide_bitmask>0x10</collide_bitmask>
-        </contact>
-      </surface>
+
       <geometry>
         <mesh filename="package://racer7-14_description/meshes/racer7-14/link5.STL" scale="1.0 1.0 1.0"/>
       </geometry>
@@ -328,11 +304,7 @@
     </visual>
     <collision>
       <origin rpy="0 3.141592653589793 3.141592653589793" xyz="0 0 0"/>
-      <surface>
-        <contact>
-          <collide_bitmask>0x01</collide_bitmask>
-        </contact>
-      </surface>
+
       <geometry>
         <mesh filename="package://racer7-14_description/meshes/racer7-14/link6.STL" scale="1.0 1.0 1.0"/>
       </geometry>

@@ -42,10 +42,10 @@ bool ExecuteJointTrajectoryHandler::initialize(bool use_state_server, bool use_r
 
   urdf_number_of_joints_ = 0;
 
-  /*if (!loadJointLimits(nh_, "robot_description")) {
+  if (!loadJointLimits(nh_, "robot_description")) {
     RCLCPP_ERROR_STREAM(rclcpp::get_logger(action_name_), "Error at loadJointLimits function");
     return false;
-  } ANDY */
+  } /* ANDY */
 
   using namespace std::placeholders;
   RCLCPP_INFO_STREAM(rclcpp::get_logger(action_name_), "Starting up the ExecuteJointTrajectoryActionServer ...  ");
@@ -54,15 +54,6 @@ bool ExecuteJointTrajectoryHandler::initialize(bool use_state_server, bool use_r
                                                                                                   std::bind(&ExecuteJointTrajectoryHandler::handle_goal, this, _1, _2),
                                                                                                   std::bind(&ExecuteJointTrajectoryHandler::handle_cancel, this, _1),
                                                                                                   std::bind(&ExecuteJointTrajectoryHandler::handle_accepted, this, _1));
-  /*RCLCPP_INFO_STREAM(rclcpp::get_logger(action_name_), " Starting up the ExecuteJointTrajectoryActionServer ...  ");
-  try {
-    as_ptr_.reset(new ExecuteJointTrajectoryActionServer(
-        nh_, action_name_, boost::bind(&ExecuteJointTrajectoryHandler::executeCallback, this, _1), false));
-    as_ptr_->start();
-  } catch (...) {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(action_name_), " ExecuteJointTrajectoryActionServer cannot not start.");
-    return false;
-  }*/
 
   RCLCPP_INFO_STREAM(rclcpp::get_logger(action_name_), "Ready to receive goals!  ");
   return true;
@@ -94,7 +85,7 @@ bool ExecuteJointTrajectoryHandler::loadJointLimits(const rclcpp::Node::SharedPt
   urdf_model_ptr_.reset(new urdf::Model());
 
   std::shared_ptr<rclcpp::SyncParametersClient> parameters_client_;
-  parameters_client_ = std::make_shared<rclcpp::SyncParametersClient>(nh, "/robot_state_publisher");
+  parameters_client_ = std::make_shared<rclcpp::SyncParametersClient>(nh, "robot_state_publisher");
   while (!parameters_client_->wait_for_service(1s))
   {
     if (!rclcpp::ok())
@@ -102,7 +93,7 @@ bool ExecuteJointTrajectoryHandler::loadJointLimits(const rclcpp::Node::SharedPt
       RCLCPP_ERROR(rclcpp::get_logger(action_name_), "Interrupted while waiting for the service. Exiting.");
       return false;
     }
-      RCLCPP_INFO(rclcpp::get_logger(action_name_), "Service not available, waiting again...");
+      RCLCPP_WARN(rclcpp::get_logger(action_name_), "Service not available, waiting again...");
   }
 
   // Search and wait for robot_description on param server
@@ -144,7 +135,7 @@ bool ExecuteJointTrajectoryHandler::loadJointLimits(const rclcpp::Node::SharedPt
     RCLCPP_ERROR_STREAM(rclcpp::get_logger(action_name_), " Unable to load URDF model with param string : " << urdf_string);
     return false;
   } else {
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(action_name_), " Received URDF from param server with Name:" << urdf_model_ptr_->getName());
+    RCLCPP_INFO_STREAM(rclcpp::get_logger(action_name_), " Received URDF from param server with Name: " << urdf_model_ptr_->getName());
   }
 
   // Get limits from URDF
@@ -153,23 +144,25 @@ bool ExecuteJointTrajectoryHandler::loadJointLimits(const rclcpp::Node::SharedPt
     return false;
   }
 
-  for (auto joint : urdf_model_ptr_->joints_) {
-
-    // Limits datastructures
-    //joint_limits_interface::JointLimits joint_limits; // Position
-    joint_limits::JointLimits joint_limits; // Position
+  // Limits datastructures
+  urdf::JointLimits joint_limits; // Position
+  std::map<std::string, urdf::JointSharedPtr>::iterator jointIter;
+  std::map<std::string, urdf::JointLimits> jointLimits;
+  for (jointIter = urdf_model_ptr_->joints_.begin();jointIter != urdf_model_ptr_->joints_.end(); jointIter++)
+  {
+    
+    urdf_number_of_joints_ += 1;
+    // ANDY RCLCPP_INFO_STREAM(rclcpp::get_logger(action_name_), " Joint " << jointLimits.lower);
+    /*joint_limits::JointLimits joint_limits;
     if (!joint.second) {
       RCLCPP_ERROR_STREAM(rclcpp::get_logger(action_name_), " URDF joint not found " << joint.first);
       return false;
     }
-    std::string j_limits = joint.first.c_str();//joint.second
-    //RCLCPP_WARN_STREAM(rclcpp::get_logger(action_name_), "joint.first::: " << joint.first.c_str() << " j_has_limits::: " << joint_limits.has_position_limits);
+    std::string j_limits = joint.first.c_str();
     if (joint_limits::get_joint_limits(j_limits, nh, joint_limits)) 
     {
       RCLCPP_INFO_STREAM(rclcpp::get_logger(action_name_), " " << joint.first << " has URDF position limits ["
                           << joint_limits.min_position << ", " << joint_limits.max_position << "]");
-
-      urdf_number_of_joints_ += 1;
       joint_names_.push_back(joint.first);
       
       joint_limits.min_position += std::numeric_limits<double>::epsilon();
@@ -178,9 +171,10 @@ bool ExecuteJointTrajectoryHandler::loadJointLimits(const rclcpp::Node::SharedPt
       joint_position_lower_limits_.push_back(joint_limits.min_position);
       joint_position_upper_limits_.push_back(joint_limits.max_position);
     }
-
+    */
   }
-  RCLCPP_INFO_STREAM(rclcpp::get_logger(action_name_), " Joints with limits Size " << joint_position_lower_limits_.size());
+
+  urdf_number_of_joints_ -= 1;
 
   return true;
 }
@@ -314,7 +308,6 @@ void ExecuteJointTrajectoryHandler::executeCallback(const std::shared_ptr<rclcpp
   if (robot_status_ == RobotStatus::READY && allow_async_) {
     const auto goal = goal_handle->get_goal();
     goal_joint_trajectory_ = parseJointTrajectoryGoal(goal);
-    //goal_joint_trajectory_ = parseJointTrajectoryGoal(goal);
     if (valid_goal_) {
       if (use_arm1_server_)
         robot_ptr_->writeJointTrajectoryCommand(goal_joint_trajectory_, comau_driver::ControlMode::MODE_JOINT_TRAJECTORY);

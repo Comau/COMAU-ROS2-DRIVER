@@ -27,6 +27,7 @@
 #include <std_msgs/msg/bool.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <tf2_msgs/msg/tf_message.hpp>
+#include <sensor_msgs/msg/joint_state.hpp>
 
 #include <comau_msgs/srv/open_connection.hpp>
 #include <comau_msgs/srv/set_move_fly_params.hpp>
@@ -119,13 +120,15 @@ public:
   
   void printVector(const std::vector<double> &vec);
 
+  void update_urdf();
+
   void update();
 
   void sendCartTraj();
 
   void send_goal();
 
-  void cancel_goal(); /* ANDY */
+  //void cancel_goal(); /* ANDY */
 
   void goal_response_callback(const GoalHandleCartTraj::SharedPtr & goal_handle);
 
@@ -195,7 +198,8 @@ protected:
   bool packet_read_;
   bool verbose_;
   uint32_t invalidMsgCount_;
-  geometry_msgs::msg::TransformStamped ee_transform_; // TODO : change timestamp to ros::Time
+  geometry_msgs::msg::TransformStamped ee_transform_;
+  sensor_msgs::msg::JointState urdf_joint_states_;
   tf2::Quaternion q;
 
   // publishers
@@ -204,6 +208,7 @@ protected:
   std::unique_ptr<realtime_tools::RealtimePublisher<comau_msgs::msg::ComauServerError>> server_error_pub_;
   std::unique_ptr<realtime_tools::RealtimePublisher<comau_msgs::msg::ComauOperationMode>> server_operation_mode_pub_;
   std::unique_ptr<realtime_tools::RealtimePublisher<tf2_msgs::msg::TFMessage>> ee_pose_pub_;
+  std::unique_ptr<realtime_tools::RealtimePublisher<sensor_msgs::msg::JointState>> urdf_joint_states_pub_;
   std::unique_ptr<realtime_tools::RealtimePublisher<comau_msgs::msg::IOStates>> io_states_pub_;
 
   // services

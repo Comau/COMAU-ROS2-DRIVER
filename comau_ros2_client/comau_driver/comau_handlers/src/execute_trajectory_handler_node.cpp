@@ -23,8 +23,6 @@ std::shared_ptr<rclcpp::Node> nh;
 
 int startTrajAction = 0;
 
-/*TO DO closeComauDriver ANDY */
-
 void signalHandler(int signum) 
 {
   RCLCPP_WARN_STREAM(rclcpp::get_logger("execute_trajectory_handler_node")," Interrupt signal (" << signum << ") received.\n");
@@ -40,7 +38,7 @@ int main(int argc, char **argv) {
 
   nh->declare_parameter("start_traj_action",0);
   nh->declare_parameter("loop_hz", 500.0);
-  nh->declare_parameter("cycle_time_error_threshold", 0.025);
+  nh->declare_parameter("cycle_time_error_threshold", 0.0025);
   
   // register signal SIGINT and signal handler
   signal(SIGINT, signalHandler);

@@ -6,8 +6,8 @@
 <robot name="nj220">
   <!-- 
     Author: LMS
-   -->
-  <controller_plugin_gazebo/>
+   
+  <controller_plugin_gazebo/>-->
   <transmission name="joint_1_trans">
     <type>transmission_interface/SimpleTransmission</type>
     <joint name="joint_1">
@@ -105,11 +105,7 @@
       </material>
     </visual>
     <collision>
-      <surface>
-        <contact>
-          <collide_bitmask>0x01</collide_bitmask>
-        </contact>
-      </surface>
+ì
       <geometry>
         <mesh filename="package://nj220_description/meshes/nj220/base_link.STL"/>
       </geometry>
@@ -130,11 +126,7 @@
       </geometry>
     </visual>
     <collision>
-      <surface>
-        <contact>
-          <collide_bitmask>0x10</collide_bitmask>
-        </contact>
-      </surface>
+ 
       <geometry>
         <mesh filename="package://nj220_description/meshes/nj220/Link1.STL"/>
       </geometry>
@@ -162,11 +154,7 @@
       </material>
     </visual>
     <collision>
-      <surface>
-        <contact>
-          <collide_bitmask>0x01</collide_bitmask>
-        </contact>
-      </surface>
+ 
       <geometry>
         <mesh filename="package://nj220_description/meshes/nj220/Link2.STL"/>
       </geometry>
@@ -194,11 +182,7 @@
       </material>
     </visual>
     <collision>
-      <surface>
-        <contact>
-          <collide_bitmask>0x01</collide_bitmask>
-        </contact>
-      </surface>
+   
       <geometry>
         <mesh filename="package://nj220_description/meshes/nj220/Link3.STL"/>
       </geometry>
@@ -227,11 +211,7 @@
       </material>
     </visual>
     <collision>
-      <surface>
-        <contact>
-          <collide_bitmask>0x01</collide_bitmask>
-        </contact>
-      </surface>
+
       <geometry>
         <mesh filename="package://nj220_description/meshes/nj220/Link4.STL"/>
       </geometry>
@@ -259,11 +239,7 @@
       </material>
     </visual>
     <collision>
-      <surface>
-        <contact>
-          <collide_bitmask>0x10</collide_bitmask>
-        </contact>
-      </surface>
+
       <geometry>
         <mesh filename="package://nj220_description/meshes/nj220/Link5.STL"/>
       </geometry>
@@ -291,11 +267,7 @@
       </material>
     </visual>
     <collision>
-      <surface>
-        <contact>
-          <collide_bitmask>0x01</collide_bitmask>
-        </contact>
-      </surface>
+
       <geometry>
         <mesh filename="package://nj220_description/meshes/nj220/Link6.STL"/>
       </geometry>

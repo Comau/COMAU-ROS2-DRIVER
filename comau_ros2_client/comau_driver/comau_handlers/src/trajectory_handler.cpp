@@ -38,7 +38,7 @@ bool TrajectoryHandler::init() {
 
   // Get current time for use with first update
   clock_gettime(CLOCK_MONOTONIC, &last_time_);
-  desired_update_period_ = 1 / loop_hz_;
+  desired_update_period_ = (double)(1 / loop_hz_);
 
   // Read parameters through rclcpp parameter server  
   nh_->declare_parameter("use_state_server", true);
@@ -54,11 +54,11 @@ bool TrajectoryHandler::init() {
   req_prev_open_connection = false;
 
   stsSelector_       = 0;
-  pins_in_           = {0,0,0,0,0,0};
+  pins_in_           = {0,0,0,0,0,0}; /* ANDY CHECK DIMENSIONS */
   pins_state_in_     = {0,0,0,0,0,0};
   pins_out_          = {0,0,0,0,0,0};
   pins_state_out_    = {0,0,0,0,0,0};
-  jnt_type_          = {0,0,0,0,0,0};
+  jnt_type_.resize(NUM_JOINTS_MAX);
 
   // Resize vectors
   joint_position_.resize(NUM_JOINTS_MAX);
@@ -113,7 +113,7 @@ bool TrajectoryHandler::init() {
   }
 
   RCLCPP_INFO_STREAM(rclcpp::get_logger("comau_robot"), "Number of joint within URDF file is: " << execute_joints_handler_ptr->urdf_number_of_joints_);
-  num_joints_ = 6; //execute_joints_handler_ptr->urdf_number_of_joints_; ANDY
+  num_joints_ = execute_joints_handler_ptr->urdf_number_of_joints_;
   for(size_t i = 0; i < num_joints_; i++)
   {
     std::stringstream str_temp;
@@ -164,6 +164,16 @@ bool TrajectoryHandler::init() {
     return false;
   }
   try {
+    urdf_joint_states_pub_.reset(
+      new realtime_tools::RealtimePublisher<sensor_msgs::msg::JointState>(nh_->create_publisher<sensor_msgs::msg::JointState>(
+      "joint_states", rclcpp::SystemDefaultsQoS())));
+  } catch (const std::exception & e) {
+    fprintf(
+      stderr, "Exception thrown during publisher creation at configure stage with message : %s \n",
+      e.what());
+    return false;
+  }
+  try {
     async_enable_pub_.reset(
       new realtime_tools::RealtimePublisher<std_msgs::msg::Bool>(
       nh_->create_publisher<std_msgs::msg::Bool>(
@@ -178,7 +188,7 @@ bool TrajectoryHandler::init() {
   try {
     io_states_pub_.reset(
       new realtime_tools::RealtimePublisher<comau_msgs::msg::IOStates>(
-        nh_->create_publisher<comau_msgs::msg::IOStates>("io_states", rclcpp::SystemDefaultsQoS())));
+        nh_->create_publisher<comau_msgs::msg::IOStates>("io_states", true)));
     io_states_pub_->msg_.digital_in_states.resize(6);
     io_states_pub_->msg_.digital_out_states.resize(6);
   } catch (const std::exception & e) {
@@ -449,7 +459,7 @@ void TrajectoryHandler::publishEndEffectorPose() {
 
   ee_transform_.header.stamp    = rclcpp::Clock{RCL_ROS_TIME}.now();
   ee_transform_.header.frame_id = "base_link";
-  ee_transform_.child_frame_id  = "tool_controller";
+  ee_transform_.child_frame_id  = "ee_link";//"tool_controller";
   ee_transform_.transform.translation.x = ee_position_[0] / 1000.;
   ee_transform_.transform.translation.y = ee_position_[1] / 1000.;
   ee_transform_.transform.translation.z = ee_position_[2] / 1000.;
@@ -593,10 +603,10 @@ void TrajectoryHandler::send_goal()
     std::bind(&TrajectoryHandler::feedback_callback, this, _1, _2);
   send_goal_options.result_callback =
     std::bind(&TrajectoryHandler::result_callback, this, _1);
-  this->client_ptr_->async_send_goal(goal_msg, send_goal_options);
+  this->client_ptr_->async_send_goal(goal_msg);//, send_goal_options);
 }
 
-void TrajectoryHandler::cancel_goal() /* ANDY */
+/* ANDY void TrajectoryHandler::cancel_goal() 
 {
   auto future_cancel = action_client_->async_cancel_goal(goal_handle_);
   if (callback_group_executor_.spin_until_future_complete(future_cancel, server_timeout_) !=
@@ -606,7 +616,7 @@ void TrajectoryHandler::cancel_goal() /* ANDY */
       node_->get_logger(),
       "Failed to cancel action server for %s", action_name_.c_str());
   }
-}
+}*/
 
 void TrajectoryHandler::goal_response_callback(const GoalHandleCartTraj::SharedPtr & goal_handle)
 {
@@ -648,7 +658,7 @@ void TrajectoryHandler::printVector(const std::vector<double> &vec) {
 void TrajectoryHandler::read(double time, double perio) {
   if (!(use_state_server_ || use_robot_server_ || use_arm1_server_)) 
   {
-    if (position_controller_running_)
+    if (position_controller_running_ && 0)
       copyVector(joint_position_command_, joint_position_);
     return;
   }
@@ -791,26 +801,64 @@ void TrajectoryHandler::write(double time, double period) {
         robot_ptr_->writeCommand(joint_position_command_, time, period,
                                  comau_driver::ControlMode::MODE_POSITION);
       } else {
-        holdConnection();
+        holdConnection(); /* REAL ROBOT ASYNC COMMANDS HERE */
       }
       packet_read_ = false;
     }
   }
 }
 
+void TrajectoryHandler::update_urdf() {
+    
+  if (use_state_server_ && robot_ptr_->state_client_ptr_->is_connected_) 
+  {
+    if (packet_read_) 
+    {
+      urdf_joint_states_.header.stamp = rclcpp::Clock{RCL_ROS_TIME}.now();
+      urdf_joint_states_.name.resize(num_joints_);
+      urdf_joint_states_.position.resize(num_joints_);
+      urdf_joint_states_pub_->msg_.name.resize(num_joints_);
+      urdf_joint_states_pub_->msg_.position.resize(num_joints_);
+
+      //Joint Names
+      for(size_t si_i = 0; si_i < num_joints_; si_i++)
+      {
+        urdf_joint_states_.name[si_i] = joint_names_.at(si_i);
+        urdf_joint_states_.position[si_i] = joint_position_.at(si_i);
+      }
+
+      if (urdf_joint_states_pub_) 
+      {
+        if (urdf_joint_states_pub_->trylock()) 
+        {
+          urdf_joint_states_pub_->msg_.header.stamp = urdf_joint_states_.header.stamp;
+          for(size_t si_i = 0; si_i < num_joints_; si_i++)
+          {
+            urdf_joint_states_pub_->msg_.name[si_i]     = urdf_joint_states_.name[si_i]; 
+            urdf_joint_states_pub_->msg_.position[si_i] = urdf_joint_states_.position[si_i]; 
+            RCLCPP_INFO_STREAM(rclcpp::get_logger("urdf_joint_states_pub_ "),"" << urdf_joint_states_pub_->msg_.position[si_i]);
+          }
+          urdf_joint_states_pub_->unlockAndPublish();
+        }
+      }
+    }
+  }
+  
+}
+
 void TrajectoryHandler::update() {
 
-  last_time_ = current_time_;
+  
   double now = rclcpp::Clock{RCL_ROS_TIME}.now().seconds();
 
   // Get change in time
-  clock_gettime(CLOCK_MONOTONIC, &current_time_);
+  
   elapsed_time_ = (current_time_.tv_sec - last_time_.tv_sec + (current_time_.tv_nsec - last_time_.tv_nsec) / BILLION);
-  last_time_ = current_time_;
 
   // Error check cycle time
   const double cycle_time_error = (elapsed_time_ - desired_update_period_);
-  if (cycle_time_error > cycle_time_error_threshold_) {
+  if (cycle_time_error > cycle_time_error_threshold_) 
+  {
     RCLCPP_WARN_STREAM(rclcpp::get_logger(name_), "Cycle time exceeded error threshold by: "
                                      << cycle_time_error << ", cycle time: " << elapsed_time_
                                      << ", threshold: " << cycle_time_error_threshold_);
@@ -818,9 +866,12 @@ void TrajectoryHandler::update() {
 
   // Input
   this->read(now, elapsed_time_);
-
+  clock_gettime(CLOCK_MONOTONIC, &last_time_);
+  //URDF Update
+  this->update_urdf();
   // Output
   this->write(now, elapsed_time_);
+  clock_gettime(CLOCK_MONOTONIC, &current_time_);
 }
 
 } // namespace trajectory_handler

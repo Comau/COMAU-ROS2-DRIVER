@@ -1,20 +1,18 @@
 <?xml version="1.0"?>
-<robot xmlns:xacro="http://wiki.ros.org/xacro">
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <!-- 
-    Author: LMS
-   -->
+  <xacro:macro name="racer5_cobot_description">
 
-  <xacro:include filename="$(find racer5-cobot_description)/urdf/comau_common.macro.xacro" />
-  <xacro:include filename="$(find racer5-cobot_description)/urdf/racer5-cobot/racer5-cobot.transmission.xacro" />
+   <xacro:include filename="$(find racer5-cobot_description)/urdf/comau_common.macro.xacro" />
+  <!--xacro:include filename="$(find racer5-cobot_description)/urdf/racer5-cobot/racer5-cobot.transmission.xacro" />
   <xacro:include filename="$(find racer5-cobot_description)/urdf/racer5-cobot/racer5-cobot.gazebo.xacro" />
 
   <xacro:macro name="racer5-cobot_robot" params="prefix transmission_hw_interface:=hardware_interface/PositionJointInterface">
 
     <xacro:racer5-cobot_transmission prefix="${prefix}" hw_interface="${transmission_hw_interface}" />
-    <xacro:racer5-cobot_gazebo prefix="${prefix}" />
+    <xacro:racer5-cobot_gazebo prefix="${prefix}" /-->
 
-    <link name="${prefix}base_link">
+    <link name="base_link">
       <inertial>
         <origin xyz="-0.017279 0.00078009 0.14492" rpy="0 0 0" />
         <mass value="6.215" />
@@ -25,7 +23,7 @@
         <geometry>
           <mesh filename="package://racer5-cobot_description/meshes/racer5-cobot/base_link.STL" />
         </geometry>
-        <xacro:c_d_grey/>
+        <xacro:c_white/>
       </visual>
       <collision>
         <xacro:col_mask_0/>
@@ -35,7 +33,7 @@
       </collision>
     </link>
 
-    <link name="${prefix}link_1">
+    <link name="link_1">
       <inertial>
         <origin xyz="0.0375246972830294 -0.0047330722058841 0.119959023209445" rpy="0 0 0" />
         <mass value="5.46814182699305" />
@@ -46,7 +44,7 @@
         <geometry>
           <mesh filename="package://racer5-cobot_description/meshes/racer5-cobot/Link1.STL" />
         </geometry>
-        <xacro:c_white/>
+        <xacro:c_blue/>
       </visual>
       <collision>
         <xacro:col_mask_1/>
@@ -56,7 +54,7 @@
       </collision>
     </link>
     
-    <joint name="${prefix}joint_1" type="revolute">
+    <joint name="joint_1" type="revolute">
       <origin xyz="0 0 0.242" rpy="0 0 0" />
       <parent link="base_link" />
       <child link="link_1" />
@@ -75,7 +73,7 @@
         <geometry>
           <mesh filename="package://racer5-cobot_description/meshes/racer5-cobot/Link2.STL" />
         </geometry>
-        <xacro:c_blue/>
+        <xacro:c_white/>
       </visual>
       <collision>
         <xacro:col_mask_1/>
@@ -85,7 +83,7 @@
       </collision>
     </link>
     
-    <joint name="${prefix}joint_2" type="revolute">
+    <joint name="joint_2" type="revolute">
       <origin xyz="0.05 0 0.123" rpy="0 0 0" />
       <parent link="link_1" />
       <child link="link_2" />
@@ -93,7 +91,7 @@
       <limit lower="-1.116" upper="1.99" effort="100000.00" velocity="20.00" />
     </joint>
 
-    <link name="${prefix}link_3">
+    <link name="link_3">
       <inertial>
         <origin xyz="-0.0174695057689258 -0.00108883931260707 -0.00846478214002855" rpy="0 0 0" />
         <mass value="2.68331708366552" />
@@ -104,7 +102,7 @@
         <geometry>
           <mesh filename="package://racer5-cobot_description/meshes/racer5-cobot/Link3.STL" />
         </geometry>
-         <xacro:c_white/>
+         <xacro:c_blue/>
       </visual>
       <collision>
         <xacro:col_mask_0/>
@@ -114,7 +112,7 @@
       </collision>
     </link>
     
-    <joint name="${prefix}joint_3" type="revolute">
+    <joint name="joint_3" type="revolute">
       <origin xyz="0 0 0.37" rpy="0 0 3.14" />
       <parent link="link_2" />
       <child link="link_3" />
@@ -122,18 +120,18 @@
       <limit lower="-2.62" upper="1.483" effort="100000.00" velocity="20.00" />
     </joint>
     
-    <link name="${prefix}link_4">
+    <link name="link_4">
       <inertial>
         <origin xyz="-0.00227788070042482 -0.00123420975347735 0.0624227170360064" rpy="0 0 0" />
         <mass value="1.62984418880799" />
         <inertia ixx="0.00636789477652846" ixy="-2.81769690428589E-06" ixz="-7.62862065969977E-05" iyy="0.00700400581464894" iyz="-3.84855032438523E-05" izz="0.00283764341486332" />
       </inertial>
       <visual>
-        <origin xyz="0 0 0" rpy="0 0 3.14" />
+        <origin xyz="0 0 0.125" rpy="0 0 3.14" />
         <geometry>
           <mesh filename="package://racer5-cobot_description/meshes/racer5-cobot/Link4.STL" />
         </geometry>
-        <xacro:c_blue/>
+        <xacro:c_white/>
       </visual>
       <collision>
         <xacro:col_mask_0/>
@@ -143,7 +141,7 @@
       </collision>
     </link>
    
-    <joint name="${prefix}joint_4" type="revolute">
+    <joint name="joint_4" type="revolute">
       <origin xyz="0.05 0 0.0" rpy="0 0 0" />
       <parent link="link_3" />
       <child link="link_4" />
@@ -151,7 +149,7 @@
       <limit lower="-3.49" upper="3.49" effort="100000.00" velocity="20.00" />
     </joint>
     
-    <link name="${prefix}link_5">
+    <link name="link_5">
       <inertial>
         <origin xyz="8.42234791683474E-06 0.000438242230281476 0.0364200996149726" rpy="0 0 0" />
         <mass value="0.805335362671064" />
@@ -162,7 +160,7 @@
         <geometry>
           <mesh filename="package://racer5-cobot_description/meshes/racer5-cobot/Link5.STL" />
         </geometry>
-        <xacro:c_white/>
+        <xacro:c_blue/>
       </visual>
       <collision>
         <xacro:col_mask_1/>
@@ -172,7 +170,7 @@
       </collision>
     </link>
     
-    <joint name="${prefix}joint_5" type="revolute">
+    <joint name="joint_5" type="revolute">
       <origin xyz="0 0 0.38594" rpy="0 0 0" />
       <parent link="link_4" />
       <child link="link_5" />
@@ -180,14 +178,14 @@
       <limit lower="-1.83" upper="1.83" effort="100000.00" velocity="20.00" />
     </joint>
     
-    <link name="${prefix}link_6">
+    <link name="link_6">
       <inertial>
         <origin xyz="5.64165774402925E-05 -4.33361315668251E-07 0.00365583421206228" rpy="0 0 0" />
         <mass value="0.0730000000000003" />
         <inertia ixx="6.94455842253111E-06" ixy="-3.96352989850563E-10" ixz="-3.15927343591289E-08" iyy="6.89301150818147E-06" iyz="3.03515042445876E-10" izz="9.67078778400452E-06" />
       </inertial>
       <visual>
-        <xacro:c_d_grey/>
+        <xacro:c_white/>
         <geometry>
           <mesh filename="package://racer5-cobot_description/meshes/racer5-cobot/Link6.STL" />
         </geometry>
@@ -203,7 +201,7 @@
       </collision>
     </link>
 
-    <joint name="${prefix}joint_6" type="revolute">
+    <joint name="joint_6" type="revolute">
       <origin xyz="0 0 0.08" rpy="0 0 0" />
       <parent link="link_5" />
       <child link="link_6" />
@@ -211,7 +209,7 @@
       <limit lower="-100" upper="100" effort="100000.00" velocity="20.00" />
     </joint>
 
-    <link name="${prefix}ee_link">
+    <link name="ee_link">
       <visual>
         <geometry>
           <cylinder length="0.001" radius="0.001"/>
@@ -219,7 +217,7 @@
       </visual>
     </link>
 
-    <joint name="${prefix}joint_ee_link" type="fixed">
+    <joint name="joint_ee_link" type="fixed">
       <origin xyz="0.0 0.0 0.0" rpy="0 0 3.14"/>
       <parent link="link_6"/>
       <child link="ee_link"/>

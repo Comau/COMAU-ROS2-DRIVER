@@ -29,6 +29,8 @@
 #include <joint_limits/joint_limits.hpp>
 #include <joint_limits/joint_limits_rosparam.hpp>
 #include <urdf/model.h>
+#include <string>
+#include <map>
 
 // msgs
 #include <comau_msgs/msg/action_result_status_constants.hpp>
