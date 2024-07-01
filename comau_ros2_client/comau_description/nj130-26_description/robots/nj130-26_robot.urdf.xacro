@@ -1,34 +1,22 @@
 <?xml version="1.0"?>
-<robot name="nj130-26" xmlns:xacro="http://wiki.ros.org/xacro">
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="nj130-26">
 
-    <!-- 
-    Author: LMS
-    -->
-    <xacro:arg name="transmission_hw_interface" default="hardware_interface/PositionJointInterface"/>
+   
+  <xacro:include filename="$(find nj130-26_description)/urdf/nj130-26/nj130-26.urdf.xacro" />
 
-    <xacro:arg name="pos_x" default="0"/>
-    <xacro:arg name="pos_y" default="0"/>
-    <xacro:arg name="pos_z" default="0"/>
-    <xacro:arg name="roll" default="0"/>
-    <xacro:arg name="pitch" default="0"/>
-    <xacro:arg name="yaw" default="0"/>
+  <xacro:nj130-26_desc/>
 
-    <!-- common stuff -->
-    <xacro:include filename="$(find nj130-26_description)/urdf/common.gazebo.xacro" />
+  <!-- Import robot ros2_control description -->
+  <xacro:include filename="$(find nj130-26_description)/ros2_control/nj130-26.ros2_control.xacro" />
+  <xacro:robot_ros2_control name="nj130-26"/>
 
-    <!--load nj130-26 -->
-    <xacro:include filename="$(find nj130-26_description)/urdf/nj130-26/nj130-26.urdf.xacro" />
+  <link name="world" />
 
-    <!-- arm -->
-    <xacro:nj130-26_robot prefix="" transmission_hw_interface="$(arg transmission_hw_interface)"/>
-
-    <link name="world" />
-
-    <joint name="world_joint" type="fixed">
-        <parent link="world" />
-        <child link = "base_link" />
-        <origin xyz="$(arg pos_x) $(arg pos_y) $(arg pos_z)" rpy="$(arg roll) $(arg pitch) $(arg yaw)" />
-    </joint>
+  <joint name="world_joint" type="fixed">
+    <parent link="world" />
+    <child link = "base_link" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
 
 
 

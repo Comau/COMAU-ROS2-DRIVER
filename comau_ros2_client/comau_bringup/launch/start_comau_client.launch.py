@@ -18,19 +18,15 @@ def generate_launch_description():
         if arg.startswith("robot_type:="):
             robot_type = str(arg.split(":=")[1])
     
-    colors = {
-            'background_r': '200'
-        }
-    
     match robot_type:
         case "aura":
             return LaunchDescription([
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([
                     PathJoinSubstitution([
-                        FindPackageShare('ros2_comau_client'),
-                        'comau_bringup/launch/robots/',
-                        'aura_bringup.launch.py'
+                        FindPackageShare('aura_description'),
+                        'launch/',
+                        'view_aura.launch.py'
                     ])
                 ]),
             )
@@ -40,9 +36,9 @@ def generate_launch_description():
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([
                     PathJoinSubstitution([
-                        FindPackageShare('ros2_comau_client'),
-                        'comau_bringup/launch/robots/',
-                        'aura-mimic_bringup.launch.py'
+                        FindPackageShare('aura-mimic_description'),
+                        'launch/',
+                        'view_aura-mimic.launch.py'
                     ])
                 ]),
             )
@@ -52,9 +48,9 @@ def generate_launch_description():
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([
                     PathJoinSubstitution([
-                        FindPackageShare('ros2_comau_client'),
-                        'comau_bringup/launch/robots/',
-                        'nj4-110_bringup.launch.py'
+                        FindPackageShare('nj4-110_description'),
+                        'launch/',
+                        'view_nj4-110.launch.py'
                     ])
                 ]),
             )
@@ -64,9 +60,9 @@ def generate_launch_description():
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([
                     PathJoinSubstitution([
-                        FindPackageShare('ros2_comau_client'),
-                        'comau_bringup/launch/robots/',
-                        'nj4-170-29_bringup.launch.py'
+                        FindPackageShare('nj4-170-29_description'),
+                        'launch/',
+                        'view_nj4-170-29.launch.py'
                     ])
                 ]),
             )
@@ -76,9 +72,9 @@ def generate_launch_description():
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([
                     PathJoinSubstitution([
-                        FindPackageShare('ros2_comau_client'),
-                        'comau_bringup/launch/robots/',
-                        'nj130-26_bringup.launch.py'
+                        FindPackageShare('nj130-26_description'),
+                        'launch/',
+                        'view_nj130-26.launch.py'
                     ])
                 ]),
             )
@@ -88,9 +84,9 @@ def generate_launch_description():
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([
                     PathJoinSubstitution([
-                        FindPackageShare('ros2_comau_client'),
-                        'comau_bringup/launch/robots/',
-                        'nj220_bringup.launch.py'
+                        FindPackageShare('nj220_description'),
+                        'launch/',
+                        'view_nj220.launch.py'
                     ])
                 ]),
             )
@@ -100,9 +96,9 @@ def generate_launch_description():
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([
                     PathJoinSubstitution([
-                        FindPackageShare('ros2_comau_client'),
-                        'comau_bringup/launch/robots/',
-                        'racer5-0-80_bringup.launch.py'
+                        FindPackageShare('racer5-0-80_description'),
+                        'launch/',
+                        'view_racer5-0-80.launch.py'
                     ])
                 ]),
             )
@@ -124,9 +120,9 @@ def generate_launch_description():
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([
                     PathJoinSubstitution([
-                        FindPackageShare('ros2_comau_client'),
-                        'comau_bringup/launch/robots/',
-                        'racer5-cobot-rail_bringup.launch.py'
+                        FindPackageShare('racer5-cobot-rail_description'),
+                        'launch/',
+                        'view_racer5-cobot-rail.launch.py'
                     ])
                 ]),
             )
@@ -136,15 +132,15 @@ def generate_launch_description():
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([
                     PathJoinSubstitution([
-                        FindPackageShare('ros2_comau_client'),
-                        'comau_bringup/launch/robots/',
-                        'racer7-14_bringup.launch.py'
+                        FindPackageShare('racer7-14_description'),
+                        'launch/',
+                        'view_racer7-14.launch.py'
                     ])
                 ]),
             )
         ])
         case _:
-            print("Client closed. Please choose a robot with robot_type:= \n aura \n aura-mimic \n nj4-110 \n nj4-170-29 \n nj130-26 \n nj220 \n racer5-0-80 \n racer5-cobot \n racer5-cobot-rail \n racer7-14")
+            print("Client closed. Please choose a robot_type:= \n aura \n aura-mimic \n nj4-110 \n nj4-170-29 \n nj130-26 \n nj220 \n racer5-0-80 \n racer5-cobot \n racer5-cobot-rail \n racer7-14")
             sys.exit()
     
     return

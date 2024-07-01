@@ -1,25 +1,23 @@
 <?xml version="1.0"?>
-<robot xmlns:xacro="http://wiki.ros.org/xacro">
-
-  <!-- 
-    Author: LMS
-   -->
-  <!--NEW-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="aura_desc">
+  
   <xacro:include filename="$(find aura_description)/urdf/comau_common.macro.xacro" />
-  <xacro:include filename="$(find aura_description)/urdf/aura/aura.transmission.xacro" />
+
+  <!--xacro:property name="damp" default="0.02"/>
+  <xacro:property name="fric" default="0.0"/>
+  <xacro:property name="dummy_inertia" default="1"/-->
+  <xacro:property name="m_scale" default="0.01"/>
+
+  <!--xacro:include filename="$(find aura_description)/urdf/aura/aura.transmission.xacro" />
   <xacro:include filename="$(find aura_description)/urdf/aura/aura.gazebo.xacro" />
 
-  <!--Experimental Parameters!-->
-  <xacro:property name="damp" default="0.02"/>
-  <xacro:property name="fric" default="0.0"/>
-  <xacro:property name="dummy_inertia" default="1"/>
-  <xacro:property name="m_scale" default="0.01"/> <!--To Reduce VIbrations-->
  <xacro:macro name="aura_robot" params="prefix use_mimic:=false transmission_hw_interface:=hardware_interface/PositionJointInterface">
 
     <xacro:aura_transmission prefix="${prefix}" hw_interface="${transmission_hw_interface}" />
-    <xacro:aura_gazebo prefix="${prefix}" use_mimic="${use_mimic}"/>
+    <xacro:aura_gazebo prefix="${prefix}" use_mimic="${use_mimic}"/-->
 
-    <link name="${prefix}base_link">
+    <link name="base_link">
       <inertial>
       <origin
         xyz="0.0190768727000594 -0.00273219739469353 0.224558520234347"
@@ -52,7 +50,7 @@
       </collision>
     </link>
 
-    <link name="${prefix}link_1">
+    <link name="link_1">
       <inertial>
       <origin
         xyz="0.266373725873378 0.00385598734773701 0.381638394835449"
@@ -87,7 +85,7 @@
 
 
 
-    <link name="${prefix}link_2">
+    <link name="link_2">
       <inertial>
       <origin
         xyz="-0.130676544255706 -0.0799633110698596 0.420177344523501"
@@ -120,7 +118,7 @@
 
 
 
-    <link name="${prefix}link_3">
+    <link name="link_3">
       <inertial>
       <origin
         xyz="-0.0729518648260472 0.0292430153422261 0.190940156994843"
@@ -151,7 +149,7 @@
       </collision>
     </link>
 
-    <link name="${prefix}link_3_virtual">
+    <link name="link_3_virtual">
       <inertial>
         <origin xyz="0 0 0" rpy="0 0 0" />
         <mass value="${0.1 * m_scale}" />
@@ -159,7 +157,7 @@
       </inertial>
     </link>
 
-    <link name="${prefix}link_4">
+    <link name="link_4">
       <inertial>
       <origin
         xyz="0.812887178114926 0.000362663375719755 -0.00614579685957262"
@@ -192,7 +190,7 @@
 
 
 
-    <link name="${prefix}link_5">
+    <link name="link_5">
       <inertial>
       <origin
         xyz="0.0568185601062883 0.000539823436256374 0.13348534058869"
@@ -225,7 +223,7 @@
 
 
 
-    <link name="${prefix}link_6">
+    <link name="link_6">
       <inertial>
       <origin
         xyz="0.0242228852262389 0.00139203375363176 0.000729669966204494"
@@ -256,15 +254,15 @@
       </collision>
     </link>
 
-    <link name="${prefix}ee_link"/>
+    <link name="ee_link"/>
 
    <!-- joints: main serial chain -->
-    <joint name="${prefix}joint_1" type="revolute">
+    <joint name="joint_1" type="revolute">
       <origin
       xyz="0 0 0.466"
       rpy="0 0 0" />
-      <parent link="${prefix}base_link" />
-      <child link="${prefix}link_1" />
+      <parent link="base_link" />
+      <child link="link_1" />
       <axis
         xyz="0 0 -1" />
       <limit
@@ -272,15 +270,15 @@
         upper="3.14"
         effort="6300.0"
         velocity="2.0" />
-      <dynamics damping="${damp}" friction="${fric}"/>
+      <!--dynamics damping="${damp}" friction="${fric}"/-->
     </joint>
 
-    <joint name="${prefix}joint_2" type="revolute">
+    <joint name="joint_2" type="revolute">
     <origin
       xyz="0.4 0 0.504"
       rpy="0 0 0" />
-    <parent link="${prefix}link_1" />
-    <child link="${prefix}link_2" />
+    <parent link="link_1" />
+    <child link="link_2" />
     <axis
       xyz="0 1 0" />
     <limit
@@ -288,58 +286,55 @@
       upper="1.48"
       effort="3300.0"
       velocity="2.0" />
-    <dynamics damping="${damp}" friction="${fric}"/>
+    <!--dynamics damping="${damp}" friction="${fric}"/-->
     </joint>
 
-    <xacro:unless value="${use_mimic}">
-      <joint name="${prefix}joint_2m" type="fixed">
+
+      <joint name="joint_2m" type="fixed">
         <origin
         xyz="0 0 1.175"
         rpy="0 ${-M_PI/2} 0" />
-        <parent link="${prefix}link_2" />
-        <child link="${prefix}link_3_virtual" />
+        <parent link="link_2" />
+        <child link="link_3_virtual" />
       </joint>
 
-      <joint name="${prefix}joint_3" type="revolute">
+      <joint name="joint_3" type="revolute">
         <origin
         xyz="0 0 0"
         rpy="0 0 0" />
-        <parent link="${prefix}link_3_virtual" />
-        <child link="${prefix}link_3" />
+        <parent link="link_3_virtual" />
+        <child link="link_3" />
         <axis
           xyz="0 -1 0" />
-        <!--0.34, 0.88 upper lower -0.69--> <!--0.69 0.88 -->
         <limit
           lower="-2.2607"           
           upper="-0.69079" 
           effort="1000.0"
           velocity="2.0" />
-        <dynamics damping="${damp}" friction="${fric}"/>
+        <!--dynamics damping="${damp}" friction="${fric}"/-->
       </joint>
-    </xacro:unless>
 
-    <xacro:if value="${use_mimic}">
-      <joint name="${prefix}joint_2m" type="continuous">
+    <!--xacro:if value="${use_mimic}">
+      <joint name="joint_2m" type="continuous">
         <origin
         xyz="0 0 1.175"
         rpy="0 ${-M_PI/2} 0" />
-        <parent link="${prefix}link_2" />
-        <child link="${prefix}link_3_virtual" />
+        <parent link="link_2" />
+        <child link="link_3_virtual" />
         <axis
           xyz="0 -1 0" />
         <mimic joint="joint_2" multiplier="1" offset="0" />
         <dynamics damping="${damp}" friction="${fric}"/>
       </joint>
 
-      <joint name="${prefix}joint_3" type="revolute">
+      <joint name="joint_3" type="revolute">
         <origin
         xyz="0 0 0"
         rpy="0 0 0" />
-        <parent link="${prefix}link_3_virtual" />
-        <child link="${prefix}link_3" />
+        <parent link="link_3_virtual" />
+        <child link="link_3" />
         <axis
           xyz="0 -1 0" />
-        <!--0.34, 0.88 upper lower -0.69--> <!--0.69 0.88 -->
         <limit
           lower="-3.8397"           
           upper="-0.8726" 
@@ -347,14 +342,14 @@
           velocity="2.0" />
         <dynamics damping="${damp}" friction="${fric}"/>
       </joint>
-    </xacro:if>
+    </xacro:if-->
 
-    <joint name="${prefix}joint_4" type="revolute">
+    <joint name="joint_4" type="revolute">
       <origin
       xyz="0.105 0 0.249999999999999"
       rpy="0 0 0" />
-      <parent link="${prefix}link_3" />
-      <child link="${prefix}link_4" />
+      <parent link="link_3" />
+      <child link="link_4" />
     <axis
       xyz="-1 0 0" />
     <limit
@@ -362,15 +357,15 @@
       upper="3.14"
       effort="60.0"
       velocity="2.0" />
-    <dynamics damping="${damp}" friction="${fric}"/>
+    <!--dynamics damping="${damp}" friction="${fric}"/-->
     </joint>
 
-    <joint name="${prefix}joint_5" type="revolute">
+    <joint name="joint_5" type="revolute">
       <origin
       xyz="1.279 0 0.029358"
       rpy="0 0 0" />
-      <parent link="${prefix}link_4" />
-      <child link="${prefix}link_5" />
+      <parent link="link_4" />
+      <child link="link_5" />
     <axis
       xyz="0.5 0 0.86603" />
     <limit
@@ -378,15 +373,15 @@
       upper="3.14"
       effort="60.0"
       velocity="2.0" />
-    <dynamics damping="${damp}" friction="${fric}"/>
+    <!--dynamics damping="${damp}" friction="${fric}"/-->
     </joint>
 
-    <joint name="${prefix}joint_6" type="revolute">
+    <joint name="joint_6" type="revolute">
       <origin
         xyz="0.16105 0 0.10055"
         rpy="0 0 0" />
-      <parent link="${prefix}link_5" />
-      <child link="${prefix}link_6" />
+      <parent link="link_5" />
+      <child link="link_6" />
       <axis
         xyz="-1 0 0" />
       <limit
@@ -394,15 +389,16 @@
         upper="3.49"
         effort="60.0"
         velocity="2.0" />
-      <dynamics damping="${damp}" friction="${fric}"/>
+      <!--dynamics damping="${damp}" friction="${fric}"/-->
     </joint>
 
-    <joint name="${prefix}fixed_ee_joint" type="fixed">
+    <joint name="fixed_ee_joint" type="fixed">
       <origin
       xyz="0.0 0 0.0"
       rpy="0 ${M_PI/2} 0" />
-      <parent link="${prefix}link_6"/>
-      <child link="${prefix}ee_link"/>
+      <parent link="link_6"/>
+      <child link="ee_link"/>
+      <axis xyz="0 0 0"/>
     </joint>
 
   </xacro:macro>

@@ -19,7 +19,8 @@ install(
     launch 
     meshes 
     robots 
-    urdf 
+    urdf
+    ros2_control
   DESTINATION share/${PROJECT_NAME})
 
 ament_export_dependencies(${THIS_PACKAGE_INCLUDE_DEPENDS})

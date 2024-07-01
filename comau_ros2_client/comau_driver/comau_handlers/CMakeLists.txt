@@ -55,6 +55,7 @@ include_directories(
 set(THIS_PACKAGE_INCLUDE_DEPENDS
 rclcpp
 rclcpp_action
+kdl_parser
 comau_driver
 ros2_control
 tf2

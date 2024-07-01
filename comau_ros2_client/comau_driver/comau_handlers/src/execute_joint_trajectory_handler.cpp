@@ -268,8 +268,8 @@ bool ExecuteJointTrajectoryHandler::validateJointLimits(vector10f_t joint_values
     switch (robot_ptr_->jnt_cmd_type_.at(joint_id))
     {
       case 0:
-        if (joint_values_array.at(joint_id) * (M_PI / 180) > 100 ||/* ANDY joint_position_upper_limits_.at(joint_id) || */
-            joint_values_array.at(joint_id) * (M_PI / 180) < -100) {/* ANDY joint_position_lower_limits_.at(joint_id)) {*/
+        if (joint_values_array.at(joint_id) * (M_PI / 180) > 10000 ||/* ANDY joint_position_upper_limits_.at(joint_id) || */
+            joint_values_array.at(joint_id) * (M_PI / 180) < -10000) {/* ANDY joint_position_lower_limits_.at(joint_id)) {*/
           valid_goal_ = false;
           RCLCPP_WARN_STREAM(rclcpp::get_logger(action_name_)," Trajectory contains an out of limits goal at joint " << joint_id + 1
                               << ". Please check robot limits.");
@@ -279,8 +279,8 @@ bool ExecuteJointTrajectoryHandler::validateJointLimits(vector10f_t joint_values
         }
         break;
       case 1:
-        if (joint_values_array.at(joint_id) * (0.001) > 100 ||/* ANDY joint_position_upper_limits_.at(joint_id) || */
-            joint_values_array.at(joint_id) * (0.001) < -100) {/* ANDY joint_position_lower_limits_.at(joint_id)) {*/
+        if (joint_values_array.at(joint_id) * (0.001) > 10000 ||/* ANDY joint_position_upper_limits_.at(joint_id) || */
+            joint_values_array.at(joint_id) * (0.001) < -10000) {/* ANDY joint_position_lower_limits_.at(joint_id)) {*/
           valid_goal_ = false;
           RCLCPP_WARN_STREAM(rclcpp::get_logger(action_name_)," Trajectory contains an out of limits goal at joint " << joint_id + 1
                               << ". Please check robot limits.");

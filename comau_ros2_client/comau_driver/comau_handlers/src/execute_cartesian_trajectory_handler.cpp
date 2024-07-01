@@ -79,16 +79,16 @@ void ExecuteCartesianTrajectoryHandler::handle_accepted(const std::shared_ptr<rc
   std::thread{std::bind(&ExecuteCartesianTrajectoryHandler::executeCallback, this, _1), goal_handle}.detach();
 }
 
-geometry_msgs::msg::PoseStamped
-ExecuteCartesianTrajectoryHandler::changePoseFrame(const std::string &target_frame,
+geometry_msgs::msg::PoseStamped ExecuteCartesianTrajectoryHandler::changePoseFrame(const std::string &target_frame,
                                                    const geometry_msgs::msg::PoseStamped &goal_pose) {
   //tf2_ros::Buffer br;
-  std::unique_ptr<tf2_ros::Buffer> br;
+  std::shared_ptr<tf2_ros::Buffer> br;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr};
-  br = std::make_unique<tf2_ros::Buffer>(nh_->get_clock());
+  br = std::make_shared<tf2_ros::Buffer>(nh_->get_clock());
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*br);
-  //br.setUsingDedicatedThread(true);
   tf2_ros::TransformListener tf2_listener(*br);
+  //tf2_ros::TransformListener tf2_listener(br);
+  br->setUsingDedicatedThread(true);
   geometry_msgs::msg::TransformStamped transform;
   geometry_msgs::msg::PoseStamped transformed_pose;
 
@@ -96,11 +96,9 @@ ExecuteCartesianTrajectoryHandler::changePoseFrame(const std::string &target_fra
     rclcpp::Time now = nh_->get_clock()->now();
     transform = br->lookupTransform(target_frame, goal_pose.header.frame_id, now,1s);//, ros::Duration(1.0));
     tf2::doTransform(goal_pose, transformed_pose, transform);
-    RCLCPP_INFO_STREAM(rclcpp::get_logger(action_name_),"Change transform pose...");
-    std::cout << "[" << transformed_pose.pose.position.x << ", " << transformed_pose.pose.position.y << ", " << transformed_pose.pose.position.z << ";" << std::endl;
-    std::cout << " " << transformed_pose.pose.orientation.x << ", " << transformed_pose.pose.orientation.y << ", " << transformed_pose.pose.orientation.z << ", " << transformed_pose.pose.orientation.w << "]" << std::endl;
+    RCLCPP_WARN_STREAM(rclcpp::get_logger("ChangePoseFrame"),"Pose Transformed!");
     return transformed_pose;
-  } catch (tf2::LookupException &e) {
+  } catch (const tf2::LookupException &e) {
     RCLCPP_ERROR(rclcpp::get_logger(action_name_),"[%s] %s", action_name_.c_str(), e.what());
     transformed_pose.header.frame_id = "ee_link";//"tool_controller";
     return transformed_pose;
@@ -114,7 +112,7 @@ trajectoryf_t ExecuteCartesianTrajectoryHandler::parseCartesianTrajectoryGoal(
   for (comau_msgs::msg::CartesianPoseStamped cart_pose : goal->trajectory)
   {
     comau_tcp_interface::utils::cart_traj_node comau_node;
-    if (cart_pose.header.frame_id != "") {
+    /*if (cart_pose.header.frame_id != "") {
       // construct tf pose from cart pose
       geometry_msgs::msg::PoseStamped pose;
       tf2::Quaternion q;
@@ -130,12 +128,13 @@ trajectoryf_t ExecuteCartesianTrajectoryHandler::parseCartesianTrajectoryGoal(
       pose.pose.orientation.w = q[3];
       // Transform the pose relative on existing TF frame (if frame not equal to pass)
       geometry_msgs::msg::PoseStamped transformed_pose;
-      transformed_pose = changePoseFrame("base_link", pose);
+      transformed_pose = ExecuteCartesianTrajectoryHandler::changePoseFrame("base_link", pose);
+      RCLCPP_INFO_STREAM(rclcpp::get_logger(action_name_),"transformed_pose| "<< "X: " << transformed_pose.pose.position.x * 1000.0 << " Y: " << transformed_pose.pose.position.y * 1000.0 << " Z: " << transformed_pose.pose.position.z * 1000.0);
       vector6f_t pose_values_array;
       // first 3 points correspond to position - PDL wants millimiters
-      pose_values_array.at(0) = static_cast<float>(transformed_pose.pose.position.x * 1000.);
-      pose_values_array.at(1) = static_cast<float>(transformed_pose.pose.position.y * 1000.);
-      pose_values_array.at(2) = static_cast<float>(transformed_pose.pose.position.z * 1000.);
+      pose_values_array.at(0) = (transformed_pose.pose.position.x * 1000.0);
+      pose_values_array.at(1) = (transformed_pose.pose.position.y * 1000.0);
+      pose_values_array.at(2) = (transformed_pose.pose.position.z * 1000.0);
       // Revert back to euler
       // POS_SET_RPY IN PDL
       tf2::Quaternion q_transformed;
@@ -147,23 +146,26 @@ trajectoryf_t ExecuteCartesianTrajectoryHandler::parseCartesianTrajectoryGoal(
       double roll, pitch, yaw;
       tf2::Matrix3x3 m(q_transformed);
       m.getRPY(roll, pitch, yaw);
-      pose_values_array.at(3) = static_cast<float>(roll * 180. / M_PI);
-      pose_values_array.at(4) = static_cast<float>(pitch * 180. / M_PI);
-      pose_values_array.at(5) = static_cast<float>(yaw * 180. / M_PI);
+      RCLCPP_INFO_STREAM(rclcpp::get_logger(action_name_),"(Rad) Roll: " << roll << " Pitch: " << pitch << " Yaw: " << yaw);
+      pose_values_array.at(3) = static_cast<float>(roll * 180.0 / M_PI);
+      pose_values_array.at(4) = static_cast<float>(pitch * 180.0 / M_PI);
+      pose_values_array.at(5) = static_cast<float>(yaw * 180.0 / M_PI);
+      RCLCPP_INFO_STREAM(rclcpp::get_logger(action_name_),"(Degree) Roll: " << pose_values_array.at(3) << " Pitch: " << pose_values_array.at(4) << " Yaw: " << pose_values_array.at(5));
       // pose_traj.push_back(pose_values_array);
       comau_node.pose = pose_values_array;
-    } else {
+    } else {*/
       vector6f_t pose_values_array;
       // first 3 points correspond to position - PDL wants millimiters
-      pose_values_array.at(0) = static_cast<float>(cart_pose.x * 1000.);
-      pose_values_array.at(1) = static_cast<float>(cart_pose.y * 1000.);
-      pose_values_array.at(2) = static_cast<float>(cart_pose.z * 1000.);
+      pose_values_array.at(0) = static_cast<float>(cart_pose.x * 1000.0);
+      pose_values_array.at(1) = static_cast<float>(cart_pose.y * 1000.0);
+      pose_values_array.at(2) = static_cast<float>(cart_pose.z * 1000.0);
       // euler angles
-      pose_values_array.at(3) = static_cast<float>(cart_pose.roll * 180. / M_PI);
-      pose_values_array.at(4) = static_cast<float>(cart_pose.pitch * 180. / M_PI);
-      pose_values_array.at(5) = static_cast<float>(cart_pose.yaw * 180. / M_PI);
+      pose_values_array.at(3) = static_cast<float>(cart_pose.roll * 180.0 / M_PI);
+      pose_values_array.at(4) = static_cast<float>(cart_pose.pitch * 180.0 / M_PI);
+      pose_values_array.at(5) = static_cast<float>(cart_pose.yaw * 180.0 / M_PI);
       comau_node.pose = pose_values_array;
-    }
+    //}
+    RCLCPP_INFO_STREAM(rclcpp::get_logger(action_name_),"comau_node.pose: [x,y,z,R,P,Y] <-> [" << comau_node.pose.at(0) << ", " << comau_node.pose.at(1) << ", " << comau_node.pose.at(2) << ", " << comau_node.pose.at(3) << ", " << comau_node.pose.at(4) << ", " << comau_node.pose.at(5) << "]");
     if (cart_pose.lin_vel)
       comau_node.lin_vel   = cart_pose.lin_vel;
     else
@@ -215,10 +217,9 @@ void ExecuteCartesianTrajectoryHandler::executeCallback(const std::shared_ptr<rc
   if (robot_status_ == RobotStatus::READY && allow_async_) {
     const auto goal = goal_handle->get_goal();
     RCLCPP_INFO(rclcpp::get_logger(action_name_),"[%s]: Parsing Cartesian trajectory", action_name_.c_str());
-    goal_cartesian_trajectory_ = parseCartesianTrajectoryGoal(goal);
+    goal_cartesian_trajectory_ = ExecuteCartesianTrajectoryHandler::parseCartesianTrajectoryGoal(goal);
     if (use_arm1_server_)
-      robot_ptr_->writeTrajectoryCommand(goal_cartesian_trajectory_,
-                                         comau_driver::ControlMode::MODE_CARTESIAN_TRAJECTORY);
+      robot_ptr_->writeTrajectoryCommand(goal_cartesian_trajectory_, comau_driver::ControlMode::MODE_CARTESIAN_TRAJECTORY);
     action_active_ = true;
     RCLCPP_INFO(rclcpp::get_logger(action_name_),"[%s]: Received trajectory sended for execution", action_name_.c_str());
   } else {

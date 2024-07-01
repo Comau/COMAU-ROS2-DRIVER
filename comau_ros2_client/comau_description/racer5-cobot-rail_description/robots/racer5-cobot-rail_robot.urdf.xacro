@@ -1,34 +1,21 @@
 <?xml version="1.0"?>
-<robot xmlns:xacro="http://wiki.ros.org/xacro" name="racer5-cobot">
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="racer5-cobot-rail">
 
-  <!-- 
-    Author: LMS
-   -->
-   
-  <xacro:arg name="transmission_hw_interface" default="hardware_interface/PositionJointInterface"/>
+  <!--load racer5-cobot-rail -->
+  <xacro:include filename="$(find racer5-cobot-rail_description)/urdf/racer5-cobot-rail/racer5-cobot-rail.urdf.xacro" />
 
-  <xacro:arg name="pos_x" default="0"/>
-  <xacro:arg name="pos_y" default="0"/>
-  <xacro:arg name="pos_z" default="1.99"/>
-  <xacro:arg name="roll" default="0"/>
-  <xacro:arg name="pitch" default="0"/>
-  <xacro:arg name="yaw" default="0"/>
-  
-  <!-- common stuff -->
-  <xacro:include filename="$(find racer5-cobot-rail_description)/urdf/common.gazebo.xacro" />
+  <xacro:racer5-cobot-rail_description/>
 
-  <!--load racer5-cobot -->
-  <xacro:include filename="$(find racer5-cobot-rail_description)/urdf/racer5-cobot/racer5-cobot-rail.urdf.xacro" />
-
-  <!-- arm -->
-  <xacro:racer5-cobot_robot prefix="" transmission_hw_interface="$(arg transmission_hw_interface)"/>
+  <!-- Import robot ros2_control description -->
+  <xacro:include filename="$(find racer5-cobot-rail_description)/ros2_control/racer5-cobot-rail.ros2_control.xacro" />
+  <xacro:robot_ros2_control name="racer5-cobot-rail"/>
 
   <link name="world" />
 
   <joint name="world_joint" type="fixed">
     <parent link="world" />
     <child link = "bridge_link" />
-    <origin xyz="$(arg pos_x) $(arg pos_y) $(arg pos_z)" rpy="$(arg roll) $(arg pitch) $(arg yaw)" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
   </joint>
 
 </robot>

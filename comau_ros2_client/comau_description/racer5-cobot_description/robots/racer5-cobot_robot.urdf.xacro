@@ -6,4 +6,8 @@
 
   <xacro:racer5_cobot_description/>
 
+  <!-- Import robot ros2_control description -->
+  <xacro:include filename="$(find racer5-cobot_description)/ros2_control/racer5-cobot.ros2_control.xacro" />
+  <xacro:robot_ros2_control name="racer5-cobot"/>
+
 </robot>

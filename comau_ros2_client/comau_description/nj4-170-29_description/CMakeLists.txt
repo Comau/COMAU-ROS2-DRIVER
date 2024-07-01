@@ -17,9 +17,10 @@ find_package(xacro REQUIRED)
 install(
   DIRECTORY 
     launch 
-    meshes 
-    robots 
+    meshes
+    robots
     urdf 
+    ros2_control
   DESTINATION share/${PROJECT_NAME})
 
 ament_export_dependencies(${THIS_PACKAGE_INCLUDE_DEPENDS})

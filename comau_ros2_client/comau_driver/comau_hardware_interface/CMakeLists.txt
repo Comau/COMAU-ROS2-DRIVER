@@ -71,10 +71,12 @@ foreach(Dependency IN ITEMS ${HW_IF_INCLUDE_DEPENDS})
   find_package(${Dependency} REQUIRED)
 endforeach()
 
-add_library(comau_hardware_interface
+add_library(
+  comau_hardware_interface
+  SHARED
   src/comau_robot_interface_node.cpp
   src/comau_hw_interface.cpp
-  src/comau_hw_control_loop.cpp
+  src/comau_control.cpp
 )
 ament_export_targets(comau_hardware_interface HAS_LIBRARY_TARGET)
 target_link_libraries(comau_hardware_interface
@@ -122,7 +124,7 @@ ament_export_dependencies(rclcpp)
 ## COMPILE
 add_executable(comau_robot_interface_node 
   src/comau_robot_interface_node.cpp
-  src/comau_hw_control_loop.cpp
+  src/comau_control.cpp
   src/comau_hw_interface.cpp
 )
 ament_target_dependencies(comau_robot_interface_node
@@ -142,10 +144,6 @@ install(
 )
 
 install(
-  DIRECTORY description/ros2_control description/urdf
-  DESTINATION share/comau_hardware_interface
-)
-install(
   DIRECTORY config
   DESTINATION share/comau_hardware_interface
 )
@@ -154,7 +152,6 @@ install(
   DIRECTORY 
     src
     config
-    launch 
    # test
   DESTINATION share/${PROJECT_NAME})
 

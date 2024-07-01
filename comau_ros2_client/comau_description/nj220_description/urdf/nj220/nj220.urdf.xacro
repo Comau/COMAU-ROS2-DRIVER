@@ -1,19 +1,17 @@
 <?xml version="1.0"?>
-<robot xmlns:xacro="http://wiki.ros.org/xacro">
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="nj220_desc">
 
-  <!-- 
-    Author: LMS
-   -->
   <xacro:include filename="$(find nj220_description)/urdf/comau_common.macro.xacro" />
-  <xacro:include filename="$(find nj220_description)/urdf/nj220/nj220.transmission.xacro" />
-  <xacro:include filename="$(find nj220_description)/urdf/nj220/nj220.gazebo.xacro" />
+  <!--xacro:include filename="$(find nj220_description)/urdf/nj220/nj220.transmission.xacro" />
+  <xacro:include filename="$(find nj220_description)/urdf/nj220/nj220.gazebo.xacro" /-->
 
-  <xacro:macro name="nj220_robot" params="prefix transmission_hw_interface:=hardware_interface/PositionJointInterface">
+  <!--xacro:macro name="nj220_robot" params="prefix transmission_hw_interface:=hardware_interface/PositionJointInterface">
 
-    <xacro:nj220_transmission prefix="${prefix}" hw_interface="${transmission_hw_interface}" />
-    <xacro:nj220_gazebo prefix="${prefix}" />
+    <xacro:nj220_transmission prefix="" hw_interface="${transmission_hw_interface}" />
+    <xacro:nj220_gazebo prefix="" /-->
 
-    <link name="${prefix}base_link">
+    <link name="base_link">
       <inertial>
         <origin xyz="-0.035816740591987 -1.213095767006E-05 0.133200705246718" rpy="0 0 0" />
         <mass value="716.304099681006" />
@@ -33,7 +31,7 @@
       </collision>
     </link>
 
-    <link name="${prefix}link_1">
+    <link name="link_1">
       <inertial>
         <origin xyz="0.280527366991791 0.0253806478923063 0.399601996204198" rpy="0 0 0" />
         <mass value="82.6779100155354" />
@@ -53,7 +51,7 @@
       </collision>
     </link>
 
-    <joint name="${prefix}joint_1" type="revolute">
+    <joint name="joint_1" type="revolute">
       <origin xyz="0 0 0.326" rpy="0 0 0" />
       <parent link="base_link" />
       <child link="link_1" />
@@ -61,7 +59,7 @@
       <limit lower="-3.14" upper="3.14" effort="10000.00" velocity="20.00" />
     </joint>
 
-    <link name="${prefix}link_2">
+    <link name="link_2">
       <inertial>
         <origin xyz="0.0184079053720003 -0.00325799474821191 0.513836750330918" rpy="0 0 0" />
         <mass value="111.905463626803" />
@@ -81,7 +79,7 @@
       </collision>
     </link>
 
-    <joint name="${prefix}joint_2" type="revolute">
+    <joint name="joint_2" type="revolute">
       <origin xyz="0.4 0 0.504" rpy="0 0 0" />
       <parent link="link_1" />
       <child link="link_2" />
@@ -89,7 +87,7 @@
       <limit lower="-1.309" upper="1.658" effort="10000.00" velocity="20.00" />
     </joint>
 
-    <link name="${prefix}link_3">
+    <link name="link_3">
       <inertial>
         <origin xyz="-0.0584887541283703 0.0263801657730134 0.213499546248928" rpy="0 0 0" />
         <mass value="157.757335015634" />
@@ -109,7 +107,7 @@
       </collision>
     </link>
 
-    <joint name="${prefix}joint_3" type="revolute">
+    <joint name="joint_3" type="revolute">
       <origin xyz="0 0 1.175" rpy="0 -1.57 0" />
       <parent link="link_2" />
       <child link="link_3" />
@@ -117,7 +115,7 @@
       <limit lower="-1.396" upper="1.238" effort="10000.00" velocity="20.00" />
     </joint>
 
-    <link name="${prefix}link_4">
+    <link name="link_4">
       <inertial>
         <origin xyz="0.588887351411885 -0.0172955641971404 -2.62021790171652E-05" rpy="0 0 0" />
         <mass value="51.3013366013648" />
@@ -138,7 +136,7 @@
       </collision>
     </link>
 
-    <joint name="${prefix}joint_4" type="revolute">
+    <joint name="joint_4" type="revolute">
       <origin xyz="0.105 0 0.249999999999999" rpy="0 0 0" />
       <parent link="link_3" />
       <child link="link_4" />
@@ -147,7 +145,7 @@
 
     </joint>
 
-    <link name="${prefix}link_5">
+    <link name="link_5">
       <inertial>
         <origin xyz="0.0907543703116531 0.0150627857042923 2.49569749883882E-05" rpy="0 0 0" />
         <mass value="46.4243167652395" />
@@ -167,7 +165,7 @@
       </collision>
     </link>
 
-    <joint name="${prefix}joint_5" type="revolute">
+    <joint name="joint_5" type="revolute">
       <origin xyz="1.02333 0 0" rpy="0 0 0" />
       <parent link="link_4" />
       <child link="link_5" />
@@ -175,7 +173,7 @@
       <limit lower="-2.182" upper="2.182" effort="10000.00" velocity="20.00" />
     </joint>
 
-    <link name="${prefix}link_6">
+    <link name="link_6">
       <inertial>
         <origin xyz="0.0238593646017924 -0.000609515326313876 -5.99002442753793E-05" rpy="0 0 0" />
         <mass value="5.30965928979932" />
@@ -195,7 +193,7 @@
       </collision>
     </link>
 
-    <joint name="${prefix}joint_6" type="revolute">
+    <joint name="joint_6" type="revolute">
       <origin xyz="0.1875 0 0" rpy="0 0 0" />
       <parent link="link_5" />
       <child link="link_6" />
@@ -203,7 +201,7 @@
       <limit lower="-3.14" upper="3.14" effort="10000.00" velocity="20.00" />
     </joint>
 
-    <link name="${prefix}ee_link">
+    <link name="ee_link">
       <visual>
         <geometry>
           <cylinder length="0.001" radius="0.001"/>
@@ -211,7 +209,7 @@
       </visual>
     </link>
 
-    <joint name="${prefix}joint_ee_link" type="fixed">
+    <joint name="joint_ee_link" type="fixed">
       <origin xyz="0.0 0.0 0.0" rpy="0 0 0.0"/>
       <parent link="link_6"/>
       <child link="ee_link"/>

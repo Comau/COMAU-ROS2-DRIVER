@@ -6,8 +6,8 @@
       Robot hardware plugin for comau robot.
     </description>
   </class>
-  <class name="comau_hardware_control_loop/ComauHWControlLoop"
-         type="comau_hardware_control_loop::ComauHWControlLoop"
+  <class name="comau_hardware_interface/ComauControl"
+         type="comau_hardware_interface::ComauControl"
          base_class_type="controller_interface::ControllerInterface">
     <description>
       Robot controller plugin for comau robot.

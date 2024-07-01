@@ -18,6 +18,9 @@
 #include "rclcpp/macros.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "realtime_tools/realtime_publisher.h"
+#include "trajectory_msgs/msg/joint_trajectory.hpp"
+#include "trajectory_msgs/msg/joint_trajectory_point.hpp"
+
 #include <comau_msgs/msg/comau_robot_status.hpp>
 #include <comau_msgs/msg/comau_server_error.hpp>
 #include <comau_msgs/msg/comau_operation_mode.hpp>
@@ -60,6 +63,8 @@
 #define KI_ERR_STATE_MAX          0x80000 /* Max error value - increase it if necessary */
 
 namespace trajectory_handler {
+using JntTraj           = comau_msgs::action::ExecuteJointTrajectory;
+using GoalHandleJntTraj = rclcpp_action::ClientGoalHandle<JntTraj>;
 using CartTraj           = comau_msgs::action::ExecuteCartesianTrajectory;
 using GoalHandleCartTraj = rclcpp_action::ClientGoalHandle<CartTraj>;
 /**
@@ -78,21 +83,8 @@ public:
    * @brief Default Destructor for the Comau Hardware Interface object
    */
   virtual ~TrajectoryHandler() = default;
-  /**
-   * @brief Handles the setup functionality for the ROS interface. This includes parsing ROS
-   * parameters, creating interfaces, starting the main driver and advertising ROS services.
-   *
-   * @returns True, if the setup was performed successfully
-   *
-   */
+
   virtual bool init();
-  /**
-   * @brief Read method of the control loop. Reads a messages from the robot and handles and
-   * publishes the information as needed.
-   *
-   * @param time Current time
-   * @param period Duration of current control loop iteration
-   */
   
   void publishRobotStatus();
 
@@ -135,6 +127,16 @@ public:
   void feedback_callback(GoalHandleCartTraj::SharedPtr, const std::shared_ptr<const CartTraj::Feedback> feedback);
 
   void result_callback(const GoalHandleCartTraj::WrappedResult & result);
+
+  void sendJntTraj();
+
+  void send_jnt_goal();
+
+  void jnt_goal_response_callback(const GoalHandleJntTraj::SharedPtr & goal_handle);
+
+  void jnt_feedback_callback(GoalHandleJntTraj::SharedPtr, const std::shared_ptr<const JntTraj::Feedback> feedback);
+
+  void jnt_result_callback(const GoalHandleJntTraj::WrappedResult & result);
   
   std::unique_ptr<comau_action_handlers::ExecuteJointTrajectoryHandler>
       execute_joints_handler_ptr;
@@ -145,6 +147,9 @@ public:
       execute_cartesian_handler_ptr; /**< Object for asynchronous cartesian trajectory action server */
 
   rclcpp_action::Client<comau_msgs::action::ExecuteCartesianTrajectory>::SharedPtr client_ptr_;
+  rclcpp_action::Client<comau_msgs::action::ExecuteJointTrajectory>::SharedPtr client_jnt_ptr_;
+
+  GoalHandleCartTraj::WrappedResult result_;
   
   double desired_update_period_;
   double elapsed_time_;
@@ -177,7 +182,8 @@ protected:
   std::vector<double> joint_position_command_;
   std::vector<double> joint_velocity_command_;
   std::vector<double> joint_effort_command_;
-  std::vector<double> sensor_tracking_command_;
+  //std::vector<double> sensor_tracking_command_;
+  std::vector<double> urdf_command_; 
   // private
   uint32_t num_joints_;
   uint32_t num_robot_joints_;
@@ -210,6 +216,9 @@ protected:
   std::unique_ptr<realtime_tools::RealtimePublisher<tf2_msgs::msg::TFMessage>> ee_pose_pub_;
   std::unique_ptr<realtime_tools::RealtimePublisher<sensor_msgs::msg::JointState>> urdf_joint_states_pub_;
   std::unique_ptr<realtime_tools::RealtimePublisher<comau_msgs::msg::IOStates>> io_states_pub_;
+  
+  // Subscribers
+  rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr urdf_joint_states_sub_;
 
   // services
   rclcpp::Service<comau_msgs::srv::SetMoveFlyParams>::SharedPtr setMoveflyParams_service_;

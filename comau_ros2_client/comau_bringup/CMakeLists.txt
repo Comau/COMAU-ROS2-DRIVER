@@ -22,32 +22,13 @@ find_package(racer5-cobot_description REQUIRED)
 find_package(racer5-cobot-rail_description REQUIRED)
 find_package(racer7-14_description REQUIRED)
 
-add_library(
-    ${PROJECT_NAME}
-    SHARED
-    src/yaml_config_params.cpp)
-
 install(
-  DIRECTORY 
-    src
+  DIRECTORY
     config
     launch 
    # test
   DESTINATION share/${PROJECT_NAME})
 
-# necessario per compilazione 	        
-ament_target_dependencies( 
-  ${PROJECT_NAME} 
-  rclcpp) 
-
-
-add_executable(load_param_node src/yaml_config_params.cpp)
-ament_target_dependencies(load_param_node rclcpp) 
-
-
-install(TARGETS
-load_param_node
-  DESTINATION lib/${PROJECT_NAME})
 ament_export_dependencies(   
   rclcpp) 
 

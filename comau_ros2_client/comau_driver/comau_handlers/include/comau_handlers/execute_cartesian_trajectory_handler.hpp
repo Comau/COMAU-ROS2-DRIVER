@@ -107,8 +107,7 @@ private:
    * @brief A function that transforms the pose goal relative to another frame
    *
    */
-  geometry_msgs::msg::PoseStamped changePoseFrame(const std::string &target_frame,
-                                                  const geometry_msgs::msg::PoseStamped &goal_pose);
+  geometry_msgs::msg::PoseStamped changePoseFrame(const std::string &target_frame, const geometry_msgs::msg::PoseStamped &goal_pose);
 
   rclcpp::Node::SharedPtr nh_;
   rclcpp::Node::SharedPtr nh_local_;
