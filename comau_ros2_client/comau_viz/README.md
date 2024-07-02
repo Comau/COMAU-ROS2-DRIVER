@@ -12,4 +12,4 @@ If you want to see just the robot without any connections with the real one, you
 ```bash
 ros2 launch comau_viz view_racer5-cobot.launch.py
 ```
-[<img height="60" alt="ROBOT" src="doc/viz.png">]
+[<img height="360" alt="ROBOT" src="../doc/viz.png">]
