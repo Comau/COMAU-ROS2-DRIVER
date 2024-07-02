@@ -1,3 +1,5 @@
+# Copyright 2024 Comau Robotics S.p.A.
+
 #Parameters for connecting with virtual robot at Roboshop
 execute_trajectory_handler_node:
   ros__parameters:

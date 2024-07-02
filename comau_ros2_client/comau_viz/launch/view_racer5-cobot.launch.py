@@ -1,3 +1,5 @@
+# Copyright 2024 Comau Robotics S.p.A.
+
 import os
 from launch_ros.actions import Node
 from launch import LaunchDescription

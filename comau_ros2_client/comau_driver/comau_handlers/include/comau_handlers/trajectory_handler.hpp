@@ -1,11 +1,11 @@
 /**
- * @file comau_hw_interface.h
- * @author Laboratory for Manufacturing Systems & Automation (LMS) - University of Patras
- * @brief The ROS node that publishes the robot information
- * @version 0.1
- * @date 25-02-2020
+ * @file trajectory_handler.hpp
+ * @author Comau Robotics S.p.A.
+ * @brief The ROS2 node that publishes the trajectory action
+ * @version 1.0
+ * @date 02/07/2024
  *
- * @copyright (c) 2020 Laboratory for Manufacturing Systems & Automation (LMS) - University of Patras
+ * @copyright (c) Comau Robotics S.p.A.
  *
  */
 
@@ -67,21 +67,12 @@ using JntTraj           = comau_msgs::action::ExecuteJointTrajectory;
 using GoalHandleJntTraj = rclcpp_action::ClientGoalHandle<JntTraj>;
 using CartTraj           = comau_msgs::action::ExecuteCartesianTrajectory;
 using GoalHandleCartTraj = rclcpp_action::ClientGoalHandle<CartTraj>;
-/**
- * @brief The ComauHardwareInterface class handles the interface between the ROS system and the main
- * driver. It contains the read and write methods of the main control loop and registers various ROS
- * topics and services.
- */
+
 class TrajectoryHandler {
 public:
-  /**
-   * @brief Construct a new Comau Hardware Interface object
-   * @param nh Root level ROS node handle
-   */
+
   TrajectoryHandler(rclcpp::Node::SharedPtr &nh);
-  /**
-   * @brief Default Destructor for the Comau Hardware Interface object
-   */
+
   virtual ~TrajectoryHandler() = default;
 
   virtual bool init();

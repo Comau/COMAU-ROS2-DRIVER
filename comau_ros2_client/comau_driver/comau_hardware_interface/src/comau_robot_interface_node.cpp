@@ -1,3 +1,14 @@
+/**
+ * @file comau_robot_interface_node.hpp
+ * @author Comau Robotics S.p.A.
+ * @brief The ROS2 node that publishes control loop and hw interface
+ * @version 1.0
+ * @date 02/07/2024
+ *
+ * @copyright (c) Comau Robotics S.p.A.
+ *
+ */
+
 #include <thread>
 #include <memory>
 

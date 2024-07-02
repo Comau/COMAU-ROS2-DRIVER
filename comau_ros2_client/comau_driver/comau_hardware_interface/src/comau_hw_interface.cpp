@@ -1,3 +1,15 @@
+/**
+ * @file comau_hw_interface.cpp
+ * @author Comau Robotics S.p.A.
+ * @brief The ROS2 node that publishes hardware interface
+ * @version 1.0
+ * @date 02/07/2024
+ *
+ * @copyright (c) Comau Robotics S.p.A.
+ *
+ */
+
+
 #include <sstream>
 
 #include "comau_hardware_interface/comau_hw_interface.hpp"

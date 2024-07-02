@@ -1,11 +1,11 @@
 /**
- * @file execute_cartesian_trajectory_handler.h
- * @author Laboratory for Manufacturing Systems & Automation (LMS) - University of Patras
- * @brief The ROS node that publishes the robot information
- * @version 0.1
- * @date 25-02-2020
+ * @file execute_cartesian_trajectory_handler.hpp
+ * @author Comau Robotics S.p.A.
+ * @brief The ROS2 node that publishes the cartesian trajectory action
+ * @version 1.0
+ * @date 02/07/2024
  *
- * @copyright (c) 2020 Laboratory for Manufacturing Systems & Automation (LMS) - University of Patras
+ * @copyright (c) Comau Robotics S.p.A.
  *
  */
 

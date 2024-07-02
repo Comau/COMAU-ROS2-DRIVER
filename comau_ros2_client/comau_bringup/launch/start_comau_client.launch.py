@@ -1,3 +1,5 @@
+# Copyright 2024 Comau Robotics S.p.A.
+
 from launch_ros.substitutions import FindPackageShare
 
 from launch import LaunchDescription

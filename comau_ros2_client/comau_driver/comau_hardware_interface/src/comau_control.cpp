@@ -1,3 +1,14 @@
+/**
+ * @file comau_control.cpp
+ * @author Comau Robotics S.p.A.
+ * @brief The ROS2 node that publishes the control loop
+ * @version 1.0
+ * @date 02/07/2024
+ *
+ * @copyright (c) Comau Robotics S.p.A.
+ *
+ */
+
 #include <comau_hardware_interface/comau_control.hpp>
 
 #include <stddef.h>
