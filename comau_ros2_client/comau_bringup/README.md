@@ -41,7 +41,7 @@ Finally, you should call the service /tcpip_conn_manager to start the TCP/IP com
 ```bash
 ros2 service call /tcpip_conn_manager comau_msgs/srv/OpenConnection open_connection:\ true\
 ```
-[<img height="60" alt="ROBOT" src="doc/robot_rviz.png">]
+[<img height="240" alt="ROBOT" src="../doc/robot_rviz.png">]
 
 ## How to monitor and change the state of the robot
 
