@@ -3,8 +3,12 @@
 <package format="3">
   <name>test</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="giulia.nicastro@external.comau.com">giulia</maintainer>
+  <description>TEST</description>
+
+  <author>Comau Robotics S.p.A</author>
+  <maintainer email="andrea.perica@comau.com">Comau Robotics S.p.A.</maintainer>
+  <maintainer email="giulia.nicastro@external.comau.com">Comau Robotics S.p.A.</maintainer>
+  
   <license>TODO: License declaration</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>

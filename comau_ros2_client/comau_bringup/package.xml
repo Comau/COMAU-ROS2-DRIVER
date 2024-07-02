@@ -7,7 +7,8 @@
 
   <author>Comau Robotics S.p.A</author>
   <maintainer email="andrea.perica@comau.com">Comau Robotics S.p.A.</maintainer>
-  <maintainer email="giulia.nicastro@comau.com">Comau Robotics S.p.A.</maintainer>
+  <maintainer email="giulia.nicastro@external.comau.com">Comau Robotics S.p.A.</maintainer>
+  
   <license>BSD-2-Clause</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>

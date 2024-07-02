@@ -2,9 +2,9 @@
 
 ## Overview
 
-This repository contains all the required ROS packages to work with Comau robots through ROS.
+This repository contains all the required ROS2 packages to work with Comau robots through ROS2.
 
-The Comau Experimental package has been tested under ROS Humble and Ubuntu 22.04. This is research code, expect that it changes often and any fitness for a particular purpose is disclaimed.
+The Comau Experimental package has been tested under ROS2 Humble and Ubuntu 22.04. This is research code, expect that it changes often and any fitness for a particular purpose is disclaimed.
 
 
 ## Acknowledgment
@@ -49,7 +49,7 @@ source install/setup.bash
 
 ```
 
-## How to use the COMAU ROS
+## How to use the COMAU ROS2 driver
 
 ## Real Robot/Roboshop
 
