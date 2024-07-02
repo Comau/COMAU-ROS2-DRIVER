@@ -13,11 +13,11 @@ Developed in collaboration between:
 
 The library is based on TCP/IP communication between the ROS2 module running on an external PC and the PDL module running on the cabinet IPC. The following figure reports the set-up.
 
-[<img height="260" alt="LMS" src="comau_ros2_client/doc/scheme1.PNG" />]
+[<img height="260" alt="COMAU" src="comau_ros2_client/doc/scheme1.PNG" />]
 
 It is also possible to use the library in virtual mode. In this case, the user only needs a laptop where both Windows and Linux run. The former is necessary to support RoboShop Comau software tool; the latter is used for ROS2.
 
-[<img height="360" alt="LMS" src="comau_ros2_client/doc/scheme2.PNG" />]
+[<img height="360" alt="COMAU" src="comau_ros2_client/doc/scheme2.PNG" />]
 ## How to Start the Communication on Robot Side
 
 This repository contains the PDL code used for the COMAU ROS2 interface.
@@ -33,4 +33,4 @@ Load and activate only the pdl_tcp_functions.cod file which will automatically l
 The Robot Controller should have the following software options:
 TCP/IP
 
-[<img height="360" alt="LMS" src="comau_ros2_client/doc/scheme3.PNG" />]
+[<img height="360" alt="COMAU" src="comau_ros2_client/doc/scheme3.PNG" />]
