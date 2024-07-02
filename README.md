@@ -34,3 +34,11 @@ The Robot Controller should have the following software options:
 TCP/IP
 
 [<img height="360" alt="COMAU" src="comau_ros2_client/doc/scheme3.PNG" />]
+
+## How to use the COMAU ROS2 Client
+
+## Real Robot/Roboshop
+
+To undesrtand the driver follow the instructions at 
+
+[comau_ros2_client README](comau_ros2_client/README.md)
