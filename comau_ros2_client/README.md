@@ -1,4 +1,4 @@
-# Comau Experimental
+# Comau ROS2 Client
 
 ## Overview
 
@@ -66,3 +66,7 @@ To start the driver follow the instructions at
 2. **For examples on how to use the c++ see the comau_example package**
 
     [comau_example README](comau_example/README.md)
+
+## URDF Robot Visualization without communication
+
+[comau_viz README](comau_viz/README.md)
