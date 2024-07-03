@@ -1,12 +1,10 @@
 PROGRAM state_server &PA, NOHOLD, STACK = 10000
   ---------------------------------------------------------------
-  --- Author: LMS                                               
-  --- Brief: Robot state server publishes the information of robot 
-  --  state over TCP/IP communication  
+  --- Author: Comau Robotics S.p.A.                                    
+  --- Brief: Robot Arm handler server for handling motion commands for robot 1 
+  --- over TCP/IP communication  
   --
   --  BSD 2-Clause License
-  --  Copyright (c) 2020, Laboratory for Manufacturing Systems & Automation (LMS) - University of Patras 
-  --  All rights reserved.
   ---------------------------------------------------------------
 CONST
   KI_LOCAL_PORT      = 1104              -- TCP server "listening" port (local to the server)

@@ -1,12 +1,10 @@
 PROGRAM robot_server NOHOLD, &PA, STACK = 10001, PRIORITY=4
   ---------------------------------------------------------------
-  --- Author: LMS                                               
-  --- Brief: Robot server for handling motion commands 
-  --  over TCP/IP communication  
+  --- Author: Comau Robotics S.p.A.                                    
+  --- Brief: Robot Arm handler server for handling motion commands for robot 1 
+  --- over TCP/IP communication  
   --
   --  BSD 2-Clause License
-  --  Copyright (c) 2020, Laboratory for Manufacturing Systems & Automation (LMS) - University of Patras 
-  --  All rights reserved.
   ---------------------------------------------------------------
 CONST
   KI_LOCAL_PORT   = 1105                -- TCP server "listening" port (local to the server)

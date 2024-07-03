@@ -1,12 +1,11 @@
 PROGRAM pdl_tcp_functions NOHOLD
 
------------------------------------------------------------------
---- Author: LMS                                                 
---- Brief: Useful functions for TCP/IP socket handling in PDL  
+  ---------------------------------------------------------------
+  --- Author: Comau Robotics S.p.A.                                    
+  --- Brief: Robot Arm handler server for handling motion commands for robot 1 
+  --- over TCP/IP communication  
   --
   --  BSD 2-Clause License
-  --  Copyright (c) 2020, Laboratory for Manufacturing Systems & Automation (LMS) - University of Patras 
-  --  All rights reserved.
   ---------------------------------------------------------------
 
 CONST
