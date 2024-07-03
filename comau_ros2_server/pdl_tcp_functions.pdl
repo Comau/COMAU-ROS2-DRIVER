@@ -290,13 +290,13 @@ BEGIN
 
   init_global_variables
 
-  SYS_CALL('ML','UD:\\USR\\comau_ros_server\\state_server.cod') 
+  SYS_CALL('ML','UD:\\USR\\comau_ros2_server\\state_server.cod') 
   DELAY 200
-  SYS_CALL('ML','UD:\\USR\\comau_ros_server\\robot_server.cod') 
+  SYS_CALL('ML','UD:\\USR\\comau_ros2_server\\robot_server.cod') 
   DELAY 200
-  SYS_CALL('ML','UD:\\USR\\comau_ros_server\\motion_server.cod') 
+  SYS_CALL('ML','UD:\\USR\\comau_ros2_server\\motion_server.cod') 
   DELAY 200
-  SYS_CALL('ML','UD:\\USR\\comau_ros_server\\arm1_handler.cod') 
+  SYS_CALL('ML','UD:\\USR\\comau_ros2_server\\arm1_handler.cod') 
   DELAY 500
   ACTIVATE state_server
   ACTIVATE robot_server
