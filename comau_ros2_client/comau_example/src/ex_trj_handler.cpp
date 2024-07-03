@@ -230,10 +230,10 @@ void TrajectoryHandler::sendJntTraj()
 
   this->client_jnt_ptr_ = rclcpp_action::create_client<comau_msgs::action::ExecuteJointTrajectory>(nh_,"execute_joint_trajectory_handler");
 
-  if (!this->client_ptr_->wait_for_action_server(std::chrono::seconds(5))) 
+  if (!this->client_jnt_ptr_->wait_for_action_server(std::chrono::seconds(5))) 
   {
     RCLCPP_ERROR(nh_->get_logger(), "Action server not available after waiting");
-    this->client_ptr_->async_cancel_all_goals();
+    this->client_jnt_ptr_->async_cancel_all_goals();
   }
   
   TrajectoryHandler::send_jnt_goal();
