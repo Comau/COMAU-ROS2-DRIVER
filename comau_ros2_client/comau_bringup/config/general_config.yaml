@@ -5,7 +5,7 @@ execute_trajectory_handler_node:
   ros__parameters:
     loop_hz: 50.0
     cycle_time_error_threshold: 0.025
-    parallel_joint_fix: false
+    parallel_joint_fix: false      # true if the robot is with parallelogram
     use_arm1_server: true
     use_robot_server: true
     use_state_server: true
