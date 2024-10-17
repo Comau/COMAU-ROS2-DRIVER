@@ -135,7 +135,7 @@ public:
    */
   bool sendInitializeMessage(bool with_verbose, int &sensor_type, int &sensor_cnvrsn, int &sensor_gain,
                              int &sensor_time, int &sensor_ofst_lim_trans, int &sensor_ofst_lim_rot,
-                             std::vector<int> &din_pins, std::vector<int> &dout_pins);
+                             std::vector<int64_t> &din_pins, std::vector<int64_t> &dout_pins);
   /**
    * @brief  Sends the message to start the robot
    *

@@ -15,6 +15,7 @@
 #include "comau_tcp_interface/comau_robot_client.hpp"
 #include "comau_tcp_interface/comau_state_client.hpp"
 #include "comau_tcp_interface/comau_tcp_interface.hpp"
+#include <vector>
 #include <boost/scoped_ptr.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -97,7 +98,7 @@ public:
    * @brief Get the DIN pins state
    * @param pins_state_in vector holding the DIN pins state
    */
-  void getPinsStatesIN(std::vector<int> &pins_state_in);
+  void getPinsStatesIN(std::vector<int64_t> &pins_state_in);
   /**
    * @brief Get the DOUT pins
    * @param pins_out vector holding the DOUT pins
@@ -107,7 +108,7 @@ public:
    * @brief Get the DOUT pins state
    * @param pins_state_out vector holding the DOUT pins state
    */
-  void getPinsStatesOUT(std::vector<int> &pins_state_out);
+  void getPinsStatesOUT(std::vector<int64_t> &pins_state_out);
   /**
    * @brief Get the current Timestamp
    *
@@ -251,7 +252,7 @@ public:
   /**
    * @brief Set's the DOUT states of the Robot from a ros service
    */
-  bool setIO(int &pin, bool state);
+  bool setIO(int &pin, bool &state);
   /**
    * @brief Set's the Robot state (lock/pause, unlock/resume, reset) from a ros service
    */
@@ -285,8 +286,8 @@ private:
   comau_tcp_interface::utils::vector6i_t  pins_state_in_;       /**< DIN states */
   comau_tcp_interface::utils::vector6i_t  pins_state_out_;      /**< DOUT states */
   comau_tcp_interface::utils::vector10i_t jnt_type_;            /**< Joint TYPE */
-  std::vector<int> din_pins_;                                   /**< DIN pins */
-  std::vector<int> dout_pins_;                                  /**< DOUT pins */
+  std::vector<int64_t> din_pins_;                                   /**< DIN pins */
+  std::vector<int64_t> dout_pins_;                                  /**< DOUT pins */
 
   // Joint/cartesian default linear velocity
   double default_linear_velocity_;

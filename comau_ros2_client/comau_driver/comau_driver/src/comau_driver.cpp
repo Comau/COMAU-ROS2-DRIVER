@@ -60,8 +60,10 @@ namespace comau_driver {
 
     din_pins_ = {-1, -1, -1, -1, -1, -1};
     dout_pins_ = {-1, -1, -1, -1, -1, -1};
-    nh_->declare_parameter("din_pins", din_pins_);
-    nh_->declare_parameter("dout_pins", dout_pins_);
+    nh_->declare_parameter("din_pins", rclcpp::PARAMETER_INTEGER_ARRAY);
+    nh_->declare_parameter("dout_pins", rclcpp::PARAMETER_INTEGER_ARRAY);
+    din_pins_  = nh_->get_parameter("din_pins").as_integer_array();
+    dout_pins_ = nh_->get_parameter("dout_pins").as_integer_array();
     if (din_pins_.size() != 6 || dout_pins_.size() != 6) {
       RCLCPP_ERROR(rclcpp::get_logger("comau_driver")," The size of the dout and din parameters must be 6");
       rclcpp::shutdown();
@@ -191,7 +193,7 @@ void ComauRobot::getJointPosition(std::vector<double> &joint_position, uint32_t 
 void ComauRobot::getPinsIN(std::vector<int> &pins_in) {
   pins_in.assign(din_pins_.begin(), din_pins_.end());
 }
-void ComauRobot::getPinsStatesIN(std::vector<int> &pins_state_in) {
+void ComauRobot::getPinsStatesIN(std::vector<int64_t> &pins_state_in) {
 
   msg->getData("pins_state_in", pins_state_in_);
   pins_state_in.assign(pins_state_in_.begin(), pins_state_in_.end());
@@ -199,7 +201,7 @@ void ComauRobot::getPinsStatesIN(std::vector<int> &pins_state_in) {
 void ComauRobot::getPinsOUT(std::vector<int> &pins_out) {
   pins_out.assign(dout_pins_.begin(), dout_pins_.end());
 }
-void ComauRobot::getPinsStatesOUT(std::vector<int> &pins_state_out) {
+void ComauRobot::getPinsStatesOUT(std::vector<int64_t> &pins_state_out) {
   msg->getData("pins_state_out", pins_state_out_);
   pins_state_out.assign(pins_state_out_.begin(), pins_state_out_.end());
 }
@@ -295,7 +297,7 @@ bool ComauRobot::writeCommand(const std::vector<double> &joint_command, double c
   return true;
 }
 
-bool ComauRobot::setIO(int &pin, bool state) {
+bool ComauRobot::setIO(int &pin, bool &state) {
   return robot_client_ptr_->sendIOMessage(pin, state);
 }
 bool ComauRobot::setSensorParams(int &sensor_type, int &sensor_cnvrsn, int &sensor_gain, int &sensor_time,

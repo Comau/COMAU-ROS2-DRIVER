@@ -23,7 +23,7 @@
   <exec_depend>launch</exec_depend>
   <exec_depend>robot_state_publisher</exec_depend>
   <exec_depend>aura_description</exec_depend> 
-    <exec_depend>comau_viz</exec_depend> 
+  <exec_depend>comau_viz</exec_depend> 
   <exec_depend>controller_manager</exec_depend>
   <exec_depend>comau_hardware_interface</exec_depend>
   

@@ -245,7 +245,8 @@ bool TrajectoryHandler::init() {
                                  });
   setIO_service_ = nh_->create_service<comau_msgs::srv::SetIO>("set_io", [&](const comau_msgs::srv::SetIO::Request::SharedPtr req, 
                                  comau_msgs::srv::SetIO::Response::SharedPtr resp)
-                                 {
+                                 {  
+                                    resp->success = false;
                                     if (use_robot_server_){
                                       resp->success = robot_ptr_->setIO(req->pin, req->state);
                                     }

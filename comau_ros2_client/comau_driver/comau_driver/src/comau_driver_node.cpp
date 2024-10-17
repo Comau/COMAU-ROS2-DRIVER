@@ -29,14 +29,14 @@ uint32_t error_value_;
 int32_t sns_trk_type_;
 uint32_t num_robot_joints_;
 uint32_t num_joints_;
-std::vector<double> ee_position_    = {0,0,0,0,0,0};
-std::vector<int> pins_in_           = {0,0,0,0,0,0};
-std::vector<int> pins_state_in_     = {0,0,0,0,0,0};
-std::vector<int> pins_out_          = {0,0,0,0,0,0};
-std::vector<int> pins_state_out_    = {0,0,0,0,0,0};
+std::vector<double> ee_position_     = {0,0,0,0,0,0};
+std::vector<int> pins_in_            = {0,0,0,0,0,0};
+std::vector<int64_t> pins_state_in_  = {0,0,0,0,0,0};
+std::vector<int> pins_out_           = {0,0,0,0,0,0};
+std::vector<int64_t> pins_state_out_ = {0,0,0,0,0,0};
 uint32_t stsSelector_;
-std::vector<int> jnt_type_          = {0,0,0,0,0,0};
-std::vector<double> joint_position_ = {0.0,0.0,0.0,0.0,0.0,0.0};
+std::vector<int> jnt_type_           = {0,0,0,0,0,0};
+std::vector<double> joint_position_  = {0.0,0.0,0.0,0.0,0.0,0.0};
 
 int main(int argc, char **argv) {
   rclcpp::init(argc, argv);

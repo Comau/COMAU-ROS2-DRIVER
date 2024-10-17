@@ -166,9 +166,9 @@ protected:
   std::vector<double> joint_effort_;
   std::vector<double> ee_position_;
   std::vector<int> pins_in_;
-  std::vector<int> pins_state_in_;
+  std::vector<int64_t> pins_state_in_;
   std::vector<int> pins_out_;
-  std::vector<int> pins_state_out_;
+  std::vector<int64_t> pins_state_out_;
   // Commands
   std::vector<double> joint_position_command_;
   std::vector<double> joint_velocity_command_;
