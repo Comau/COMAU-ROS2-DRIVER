@@ -301,6 +301,7 @@ void ExecuteJointTrajectoryHandler::executeCallback(const std::shared_ptr<rclcpp
   RCLCPP_INFO(rclcpp::get_logger(action_name_), "Executing goal");
   double start_time = rclcpp::Clock{RCL_ROS_TIME}.now().nanoseconds();//double start_time = ros::Time::now().toNSec() / 1e-6; // to convert nanoseconds to milliseconds
   action_active_ = false;
+  bool pub_moving = false;
   goal_handle_ = goal_handle;
   feedback_ = std::make_shared<comau_msgs::action::ExecuteJointTrajectory::Feedback>();
   result_   = std::make_shared<comau_msgs::action::ExecuteJointTrajectory::Result>();
@@ -344,7 +345,7 @@ void ExecuteJointTrajectoryHandler::executeCallback(const std::shared_ptr<rclcpp
       if (use_robot_server_)
         robot_ptr_->cancelMotionPDL();
       goal_handle->canceled(result_);
-
+      pub_moving = false;
       return;
     } else if (robot_status_ == RobotStatus::SUCCEEDED) { // SUCCEEDED
       RCLCPP_INFO(rclcpp::get_logger(action_name_), " [%s]: Trajectory execution Succeeded", action_name_.c_str());
@@ -365,7 +366,7 @@ void ExecuteJointTrajectoryHandler::executeCallback(const std::shared_ptr<rclcpp
         rclcpp::sleep_for(rclcpp::Duration::from_seconds(0.002).to_chrono<std::chrono::nanoseconds>());
       }*/
       
-
+      pub_moving = false;
       return;
     } else if (robot_status_ == RobotStatus::ERROR) {
       // ERROR
@@ -386,17 +387,24 @@ void ExecuteJointTrajectoryHandler::executeCallback(const std::shared_ptr<rclcpp
       result_->action_result.millis_passed = feedback_->action_feedback.millis_passed;
       result_->action_result.success = false;
       goal_handle->abort(result_);
+      pub_moving = false;
       return;
     } else if (robot_status_ == RobotStatus::MOVING) { // MOVING
-      // MOVING
-      RCLCPP_DEBUG(rclcpp::get_logger(action_name_), "[%s]: Trajectory execution is active", action_name_.c_str());
-      feedback_->action_feedback.success = false;
-      feedback_->action_feedback.millis_passed = uint((rclcpp::Clock{RCL_ROS_TIME}.now().nanoseconds() / 1e-6) - start_time);
-      feedback_->action_feedback.status = robot_status_;
-      goal_handle->publish_feedback(feedback_);
+      if(pub_moving == false)
+      {
+        // MOVING
+        RCLCPP_DEBUG(rclcpp::get_logger(action_name_), "[%s]: Trajectory execution is active", action_name_.c_str());
+        feedback_->action_feedback.success = false;
+        feedback_->action_feedback.millis_passed = uint((rclcpp::Clock{RCL_ROS_TIME}.now().nanoseconds() / 1e-6) - start_time);
+        feedback_->action_feedback.status = robot_status_;
+        goal_handle->publish_feedback(feedback_);
+      }
+      pub_moving = true;
     }
+    
     rclcpp::sleep_for(rclcpp::Duration::from_seconds(0.001).to_chrono<std::chrono::nanoseconds>());
   }
+  pub_moving = false;
   goal_handle_ = goal_handle;
 }
 
