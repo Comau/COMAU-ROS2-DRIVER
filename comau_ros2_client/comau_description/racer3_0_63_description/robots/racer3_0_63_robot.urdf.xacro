@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="racer3_0_63">
+
+  <!--load racer3_0_63 -->
+  <xacro:include filename="$(find racer3_0_63_description)/urdf/racer3_0_63/racer3_0_63.urdf.xacro" />
+
+  <xacro:racer3_0_63_description/>
+
+  <!-- Import robot ros2_control description -->
+  <xacro:include filename="$(find racer3_0_63_description)/ros2_control/racer3_0_63.ros2_control.xacro" />
+  <xacro:robot_ros2_control name="racer3_0_63"/>
+
+</robot>
