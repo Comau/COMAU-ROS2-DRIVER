@@ -45,6 +45,18 @@ def generate_launch_description():
                 ]),
             )
         ])
+        case "edo":
+            return LaunchDescription([
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([
+                    PathJoinSubstitution([
+                        FindPackageShare('edo_description'),
+                        'launch/',
+                        'view_edo.launch.py'
+                    ])
+                ]),
+            )
+        ])
         case "nj4-110":
             return LaunchDescription([
             IncludeLaunchDescription(
@@ -117,6 +129,18 @@ def generate_launch_description():
                 ]),
             )
         ])
+        case "racer3-rl":
+            return LaunchDescription([
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([
+                    PathJoinSubstitution([
+                        FindPackageShare('racer3-robolab_description'),
+                        'launch/',
+                        'view_racer3-robolab.launch.py'
+                    ])
+                ]),
+            )
+        ])
         case "racer5-0-80":
             return LaunchDescription([
             IncludeLaunchDescription(
@@ -166,7 +190,7 @@ def generate_launch_description():
             )
         ])
         case _:
-            print("Client closed. Please choose a robot_type:= \n aura \n aura-mimic \n nj4-110 \n nj-165-30 \n nj4-170-29 \n nj130-26 \n nj220 \n racer3 \n racer5-0-80 \n racer5-cobot \n racer5-cobot-rail \n racer7-14")
+            print("Client closed. Please choose a robot_type:= \n aura \n aura-mimic \n edo \n nj4-110 \n nj-165-30 \n nj4-170-29 \n nj130-26 \n nj220 \n racer3 \n racer3-rl \n racer5-0-80 \n racer5-cobot \n racer5-cobot-rail \n racer7-14")
             sys.exit()
     
     return

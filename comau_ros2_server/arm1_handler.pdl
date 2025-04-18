@@ -15,7 +15,7 @@ CONST
   KI_COND_LOCK    =  2                  -- Condition number for locking the arm
   KI_COND_UNLOCK  =  3                  -- Condition number for unlocking the arm
   KI_COND_CANCEL  =  4
-  KI_NUM_JNT      =  6
+  KI_NUM_JNT      =  10
   KI_NUM_CMP      =  6
   -- Error values
   KI_ERR_NULL               = 0x00000 -- Null error

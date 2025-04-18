@@ -61,7 +61,7 @@ TYPE
     pins_out       : ARRAY[KI_MAX_NUM_IO]  OF INTEGER  -- The DOUT pin numbers as an array
     states_out     : ARRAY[KI_MAX_NUM_IO]  OF INTEGER  -- The DOUT states as an array
     error_value    : INTEGER                           -- Error values to client
-    num_joints     : INTEGER                           -- Number of controlled joints
+    jnt_mask       : INTEGER                           -- Number of controlled joints
     jnt_type       : ARRAY[KI_NUM_JNT] OF INTEGER      -- ARRAY FOR JOINT TYPE
   ENDRECORD
 
@@ -208,7 +208,7 @@ BEGIN
   ENDIF
   $ERROR := 0
   ERR_TRAP_ON(40033)   --ERR_TRAP for inactive connection 
-  WRITE vi_server_netlun (state_message.timestamp, state_message.robot_status, state_message.sts_selector, state_message.sensor_type, state_message.joint_position[1], state_message.joint_position[2], state_message.joint_position[3], state_message.joint_position[4], state_message.joint_position[5], state_message.joint_position[6],state_message.joint_position[7], state_message.joint_position[8], state_message.joint_position[9], state_message.joint_position[10], state_message.ee_position[1], state_message.ee_position[2], state_message.ee_position[3], state_message.ee_position[4], state_message.ee_position[5], state_message.ee_position[6], state_message.states_in[1], state_message.states_in[2], state_message.states_in[3], state_message.states_in[4], state_message.states_in[5], state_message.states_in[6], state_message.states_out[1], state_message.states_out[2], state_message.states_out[3], state_message.states_out[4], state_message.states_out[5], state_message.states_out[6], state_message.error_value,state_message.num_joints,state_message.jnt_type[1],state_message.jnt_type[2],state_message.jnt_type[3],state_message.jnt_type[4],state_message.jnt_type[5],state_message.jnt_type[6],state_message.jnt_type[7],state_message.jnt_type[8],state_message.jnt_type[9],state_message.jnt_type[10])
+  WRITE vi_server_netlun (state_message.timestamp, state_message.robot_status, state_message.sts_selector, state_message.sensor_type, state_message.joint_position[1], state_message.joint_position[2], state_message.joint_position[3], state_message.joint_position[4], state_message.joint_position[5], state_message.joint_position[6],state_message.joint_position[7], state_message.joint_position[8], state_message.joint_position[9], state_message.joint_position[10], state_message.ee_position[1], state_message.ee_position[2], state_message.ee_position[3], state_message.ee_position[4], state_message.ee_position[5], state_message.ee_position[6], state_message.states_in[1], state_message.states_in[2], state_message.states_in[3], state_message.states_in[4], state_message.states_in[5], state_message.states_in[6], state_message.states_out[1], state_message.states_out[2], state_message.states_out[3], state_message.states_out[4], state_message.states_out[5], state_message.states_out[6], state_message.error_value,state_message.jnt_mask,state_message.jnt_type[1],state_message.jnt_type[2],state_message.jnt_type[3],state_message.jnt_type[4],state_message.jnt_type[5],state_message.jnt_type[6],state_message.jnt_type[7],state_message.jnt_type[8],state_message.jnt_type[9],state_message.jnt_type[10])
   ERR_TRAP_OFF(40033)
   IF $ERROR = 40033 THEN
     WRITE _vs_screen_lun (KS_MAIN_LOG, ' WRITE Error - code: ', $FL_STS, NL)
@@ -366,8 +366,8 @@ BEGIN
     state_message.states_out[vi_ti] := -1
   ENDFOR
 
-  state_message.num_joints  := $NUM_JNT_AXES
-  state_message.jnt_type    := ai_jnt_type
+  state_message.jnt_mask := $JNT_MASK
+  state_message.jnt_type := ai_jnt_type
   
   WRITE _vs_screen_lun (KS_MAIN_LOG, 'Server Address : ', vs_server_host, NL)
   WRITE _vs_screen_lun (KS_MAIN_LOG, 'Server Port    : ', KI_LOCAL_PORT, NL)
