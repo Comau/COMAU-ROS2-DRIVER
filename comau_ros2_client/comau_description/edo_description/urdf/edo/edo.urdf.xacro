@@ -410,5 +410,18 @@
       <child link="ee_link"/>
   </joint>
 
+  <link name="tool" />
+
+  <joint name="tool_joint" type="revolute">
+     <origin
+      xyz="0.0 0 0.0"
+      rpy="1.57 0 1.57" />
+    <parent link="ee_link" />
+    <child link = "tool" />
+    <axis 
+       xyz="0 0 1"/>
+    <limit lower="-3.14" upper="3.14" effort="100000.00" velocity="20.00" />
+  </joint>
+
   </xacro:macro>
 </robot>
