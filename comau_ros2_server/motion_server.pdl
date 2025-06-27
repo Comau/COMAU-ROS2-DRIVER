@@ -312,7 +312,6 @@ END ru_check_error
 ROUTINE receive_motion_message : BOOLEAN
 VAR
   t_i           : INTEGER
-  vi_ti         : INTEGER
   t_msg         : MOTION_MESSAGE_TYPE
   t_joint_pos   : JOINTPOS FOR ARM[1]
   t_position    : POSITION 
@@ -329,8 +328,6 @@ BEGIN
       RETURN(TRUE) -- Keep trying
     ENDIF
   ENDIF
-	
-	 t_joint_pos := ARM_JNTP(KI_ARM_NUM)
 
   t_msg_id       := t_msg.id
   vs_motion_type := t_msg.vs_motion_type
@@ -354,14 +351,18 @@ BEGIN
       FOR t_i := 1 TO t_msg.trajectory_size DO
         READ vi_server_netlun (t_msg.joint_traj_point[1]::4, t_msg.joint_traj_point[2]::4, t_msg.joint_traj_point[3]::4, t_msg.joint_traj_point[4]::4, t_msg.joint_traj_point[5]::4, t_msg.joint_traj_point[6]::4, t_msg.joint_traj_point[7]::4, t_msg.joint_traj_point[8]::4, t_msg.joint_traj_point[9]::4, t_msg.joint_traj_point[10]::4)
         READ vi_server_netlun (t_msg.segment_ovr::4, t_msg.move_type::4)
-				
-				
-				 FOR vi_ti := 1 TO $LAST_JNT_AXIS DO
-						IF BIT_TEST($JNT_MASK, vi_ti) THEN
-									 t_joint_pos[vi_ti] :=  t_msg.joint_traj_point[vi_ti]
-						ENDIF
-				ENDFOR
-        
+        SELECT $LAST_JNT_AXIS OF
+          CASE(6):
+            JNT(t_joint_pos, t_msg.joint_traj_point[1], t_msg.joint_traj_point[2], t_msg.joint_traj_point[3], t_msg.joint_traj_point[4], t_msg.joint_traj_point[5], t_msg.joint_traj_point[6])
+          CASE(7):
+            JNT(t_joint_pos, t_msg.joint_traj_point[1], t_msg.joint_traj_point[2], t_msg.joint_traj_point[3], t_msg.joint_traj_point[4], t_msg.joint_traj_point[5], t_msg.joint_traj_point[6],t_msg.joint_traj_point[7])
+          CASE(8):
+            JNT(t_joint_pos, t_msg.joint_traj_point[1], t_msg.joint_traj_point[2], t_msg.joint_traj_point[3], t_msg.joint_traj_point[4], t_msg.joint_traj_point[5], t_msg.joint_traj_point[6],t_msg.joint_traj_point[7], t_msg.joint_traj_point[8])
+          CASE(9):
+            JNT(t_joint_pos, t_msg.joint_traj_point[1], t_msg.joint_traj_point[2], t_msg.joint_traj_point[3], t_msg.joint_traj_point[4], t_msg.joint_traj_point[5], t_msg.joint_traj_point[6],t_msg.joint_traj_point[7], t_msg.joint_traj_point[8], t_msg.joint_traj_point[9])
+          CASE(10):
+            JNT(t_joint_pos, t_msg.joint_traj_point[1], t_msg.joint_traj_point[2], t_msg.joint_traj_point[3], t_msg.joint_traj_point[4], t_msg.joint_traj_point[5], t_msg.joint_traj_point[6],t_msg.joint_traj_point[7], t_msg.joint_traj_point[8], t_msg.joint_traj_point[9],t_msg.joint_traj_point[10])
+        ENDSELECT
         IF append_to_joint_trajectory(t_joint_pos, t_msg.segment_ovr, t_msg.move_type, t_i, t_msg.trajectory_size) = KI_INDEX_NCORRECT THEN
           ENCODE(vs_err_string, t_i)
           vs_err_string := STR_CAT(vs_err_string, 'th node is out of traj. size')
