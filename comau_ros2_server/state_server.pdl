@@ -94,6 +94,7 @@ VAR
 ROUTINE tcp_server_accept(netlun, port, screenlun, verbose: INTEGER; log_tag: STRING; si_prog_id: INTEGER) : INTEGER EXPORTED FROM pdl_tcp_functions
 ROUTINE tcp_server_disconnect(netlun, screenlun, verbose: INTEGER; log_tag: STRING; si_prog_id: INTEGER) EXPORTED FROM pdl_tcp_functions
 ROUTINE throw_error(error_msg, vs_main_log : STRING) EXPORTED FROM pdl_tcp_functions
+ROUTINE throw_collision(error_msg, vs_main_log : STRING) EXPORTED FROM pdl_tcp_functions GLOBAL
 ROUTINE close_state_tcp EXPORTED FROM state_server
 
   --------------------------------------------------------------------
@@ -254,31 +255,41 @@ BEGIN
   ENDIF
 END ru_safety_gate
 
-ROUTINE ru_error_prog(vi_on : BOOLEAN)
+ROUTINE ru_error_prog
+CONST 
+  KI_WARN_COLLISION = 62563 -- Warning collision error code
 VAR 
   vs_err_code : STRING[40]
   vi_err_sev  : INTEGER
   vs_err_str  : STRING[10]
-  vi_err_code : INTEGER  
+  vi_err_code : INTEGER
 BEGIN
   -- Set error
-  IF vi_on THEN
+  SELECT $THRD_CEXP OF
+  CASE (1):
+	  WRITE _vs_screen_lun (NL, '---', NL, 'Program Execution Warning : ', NL)
     vi_err_code := $THRD_ERROR
     ENCODE(vs_err_code, vi_err_code)
     vs_err_code := STR_CAT('Program Execution Error : ', vs_err_code)
     vs_err_str  := ERR_STR(vi_err_code, 0x2, vi_err_sev)
-
     IF vi_err_sev > 2 THEN -- Severity greater than WARNING
       _si_error_state := _si_error_state OR KI_ERR_STATE_WRONG_MOTION
       throw_error(vs_err_code, KS_MAIN_LOG)
     ELSE
       WRITE _vs_screen_lun (KS_MAIN_LOG, ' Program Execution Warning : ', vi_err_code, NL)
     ENDIF
-  ELSE -- Reset error
+  CASE (2):
+    --WARNING COLLISION
+    vi_err_code := KI_WARN_COLLISION
+    ENCODE(vs_err_code, vi_err_code)
+    _si_error_state := _si_error_state OR KI_ERR_STATE_WRONG_MOTION
+    throw_collision(vs_err_code, KS_MAIN_LOG)
+  CASE (3): -- Reset error
     IF (_si_error_state AND  KI_ERR_STATE_WRONG_MOTION) = KI_ERR_STATE_WRONG_MOTION THEN
       _si_error_state := _si_error_state AND (NOT(KI_ERR_STATE_WRONG_MOTION))
     ENDIF
-  ENDIF
+  ELSE:
+  ENDSELECT
 END ru_error_prog
   
 -- +---------------------------------------------------------+
@@ -310,10 +321,12 @@ BEGIN
   ENDCONDITION
 
   CONDITION[KI_COND_ERR_PROG] NODISABLE:
-    WHEN ERRORCLASS EC_PROG BY arm1_handler DO 
-      ru_error_prog(TRUE)
+    WHEN (ERRORCLASS EC_PROG BY arm1_handler)  DO
+      ru_error_prog
+    WHEN (ERRORNUM 62563) OR (ERRORNUM 28986) DO
+      ru_error_prog
     WHEN $GO[4]+ DO
-      ru_error_prog(FALSE)
+      ru_error_prog
   ENDCONDITION
 
 END ru_init_condition
@@ -384,7 +397,16 @@ BEGIN
       _vb_tcp_conn_state := FALSE
       DELAY 100
     ENDIF
-    
+
+    IF($THRD_ERROR = 0) THEN
+      if (_ss_state = 'A') THEN
+       IF (_si_error_state AND  KI_ERR_STATE_WRONG_MOTION) = KI_ERR_STATE_WRONG_MOTION THEN
+      _si_error_state := _si_error_state AND (NOT(KI_ERR_STATE_WRONG_MOTION))
+      ENDIF
+       _ss_state := 'M'
+      ENDIF
+    ENDIF
+
     DELAY ROUND(1 / _si_publish_freq * 1000)
     
   UNTIL _sb_shutdown -- Main loop

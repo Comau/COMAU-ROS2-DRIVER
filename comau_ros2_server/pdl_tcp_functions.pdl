@@ -79,6 +79,17 @@ ROUTINE print_connection_info(netlun, screenlun, verbose: INTEGER; log_tag: STRI
 ROUTINE tcp_server_accept(netlun, port, screenlun, verbose: INTEGER; log_tag: STRING; si_prog_id: INTEGER) : INTEGER EXPORTED FROM pdl_tcp_functions GLOBAL
 ROUTINE tcp_server_disconnect(netlun, screenlun, verbose: INTEGER; log_tag: STRING; si_prog_id: INTEGER) EXPORTED FROM pdl_tcp_functions GLOBAL
 ROUTINE throw_error(error_msg, vs_main_log : STRING) EXPORTED FROM pdl_tcp_functions GLOBAL
+ROUTINE throw_collision(error_msg, vs_main_log : STRING) EXPORTED FROM pdl_tcp_functions GLOBAL
+
+  --------------------------------------------------------------------
+  --- Routine: throw_collision
+  --- Brief: Update the state machine of the robot
+  --------------------------------------------------------------------
+ROUTINE throw_collision(error_msg, vs_main_log : STRING)
+BEGIN
+   _ss_state    := 'A' --COLLISION
+   WRITE _vs_screen_lun (vs_main_log, '[WARN_COLLISION] : ', error_msg, NL)
+END throw_collision
 
   --------------------------------------------------------------------
   --- Routine: throw_error

@@ -8,3 +8,4 @@ string MOVING=moving
 string SUCCEEDED=succeeded
 string PAUSED=paused
 string ERROR=error
+string COLLISION=collision

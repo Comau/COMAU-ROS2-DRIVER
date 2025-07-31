@@ -311,7 +311,13 @@ void TrajectoryHandler::publishRobotStatus() {
         robot_status_pub_->msg_.status = comau_msgs::msg::ComauRobotStatus::CANCELING;
         robot_status_pub_->unlockAndPublish();
       }
-    } else {
+    } 
+     else if (robot_status_ == comau_tcp_interface::RobotStatus::COLLISION) {
+      if (robot_status_pub_->trylock()) {
+        robot_status_pub_->msg_.status = comau_msgs::msg::ComauRobotStatus::COLLISION;
+        robot_status_pub_->unlockAndPublish();
+      }
+    }else {
       RCLCPP_ERROR_STREAM(rclcpp::get_logger("comau_robot"), "Unknow status type.");
       RCLCPP_ERROR_STREAM(rclcpp::get_logger("comau_robot"), "" << robot_status_pub_->msg_.status);
       std::cout << "robot_status_ " << robot_status_ << std::endl;
@@ -896,7 +902,7 @@ void TrajectoryHandler::read(double time, double perio) {
       }
 
       if ((robot_status_ == 'T') || (robot_status_ == 'C') || (robot_status_ == 'R') || (robot_status_ == 'M') ||
-          (robot_status_ == 'I') || (robot_status_ == 'P') || (robot_status_ == 'S') || (robot_status_ == 'E') )
+          (robot_status_ == 'I') || (robot_status_ == 'P') || (robot_status_ == 'S') || (robot_status_ == 'E') || (robot_status_ == 'A') )
       {
         packet_read_ = true;
         if (error_value_ != error_value_prev_)

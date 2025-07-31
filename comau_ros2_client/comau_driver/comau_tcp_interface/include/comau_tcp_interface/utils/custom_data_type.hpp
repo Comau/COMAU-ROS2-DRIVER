@@ -38,6 +38,7 @@ public:
   inline static const char PAUSED = 'P';
   inline static const char SUCCEEDED = 'S';
   inline static const char ERROR = 'E';
+  inline static const char COLLISION = 'A';
 };
 
 /**
