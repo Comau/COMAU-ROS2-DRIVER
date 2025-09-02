@@ -189,8 +189,20 @@ def generate_launch_description():
                 ]),
             )
         ])
+        case "nj60":
+            return LaunchDescription([
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([
+                    PathJoinSubstitution([
+                        FindPackageShare('nj60_description'),
+                        'launch/',
+                        'view_nj60.launch.py'
+                    ])
+                ]),
+            )
+        ])
         case _:
-            print("Client closed. Please choose a robot_type:= \n aura \n aura-mimic \n edo \n nj4-110 \n nj-165-30 \n nj4-170-29 \n nj130-26 \n nj220 \n racer3 \n racer3-rl \n racer5-0-80 \n racer5-cobot \n racer5-cobot-rail \n racer7-14")
+            print("Client closed. Please choose a robot_type:= \n aura \n aura-mimic \n edo \n nj4-110 \n nj-165-30 \n nj4-170-29 \n nj130-26 \n nj220 \n nj60 \n racer3 \n racer3-rl \n racer5-0-80 \n racer5-cobot \n racer5-cobot-rail \n racer7-14")
             sys.exit()
     
     return

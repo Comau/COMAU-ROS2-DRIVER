@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="nj60">
+
+   
+  <xacro:include filename="$(find nj60_description)/urdf/nj60/nj60.urdf.xacro" />
+
+  <xacro:nj60_desc/>
+
+  <!-- Import robot ros2_control description -->
+  <xacro:include filename="$(find nj60_description)/ros2_control/nj60.ros2_control.xacro" />
+  <xacro:robot_ros2_control name="nj60"/>
+
+  <!--link name="world" />
+
+  <joint name="world_joint" type="fixed">
+    <parent link="world" />
+    <child link = "base_link" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint-->
+
+
+
+</robot>
