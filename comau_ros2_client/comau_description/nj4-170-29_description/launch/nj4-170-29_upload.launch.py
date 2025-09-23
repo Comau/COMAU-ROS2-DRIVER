@@ -1,3 +1,5 @@
+# Copyright 2024 Comau Robotics S.p.A.
+
 import os
 from launch import LaunchDescription
 from launch.substitutions import FindExecutable

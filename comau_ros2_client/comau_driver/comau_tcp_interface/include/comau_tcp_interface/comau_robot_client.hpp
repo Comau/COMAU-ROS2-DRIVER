@@ -1,11 +1,11 @@
 /**
- * @file comau_robot_client.h
- * @author Laboratory for Manufacturing Systems & Automation (LMS) - University of Patras
- * @brief The ROS node that publishes the robot information
- * @version 0.1
- * @date 25-02-2020
+ * @file comau_robot_client.hpp
+ * @author Comau Robotics S.p.A.
+ * @brief The ROS2 node send the robot data
+ * @version 1.0
+ * @date 02/07/2024
  *
- * @copyright (c) 2020 Laboratory for Manufacturing Systems & Automation (LMS) - University of Patras
+ * @copyright (c) Comau Robotics S.p.A.
  *
  */
 
@@ -135,7 +135,7 @@ public:
    */
   bool sendInitializeMessage(bool with_verbose, int &sensor_type, int &sensor_cnvrsn, int &sensor_gain,
                              int &sensor_time, int &sensor_ofst_lim_trans, int &sensor_ofst_lim_rot,
-                             std::vector<int> &din_pins, std::vector<int> &dout_pins);
+                             std::vector<int64_t> &din_pins, std::vector<int64_t> &dout_pins);
   /**
    * @brief  Sends the message to start the robot
    *
@@ -175,15 +175,17 @@ public:
    * @return
    * @return
    */
-  bool openRobotThread(bool openRobot, bool success); /*ANDY*/
+  bool openRobotThread(bool openRobot, bool success); /* ANDY FOR TEST NODE */
   /**
    * @brief Returns the The Handler thread
    *
    * @return
    * @return
    */
-  bool openHandlerThread(bool openHandler, bool success); /*ANDY*/
-  bool openStateThread(bool openState, bool success); /*TEMP*/
+  bool openHandlerThread(bool openHandler, bool success); /* ANDY FOR TEST NODE */
+
+  bool openStateThread(bool openState, bool success); /* ANDY FOR TEST NODE */
+  
 private:
   /**
    * @brief Read the message and parse it into the MessagePackage last_recv_msg_

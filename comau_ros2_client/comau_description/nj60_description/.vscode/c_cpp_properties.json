@@ -1,0 +1,44 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/comau/ros2_humble/install/ros2_control_demo_example_9/include/**",
+        "/home/comau/ros2_humble/install/ros2_control_demo_example_8/include/**",
+        "/home/comau/ros2_humble/install/ros2_control_demo_example_7/include/**",
+        "/home/comau/ros2_humble/install/ros2_control_demo_example_6/include/**",
+        "/home/comau/ros2_humble/install/ros2_control_demo_example_5/include/**",
+        "/home/comau/ros2_humble/install/ros2_control_demo_example_4/include/**",
+        "/home/comau/ros2_humble/install/ros2_control_demo_example_3/include/**",
+        "/home/comau/ros2_humble/install/ros2_control_demo_example_2/include/**",
+        "/home/comau/ros2_humble/install/ros2_control_demo_example_14/include/**",
+        "/home/comau/ros2_humble/install/ros2_control_demo_example_12/include/**",
+        "/home/comau/ros2_humble/install/ros2_control_demo_example_11/include/**",
+        "/home/comau/ros2_humble/install/ros2_control_demo_example_10/include/**",
+        "/home/comau/ros2_humble/install/ros2_control_demo_example_1/include/**",
+        "/home/comau/ros2_humble/install/comau_hardware_interface/include/**",
+        "/home/comau/ros2_humble/install/comau_example/include/**",
+        "/home/comau/ros2_humble/install/comau_handlers/include/**",
+        "/home/comau/ros2_humble/install/comau_driver/include/**",
+        "/home/comau/ros2_humble/install/comau_tcp_interface/include/**",
+        "/home/comau/ros2_humble/install/comau_msgs/include/**",
+        "/opt/ros/humble/include/**",
+        "/home/comau/ros2_humble/src/comau-ros2-library/comau_ros2_core/comau_driver/comau_driver/include/**",
+        "/home/comau/ros2_humble/src/comau-ros2-library/comau_ros2_core/comau_driver/comau_handlers/include/**",
+        "/home/comau/ros2_humble/src/comau-ros2-library/comau_ros2_core/comau_driver/comau_hardware_interface/include/**",
+        "/home/comau/ros2_humble/src/comau-ros2-library/comau_ros2_core/comau_driver/comau_tcp_interface/include/**",
+        "/home/comau/ros2_humble/src/comau-ros2-library/comau_ros2_core/comau_example/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}

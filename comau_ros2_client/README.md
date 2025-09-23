@@ -1,12 +1,10 @@
-# Comau Experimental
-
-[![catkin_build](https://github.com/LMS-Robotics-VR/comau_experimental/actions/workflows/main.yml/badge.svg)](https://github.com/LMS-Robotics-VR/comau_experimental/actions/workflows/main.yml)
+# Comau ROS2 Client
 
 ## Overview
 
-This repository contains all the required ROS packages to work with Comau robots through ROS.
+This repository contains all the required ROS2 packages to work with Comau robots through ROS2.
 
-The Comau Experimental package has been tested under ROS Melodic and Ubuntu 18.04. This is research code, expect that it changes often and any fitness for a particular purpose is disclaimed.
+The Comau Experimental package has been tested under ROS2 Humble and Ubuntu 22.04. This is research code, expect that it changes often and any fitness for a particular purpose is disclaimed.
 
 
 ## Acknowledgment
@@ -15,11 +13,7 @@ Developed in collaboration between:
 
 [<img height="60" alt="LMS" src="doc/LMS-logo.jpg">](http://lms.mech.upatras.gr) &nbsp; and &nbsp;
 [<img height="60" alt="COMAU" src="doc/COMAU-logo.png">](https://www.comau.com/en)
- 
-This project has received funding from the European Union’s Horizon 2020
-research and innovation programme under grant agreement no. 820689
 
-<img src="doc/EU-flag.jpg" alt="eu_flag" height="45">
 
 ## Installation
 
@@ -27,9 +21,9 @@ research and innovation programme under grant agreement no. 820689
 
 #### Requirements
 
-- [Robot Operating System (ROS)](http://wiki.ros.org) (middleware for robotics)
+- [Robot Operating System (ROS2)](https://docs.ros.org/en/humble/index.html) (middleware for robotics)
 
-It is recommended to use **Ubuntu 18.04 with ROS melodic**, however using Ubuntu 16.04 with ROS kinetic should also work.
+It is recommended to use **Ubuntu 22.04 with ROS Humble**.
 
 #### Building procedure
 
@@ -37,55 +31,42 @@ It is recommended to use **Ubuntu 18.04 with ROS melodic**, however using Ubuntu
 # source global ros
 source /opt/ros/<your_ros_version>/setup.bash
 
-# create a catkin workspace
-mkdir -p catkin_ws/src && cd catkin_ws/src
+# create a ros2 workspace
+mkdir -p ros2_humble/src && cd ros2_humble/src
 
-# Clone the latest version of this repository into your catkin workspace *src* folder.
+
+# Clone the latest version of this repository into your ros2 workspace *src* folder.
 git clone <repository link>
 
-# Install dependencies of all packages.
-sudo apt update -qq
-rosdep update
-rosdep install --from-paths src --ignore-src -r -y
 
 # build the workspace
-catkin_make
+colcon build
+
 
 # activate the workspace
-source devel/setup.bash
+source install/setup.bash
+
 
 ```
 
-## How to use the COMAU ROS
+## How to use the COMAU ROS2 driver
 
-### Simulation
-
-Follow the instructions at 
-
-[comau_sim README](comau_sim/README.md)
-
-## Real Robot
+## Real Robot/Roboshop
 
 To start the driver follow the instructions at 
 
-[comau_driver README](comau_driver/comau_hardware_interface/README.md)
+[comau_bringup README](comau_bringup/README.md)
 
 
 ### After that you are ready to start interfacing with the robot through ros 
-1. How to use Comau controller wrapper
-    
-    [comau_controller_wrapper README](comau_tools/comau_controller_wrapper/README.md)
-
-2. How to use Asynchronous Joint/Cartesian feature
+1. How to use Asynchronous Joint/Cartesian feature
     
     [comau_handlers README](comau_driver/comau_handlers/README.md)
 
-3. How to use Sensor Tracking feature 
+2. **For examples on how to use the c++ see the comau_example package**
 
-    [comau_controllers README](comau_driver/comau_controllers/README.md)
+    [comau_example README](comau_example/README.md)
 
-4. How to use Moveit
-    
-    [comau_moveit_handlers README](comau_moveit/comau_moveit_handlers/README.md)
+## URDF Robot Visualization without communication
 
-5. **For examples on how to use the c++ and python api see the comau_demo package**
+[comau_viz README](comau_viz/README.md)

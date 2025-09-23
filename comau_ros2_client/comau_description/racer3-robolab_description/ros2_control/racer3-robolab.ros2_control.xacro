@@ -1,0 +1,115 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="robot_ros2_control" params="name">
+
+    <ros2_control name="${name}" type="system">
+
+      <hardware>
+        <plugin>comau_hardware_interface/ComauHardwareInterface</plugin>
+      </hardware>
+
+      <joint name="joint_1">
+        <command_interface name="position">
+          <param name="min">{-170*pi/180}</param>
+          <param name="max">{170*pi/180}</param>
+        </command_interface>
+        <command_interface name="velocity">
+          <param name="min">{-430*pi/180}</param>
+          <param name="max">{430*pi/180}</param>
+        </command_interface>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+      </joint>
+
+      <joint name="joint_2">
+        <command_interface name="position">
+          <param name="min">{-95*pi/180}</param>
+          <param name="max">{135*pi/180}</param>
+        </command_interface>
+        <command_interface name="velocity">
+          <param name="min">{-450*pi/180}</param>
+          <param name="max">{450*pi/180}</param>
+        </command_interface>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+      </joint>
+
+      <joint name="joint_3">
+        <command_interface name="position">
+          <param name="min">{-155*pi/180}</param>
+          <param name="max">{90*pi/180}</param>
+        </command_interface>
+        <command_interface name="velocity">
+          <param name="min">{-500*pi/180}</param>
+          <param name="max">{500*pi/180}</param>
+        </command_interface>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+      </joint>
+
+      <joint name="joint_4">
+        <command_interface name="position">
+          <param name="min">{-200*pi/180}</param>
+          <param name="max">{200*pi/180}</param>
+        </command_interface>
+        <command_interface name="velocity">
+          <param name="min">{-600*pi/180}</param>
+          <param name="max">{600*pi/180}</param>
+        </command_interface>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+      </joint>
+
+      <joint name="joint_5">
+        <command_interface name="position">
+          <param name="min">{-125*pi/180}</param>
+          <param name="max">{125*pi/180}</param>
+        </command_interface>
+        <command_interface name="velocity">
+          <param name="min">{-600*pi/180}</param>
+          <param name="max">{600*pi/180}</param>
+        </command_interface>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+      </joint>
+
+      <joint name="joint_6">
+        <command_interface name="position">
+          <param name="min">{-2700*pi/180}</param>
+          <param name="max">{2700*pi/180}</param>
+        </command_interface>
+        <command_interface name="velocity">
+          <param name="min">{-900*pi/180}</param>
+          <param name="max">{900*pi/180}</param>
+        </command_interface>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+      </joint>
+
+      <!--sensor name="tcp_fts_sensor">
+        <state_interface name="force.x"/>
+        <state_interface name="force.y"/>
+        <state_interface name="force.z"/>
+        <state_interface name="torque.x"/>
+        <state_interface name="torque.y"/>
+        <state_interface name="torque.z"/>
+      </sensor-->
+
+    </ros2_control>
+
+  </xacro:macro>
+
+</robot>

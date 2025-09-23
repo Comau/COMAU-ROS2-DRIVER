@@ -1,0 +1,16 @@
+<library path="comau_hardware_interface">
+  <class name="comau_hardware_interface/ComauHardwareInterface"
+         type="comau_hardware_interface::ComauHardwareInterface"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>
+      Robot hardware plugin for comau robot.
+    </description>
+  </class>
+  <class name="comau_hardware_interface/ComauControl"
+         type="comau_hardware_interface::ComauControl"
+         base_class_type="controller_interface::ControllerInterface">
+    <description>
+      Robot controller plugin for comau robot.
+    </description>
+  </class>
+</library>

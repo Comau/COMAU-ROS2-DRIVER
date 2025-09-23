@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>comau_hardware_interface</name>
+  <version>0.0.0</version>
+   <description>The comau_hardware_interface package</description>
+
+  <author>Comau Robotics S.p.A</author>
+  <maintainer email="andrea.perica@comau.com">Comau Robotics S.p.A.</maintainer>
+  <maintainer email="giulia.nicastro@external.comau.com">Comau Robotics S.p.A.</maintainer>
+
+  <license>Apache-2.0</license>
+  
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  
+  <build_depend>boost</build_depend>
+  
+  <depend>rclcpp_lifecycle</depend>
+  <depend>rclcpp</depend>
+  <depend>rcpputils</depend>
+  <depend>control_msgs</depend>
+  <depend>controller_manager</depend>
+  <depend>controller_manager_msgs</depend>
+  <depend>controller_interface</depend>
+  <depend>hardware_interface</depend>
+  <depend>pluginlib</depend>
+  <depend>tf2_ros</depend>
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>comau_msgs</depend>
+  <depend>comau_driver</depend>
+  <depend>comau_handlers</depend>
+  <depend>urdf</depend>
+  <depend>trajectory_msgs</depend>
+  <depend>tf2_geometry_msgs</depend>
+  <depend>joint_state_broadcaster</depend>
+  <depend>joint_trajectory_controller</depend>
+  <depend>robot_state_publisher</depend>
+  
+  
+  <doc_depend>doxygen</doc_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

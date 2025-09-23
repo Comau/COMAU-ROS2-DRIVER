@@ -1,34 +1,23 @@
 <?xml version="1.0"?>
-<robot xmlns:xacro="http://wiki.ros.org/xacro" name="nj220">
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="nj220">
 
-  <!-- 
-    Author: LMS
-   -->
    
-  <xacro:arg name="transmission_hw_interface" default="hardware_interface/PositionJointInterface"/>
-
-  <xacro:arg name="pos_x" default="0"/>
-  <xacro:arg name="pos_y" default="0"/>
-  <xacro:arg name="pos_z" default="0"/>
-  <xacro:arg name="roll" default="0"/>
-  <xacro:arg name="pitch" default="0"/>
-  <xacro:arg name="yaw" default="0"/>
-  
-  <!-- common stuff -->
-  <xacro:include filename="$(find nj220_description)/urdf/common.gazebo.xacro" />
-
-  <!--load nj220 -->
   <xacro:include filename="$(find nj220_description)/urdf/nj220/nj220.urdf.xacro" />
 
-  <!-- arm -->
-  <xacro:nj220_robot prefix="" transmission_hw_interface="$(arg transmission_hw_interface)"/>
+  <xacro:nj220_desc/>
+
+  <!-- Import robot ros2_control description -->
+  <xacro:include filename="$(find nj220_description)/ros2_control/nj220.ros2_control.xacro" />
+  <xacro:robot_ros2_control name="nj220"/>
 
   <link name="world" />
 
   <joint name="world_joint" type="fixed">
     <parent link="world" />
     <child link = "base_link" />
-    <origin xyz="$(arg pos_x) $(arg pos_y) $(arg pos_z)" rpy="$(arg roll) $(arg pitch) $(arg yaw)" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
   </joint>
+
+
 
 </robot>

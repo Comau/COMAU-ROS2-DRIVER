@@ -1,0 +1,427 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+<xacro:macro name="edo_description">
+  
+   <xacro:include filename="$(find edo_description)/urdf/comau_common.macro.xacro" />
+  <!--xacro:include filename="$(find edo_description)/urdf/edo/edo.transmission.xacro" />
+  <xacro:include filename="$(find edo_description)/urdf/edo/edo.gazebo.xacro" />
+  <xacro:include filename="$(find edo_description)/urdf/utilities.xacro" />
+  <xacro:macro name="edo_robot" params="prefix transmission_hw_interface:=hardware_interface/PositionJointInterface">
+
+    <xacro:edo_transmission prefix="${prefix}" hw_interface="${transmission_hw_interface}" />
+    <xacro:edo_gazebo prefix="${prefix}" /-->
+  <link
+    name="base_link">
+            <inertial>
+                <origin xyz="0.057188 0.005983 0.05" 
+		rpy="0 0 0"/>
+	    <mass 
+	       value="0.0785942338762368"/>
+                <inertia
+                        ixx="0.0123841200738068"
+                        ixy="-0.000187984913202787"
+                        ixz="-1.32683892634308E-06"
+                        iyy="7.0169034503364E-05"
+                        iyz="-9.17416945099319E-05"
+                        izz="0.0123862261905614" />
+            </inertial>
+
+            <visual>
+        
+       <origin 
+		  xyz="0 0 0.0" 
+		  rpy="0 0 0"/>
+       <geometry>
+ 	<mesh 
+	  filename="package://edo_description/meshes/visual/base_link.STL"/>
+       </geometry>
+       <material 
+         name="Grey"/>
+    </visual>
+
+            <collision>
+                <origin xyz="0 0 0.135" rpy="0 0 0"/>
+                <geometry>
+                    <mesh filename="package://edo_description/meshes/collision/base_link.STL"/>
+                </geometry>
+                
+            </collision>
+
+        </link>
+  <link
+    name="link_1">
+            <inertial>
+                <origin 
+		 xyz="-0.037464 0.047260 0" 
+		 rpy="0 0 0"/>
+		<mass 
+		  value="0.0785942338762368"/>
+                <inertia
+                        ixx="0.0123841200738068"
+                        ixy="0.000187984913202727"
+                        ixz="-1.32683892634271E-06"
+                        iyy="7.01690345033622E-05"
+                        iyz="9.17416945099368E-05"
+                        izz="0.0123862261905615" />
+            </inertial>
+            <visual>
+                <origin 
+		  xyz="0 0 0" 
+		  rpy="0 0 0"/>
+                <geometry>
+                  <mesh 
+		     filename="package://edo_description/meshes/visual/link_1.dae"/>
+                </geometry>
+                <material 
+		  name="Orange"/>
+            </visual>
+            <collision>
+                <origin 
+		  xyz="0 0 0" 
+		  rpy="0 0 0"/>
+                <geometry>
+		  <mesh 
+		    filename="package://edo_description/meshes/collision/link_1.dae"/>
+                </geometry>
+                
+            </collision>
+        </link>
+  <joint
+    name="joint_1"
+    type="revolute">
+    <origin
+      xyz="0 0 ${0.135 + 0.202}"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="link_1" />
+    <axis
+      xyz="0 0 1" />
+      <limit lower="-3.14" upper="3.14" effort="100000.00" velocity="20.00" />
+  </joint>
+  <link
+    name="link_2">
+    <inertial>
+      <origin
+        xyz="-0.016423 0.031803 -0.045948"
+        rpy="0 0 0" />
+      <mass
+        value="0.0785942338762368" />
+      <inertia
+        ixx="0.0122070242873091"
+        ixy="0.000930596667670934"
+        ixz="-0.0011486325666074"
+        iyy="0.007576065624266"
+        iyz="0.0059380539105297"
+        izz="0.00505742538729646" />
+    </inertial>
+    <visual>
+    <origin 
+      xyz="0 0.2105 0" 
+      rpy="${3.14 /2} ${3.14} ${3.14}"/>
+      <geometry>
+         <mesh 
+	  filename="package://edo_description/meshes/visual/link_2.dae"/>
+                </geometry>
+                <material 
+		  name="Orange"/>
+            </visual>
+
+            <collision>
+              <origin 
+		xyz="0 0.2105 0" 
+		rpy="${3.14 /2} ${3.14} ${3.14}"/>
+                <geometry>
+                    <mesh 
+		      filename="package://edo_description/meshes/collision/link_2.dae"/>
+                </geometry>
+                
+            </collision>
+        </link>
+  <joint
+    name="joint_2"
+    type="revolute">
+    <origin
+      xyz="0 0 0"
+      rpy="${3.14 /2} 0 0" />
+    <parent
+      link="link_1" />
+    <child
+      link="link_2" />
+    <axis
+      xyz="0 0 -1" />
+      <limit lower="-3.14" upper="3.14" effort="100000.00" velocity="20.00" />
+  </joint>
+  <link
+    name="link_3">
+    <inertial>
+      <origin
+        xyz="-0.031475 0.013100 0.000326"
+        rpy="0 0 0" />
+      <mass
+        value="0.0785942338762368" />
+      <inertia
+        ixx="0.0123841200738068"
+        ixy="0.000187984913202718"
+        ixz="1.32683892634266E-06"
+        iyy="7.01690345033619E-05"
+        iyz="-9.17416945099381E-05"
+        izz="0.0123862261905615" />
+    </inertial>
+    <visual>
+        
+      <origin
+        xyz="0 0 0"
+        rpy="${3.14/2} 0 0" />
+      <geometry>
+        <mesh
+          filename="package://edo_description/meshes/visual/link_3.dae"/>
+      </geometry>
+      <material 
+        name="Orange"/>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="${3.14 /2} 0 0"/>
+      <geometry>
+        <mesh
+          filename="package://edo_description/meshes/collision/link_3.dae"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint_3"
+    type="revolute">
+    <origin
+      xyz="0 0.2105 0"
+      rpy="0 ${3.14} ${3.14}" />
+    <parent
+      link="link_2" />
+    <child
+      link="link_3" />
+    <axis
+      xyz="0 0 1" />
+    <limit lower="-3.14" upper="3.14" effort="100000.00" velocity="20.00" />
+  </joint>
+  <link
+    name="link_4">
+    <inertial>
+      <origin
+        xyz="0.033909 0.000544 -0.013765" 
+        rpy="0 0 0" />
+      <mass
+        value="0.0785942338762368" />
+      <inertia
+        ixx="0.0123841200738068"
+        ixy="-1.32683892634285E-06"
+        ixz="0.000187984913202718"
+        iyy="0.0123862261905615"
+        iyz="9.17416945099506E-05"
+        izz="7.01690345033621E-05" />
+    </inertial>
+    <visual>
+        
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+		    filename="package://edo_description/meshes/visual/link_4.dae"/>
+      </geometry>
+	<material 
+	  name="Orange"/>
+      </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+	  filename="package://edo_description/meshes/collision/link_4.dae"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint_4"
+    type="revolute">
+    <origin
+      xyz="0 -0.268 0"
+      rpy="${3.14 / 2} 0 0" />
+    <parent
+      link="link_3" />
+    <child
+      link="link_4" />
+    <axis
+      xyz="0 0 1" />
+    <limit lower="-3.14" upper="3.14" effort="100000.00" velocity="20.00" />
+  </joint>
+  <link
+    name="link_5">
+    <inertial>
+      <origin
+        xyz="0.029485 -0.000458 0.026739"
+        rpy="0 0 0" />
+      <mass
+        value="0.0785942338762368" />
+      <inertia
+        ixx="0.0123841200738068"
+        ixy="1.32683892634191E-06"
+        ixz="0.000187984913202582"
+        iyy="0.0123862261905615"
+        iyz="-9.17416945099552E-05"
+        izz="7.01690345033581E-05" />
+    </inertial>
+    <visual>
+        
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+		    filename="package://edo_description/meshes/visual/link_5.dae"/>
+      </geometry>
+      <material 
+        name="Orange"/>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+		      filename="package://edo_description/meshes/collision/link_5.dae"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint_5"
+    type="revolute">
+    <origin
+      xyz="0 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="link_4" />
+    <child
+      link="link_5" />
+    <axis
+      xyz="0 1 0" />
+    <limit lower="-3.14" upper="3.14" effort="100000.00" velocity="20.00" />
+  </joint>
+  <link
+    name="link_6">
+    <inertial>
+      <origin
+        xyz="0.000007 -0.009327 0.000006"
+        rpy="0 0 0" />
+      <mass
+        value="0.0279702497322662" />
+      <inertia
+        ixx="7.63464744598253E-06"
+        ixy="1.89204959067221E-10"
+        ixz="5.32970316039599E-09"
+        iyy="1.45744912344428E-05"
+        iyz="1.08958003890421E-10"
+        izz="7.62871791498103E-06" />
+    </inertial>
+    <visual>
+        
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://edo_description/meshes/visual/link_6.dae"/>
+      </geometry>
+      <material
+                 name="Orange"/>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+	  filename="package://edo_description/meshes/collision/link_6.dae"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint_6"
+    type="revolute">
+    <origin
+      xyz="0 0 0.1745"
+      rpy="0 0 0" />
+    <parent
+      link="link_5" />
+    <child
+      link="link_6" />
+    <axis 
+       xyz="0 0 1"/>
+    <limit lower="-3.14" upper="3.14" effort="100000.00" velocity="20.00" />
+  </joint>
+
+  <link 
+    name="ee_link">
+     <inertial>
+      <origin
+        xyz="0.00000 0.00 0.0000"
+        rpy="0 0 0" />
+      <mass
+        value="0.0279702497322662" />
+      <inertia
+        ixx="7.63464744598253E-06"
+        ixy="1.89204959067221E-10"
+        ixz="5.32970316039599E-09"
+        iyy="1.45744912344428E-05"
+        iyz="1.08958003890421E-10"
+        izz="7.62871791498103E-06" />
+    </inertial>
+    <visual>
+        
+      <origin
+        xyz="0 0 -0.1355"
+        rpy="-1.57 0 -0.785" />
+      <geometry>
+        <mesh
+          filename="package://edo_description/meshes/visual/edo_gripper.dae"/>
+      </geometry>
+      <material
+         name="White"/>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 -0.1355"
+        rpy="-1.57 0 -0.785" />
+      <geometry>
+        <mesh
+	  filename="package://edo_description/meshes/collision/edo_gripper.dae"/>
+      </geometry>
+    </collision>
+  </link>
+        
+  <joint name="fixed_ee_joint" type="fixed">
+      <origin
+      xyz="0.0 0 0.0"
+      rpy="1.57 0 1.57" />
+      <parent link="link_6"/>
+      <child link="ee_link"/>
+  </joint>
+
+  <link name="tool" />
+
+  <joint name="tool_joint" type="revolute">
+     <origin
+      xyz="0.0 0 0.0"
+      rpy="1.57 0 1.57" />
+    <parent link="ee_link" />
+    <child link = "tool" />
+    <axis 
+       xyz="0 0 1"/>
+    <limit lower="-3.14" upper="3.14" effort="100000.00" velocity="20.00" />
+  </joint>
+
+  </xacro:macro>
+</robot>

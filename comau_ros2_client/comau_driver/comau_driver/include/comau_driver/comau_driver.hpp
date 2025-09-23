@@ -1,11 +1,11 @@
 /**
- * @file comau_driver.h
- * @author Laboratory for Manufacturing Systems & Automation (LMS) - University of Patras
- * @brief The ROS node that publishes the robot information
- * @version 0.1
- * @date 25-02-2020
+ * @file comau_driver.hpp
+ * @author Comau Robotics S.p.A.
+ * @brief The ROS2 node that publishes the robot information
+ * @version 1.0
+ * @date 02/07/2024
  *
- * @copyright (c) 2020 Laboratory for Manufacturing Systems & Automation (LMS) - University of Patras
+ * @copyright (c) Comau Robotics S.p.A.
  *
  */
 
@@ -15,6 +15,7 @@
 #include "comau_tcp_interface/comau_robot_client.hpp"
 #include "comau_tcp_interface/comau_state_client.hpp"
 #include "comau_tcp_interface/comau_tcp_interface.hpp"
+#include <vector>
 #include <boost/scoped_ptr.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -97,7 +98,7 @@ public:
    * @brief Get the DIN pins state
    * @param pins_state_in vector holding the DIN pins state
    */
-  void getPinsStatesIN(std::vector<int> &pins_state_in);
+  void getPinsStatesIN(std::vector<int64_t> &pins_state_in);
   /**
    * @brief Get the DOUT pins
    * @param pins_out vector holding the DOUT pins
@@ -107,7 +108,7 @@ public:
    * @brief Get the DOUT pins state
    * @param pins_state_out vector holding the DOUT pins state
    */
-  void getPinsStatesOUT(std::vector<int> &pins_state_out);
+  void getPinsStatesOUT(std::vector<int64_t> &pins_state_out);
   /**
    * @brief Get the current Timestamp
    *
@@ -251,7 +252,7 @@ public:
   /**
    * @brief Set's the DOUT states of the Robot from a ros service
    */
-  bool setIO(int &pin, bool state);
+  bool setIO(int &pin, bool &state);
   /**
    * @brief Set's the Robot state (lock/pause, unlock/resume, reset) from a ros service
    */
@@ -272,13 +273,12 @@ private:
   comau_tcp_interface::utils::MessagePackage *msg;                       /**< State message */
   comau_tcp_interface::ComauTcpInterfaceParameters state_params_, robot_params_, arm1_params_; /**< Net parameters */
   bool parallel_link_fix_; /**< Parameter for parallel link transformation */
-  bool allow_async_ =
-      false;     /**< Parameter indicating if the robot is in a mode ready to receive asynchronous trajectories */
+  bool allow_async_ = false;     /**< Parameter indicating if the robot is in a mode ready to receive asynchronous trajectories */
   bool verbose_; /**< Parameter for verbose messages */
   
   bool communication_initialized_ = false; /*ANDY VER if true the initialized and start commands are sent to the server*/
   // State parameters
-  comau_tcp_interface::utils::vector10f_t joints_float_;   /*ANDY*/     /**< Joint positions */
+  comau_tcp_interface::utils::vector10f_t joints_float_;        /**< Joint positions */
   comau_tcp_interface::utils::vector6f_t  ee_float_;            /**< End effector position */
   comau_tcp_interface::utils::vector6f_t  joint_command_float_; /**< Joint commands */
   comau_tcp_interface::utils::vector6f_t  sns_trk_cmd_;         /**< Sensor tracking commands */
@@ -286,8 +286,8 @@ private:
   comau_tcp_interface::utils::vector6i_t  pins_state_in_;       /**< DIN states */
   comau_tcp_interface::utils::vector6i_t  pins_state_out_;      /**< DOUT states */
   comau_tcp_interface::utils::vector10i_t jnt_type_;            /**< Joint TYPE */
-  std::vector<int> din_pins_;                                  /**< DIN pins */
-  std::vector<int> dout_pins_;                                 /**< DOUT pins */
+  std::vector<int64_t> din_pins_;                                   /**< DIN pins */
+  std::vector<int64_t> dout_pins_;                                  /**< DOUT pins */
 
   // Joint/cartesian default linear velocity
   double default_linear_velocity_;

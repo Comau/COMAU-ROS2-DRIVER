@@ -1,11 +1,11 @@
 /**
- * @file comau_state_client_node.cpp
- * @author Laboratory for Manufacturing Systems & Automation (LMS) - University of Patras
- * @brief The rclcpp node that publishes the robot information
- * @version 0.1
- * @date 25-02-2020
+ * @file comau_driver_node.cpp
+ * @author Comau Robotics S.p.A.
+ * @brief The ROS2 node that publishes the robot information
+ * @version 1.0
+ * @date 02/07/2024
  *
- * @copyright (c) 2020 Laboratory for Manufacturing Systems & Automation (LMS) - University of Patras
+ * @copyright (c) Comau Robotics S.p.A.
  *
  */
 
@@ -29,14 +29,14 @@ uint32_t error_value_;
 int32_t sns_trk_type_;
 uint32_t num_robot_joints_;
 uint32_t num_joints_;
-std::vector<double> ee_position_    = {0,0,0,0,0,0};
-std::vector<int> pins_in_           = {0,0,0,0,0,0};
-std::vector<int> pins_state_in_     = {0,0,0,0,0,0};
-std::vector<int> pins_out_          = {0,0,0,0,0,0};
-std::vector<int> pins_state_out_    = {0,0,0,0,0,0};
+std::vector<double> ee_position_     = {0,0,0,0,0,0};
+std::vector<int> pins_in_            = {0,0,0,0,0,0};
+std::vector<int64_t> pins_state_in_  = {0,0,0,0,0,0};
+std::vector<int> pins_out_           = {0,0,0,0,0,0};
+std::vector<int64_t> pins_state_out_ = {0,0,0,0,0,0};
 uint32_t stsSelector_;
-std::vector<int> jnt_type_          = {0,0,0,0,0,0};
-std::vector<double> joint_position_ = {0.0,0.0,0.0,0.0,0.0,0.0};
+std::vector<int> jnt_type_           = {0,0,0,0,0,0};
+std::vector<double> joint_position_  = {0.0,0.0,0.0,0.0,0.0,0.0};
 
 int main(int argc, char **argv) {
   rclcpp::init(argc, argv);

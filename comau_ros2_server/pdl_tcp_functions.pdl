@@ -1,0 +1,317 @@
+PROGRAM pdl_tcp_functions NOHOLD
+
+  ---------------------------------------------------------------
+  --- Author: Comau Robotics S.p.A.                                    
+  --- Brief: Robot Arm handler server for handling motion commands for robot 1 
+  --- over TCP/IP communication  
+  --
+  --  BSD 2-Clause License
+  ---------------------------------------------------------------
+
+CONST
+  -- TCP/IP Constants
+  KI_DV_TCP_GET        = 27           -- DV_CNTRL code for getting connection info
+  KI_DV_TCP_CONFIG     = 28           -- DV_CNTRL code for setting connection params
+  KI_DV_TCP_ACCEPT     = 29           -- DV_CNTRL code for port to socket connection
+  KI_DV_TCP_DISCONNECT = 31           -- DV_CNTRL code to deactivate TCP connection (TCP go DOWN)
+  
+  -- Error values
+  KI_ERR_NULL               = 0x00000 -- Null error
+  KI_ERR_STATE_ACCEPT       = 0x00001 -- State  Server  error 15470 : Address already in use
+  KI_ERR_ROBOT_ACCEPT       = 0x00002 -- Robot  Server  error 15470 : Address already in use
+  KI_ERR_HANDLER_ACCEPT     = 0x00004 -- Motion Handler error 15470 : Address already in use
+  KI_ERR_STATE_WRITE        = 0x00008 -- State  Server  error 40033 : Error 15474 in write
+  KI_ERR_ROBOT_READ_NCON    = 0x00010 -- Robot  Server  error 39990 : Error 15467 in read
+  KI_ERR_HANDLER_READ_NCON  = 0x00020 -- Motion Handler error 39990 : Error 15467 in read
+  KI_ERR_ROBOT_READ_DCON    = 0x00040 -- Robot  Server  error 39990 : Error 15468 in read
+  KI_ERR_HANDLER_READ_DCON  = 0x00080 -- Motion Handler error 39990 : Error 15468 in read
+  KI_ERR_ROBOT_READ_CANC    = 0x00100 -- Robot  Server  error 39991 
+  KI_ERR_HANDLER_READ_CANC  = 0x00200 -- Motion Handler error 39991 
+  KI_ERR_ROBOT_READ_TOUT    = 0x00400 -- Robot  Server  error 39992 
+  KI_ERR_HANDLER_READ_TOUT  = 0x00800 -- Motion Handler error 39992 
+  KI_ERR_STATE_DISCONNECT   = 0x01000 -- State  Server  error 30767 
+  KI_ERR_ROBOT_DISCONNECT   = 0x02000 -- Robot  Server  error 30767 
+  KI_ERR_HANDLER_DISCONNECT = 0x04000 -- Motion Handler error 30767 
+  KI_ERR_STATE_SAFETY_GATE  = 0x08000 -- Safety Gate / External Emergency Stop 
+  -- Error reset masks
+  KI_RESET_STATE_ERR        = 0x01009 -- 001000000001001
+  KI_RESET_ROBOT_ERR        = 0x02552 -- 010010101010010
+  KI_RESET_HANDLER_ERR      = 0x04AA4 -- 100101010100100
+  -- Progs ID 
+  KI_ID_STATE   = 1
+  KI_ID_ROBOT   = 2
+  KI_ID_HANDLER = 3
+
+VAR
+  -- Shared variables
+  _ss_state         : STRING[1] EXPORTED FROM pdl_tcp_functions NOSAVE -- Shared variable for showing the status (TERMINATE:T, READY:R, MOVING:M, CANCELING:C, SUCCEEDED:S, ERROR:E)
+  _sb_shutdown      : BOOLEAN   EXPORTED FROM pdl_tcp_functions NOSAVE -- Shared variable to shutdown pdl program
+  _sb_enable_robot  : BOOLEAN   EXPORTED FROM pdl_tcp_functions NOSAVE -- Shared variable to show that the robot is allowed to move
+  _sb_reset_motion  : BOOLEAN   EXPORTED FROM pdl_tcp_functions NOSAVE -- Shared flag to cancel the motion and then reset
+  _sb_cancel_motion : BOOLEAN   EXPORTED FROM pdl_tcp_functions NOSAVE -- Shared flag to cancel the motion and then reset
+  _sb_lock_robot    : BOOLEAN   EXPORTED FROM pdl_tcp_functions NOSAVE -- Shared flag to lock the arm
+  _sb_unlock_robot  : BOOLEAN   EXPORTED FROM pdl_tcp_functions NOSAVE -- Shared flag to unlock the arm
+  _si_verbose       : INTEGER   EXPORTED FROM pdl_tcp_functions NOSAVE -- Level of logging
+  _vs_screen_lun    : INTEGER   EXPORTED FROM pdl_tcp_functions NOSAVE -- Output screen identifier
+  _sb_robot_init    : BOOLEAN   EXPORTED FROM pdl_tcp_functions NOSAVE -- Shared variable indicating the robot is initialized
+  _vb_first_sns_trk : BOOLEAN   EXPORTED FROM pdl_tcp_functions NOSAVE
+  _si_delay_change_sts : INTEGER EXPORTED FROM pdl_tcp_functions NOSAVE
+  _si_publish_freq  : INTEGER   EXPORTED FROM pdl_tcp_functions NOSAVE -- The frequency in Hz that will publish the state message. 25 Hz is ideal for real robot communication.
+
+  -- Shared variables for sensor tracking configuration
+  _si_sensor_type           : INTEGER EXPORTED FROM pdl_tcp_functions NOSAVE  -- The mode of Sensor Tracking     
+  _si_sensor_cnvrsn         : INTEGER EXPORTED FROM pdl_tcp_functions NOSAVE  -- Convert the values to millimeters : default 1
+  _si_sensor_gain           : INTEGER EXPORTED FROM pdl_tcp_functions NOSAVE  -- Percentage value that define the speed to be used for the corrections : default 100
+  _si_sensor_time           : INTEGER EXPORTED FROM pdl_tcp_functions NOSAVE  -- period in which the corrections must be applied default : 0ms
+  _si_sensor_ofst_lim_trans : INTEGER EXPORTED FROM pdl_tcp_functions NOSAVE  -- Maximum translational offset default 500
+  _si_sensor_ofst_lim_rot   : INTEGER EXPORTED FROM pdl_tcp_functions NOSAVE  -- Maximum rotational offset default 800
+
+  _ai_din_pins  : ARRAY[6] OF INTEGER EXPORTED FROM pdl_tcp_functions NOSAVE  -- Shared variable for DIN pin numbers
+  _ai_dout_pins : ARRAY[6] OF INTEGER EXPORTED FROM pdl_tcp_functions NOSAVE  -- Shared variable for DOUT pin numbers
+ 
+  _si_error_state           : INTEGER EXPORTED FROM pdl_tcp_functions NOSAVE  -- Error state variable
+  _vb_tcp_conn_handler      : BOOLEAN EXPORTED FROM pdl_tcp_functions NOSAVE
+  _vb_tcp_conn_robot        : BOOLEAN EXPORTED FROM pdl_tcp_functions NOSAVE
+  _vb_tcp_conn_state        : BOOLEAN EXPORTED FROM pdl_tcp_functions NOSAVE
+
+-- Declaration of shared functions 
+ROUTINE print_connection_info(netlun, screenlun, verbose: INTEGER; log_tag: STRING) EXPORTED FROM pdl_tcp_functions GLOBAL
+ROUTINE tcp_server_accept(netlun, port, screenlun, verbose: INTEGER; log_tag: STRING; si_prog_id: INTEGER) : INTEGER EXPORTED FROM pdl_tcp_functions GLOBAL
+ROUTINE tcp_server_disconnect(netlun, screenlun, verbose: INTEGER; log_tag: STRING; si_prog_id: INTEGER) EXPORTED FROM pdl_tcp_functions GLOBAL
+ROUTINE throw_error(error_msg, vs_main_log : STRING) EXPORTED FROM pdl_tcp_functions GLOBAL
+ROUTINE throw_collision(error_msg, vs_main_log : STRING) EXPORTED FROM pdl_tcp_functions GLOBAL
+
+  --------------------------------------------------------------------
+  --- Routine: throw_collision
+  --- Brief: Update the state machine of the robot
+  --------------------------------------------------------------------
+ROUTINE throw_collision(error_msg, vs_main_log : STRING)
+BEGIN
+   _ss_state    := 'A' --COLLISION
+   WRITE _vs_screen_lun (vs_main_log, '[WARN_COLLISION] : ', error_msg, NL)
+END throw_collision
+
+  --------------------------------------------------------------------
+  --- Routine: throw_error
+  --- Brief: Update the state machine of the robot
+  --------------------------------------------------------------------
+ROUTINE throw_error(error_msg, vs_main_log : STRING)
+BEGIN
+   _ss_state    := 'E' --ERROR
+   --_sb_shutdown := TRUE 
+   WRITE _vs_screen_lun (vs_main_log, '[ERROR] : ', error_msg, NL)
+END throw_error
+
+---------------------------------------------------------------
+--- Routine: print_connection_info
+--- Brief: Print info of the incoming connections
+---------------------------------------------------------------
+-- Parameters:
+--    netlun:     The " socket file" corresponding to the network
+--                resource
+--    screenlun:  The identifier for the output screen 
+--                If -1, the outputs will be written in the TP
+--    verbose:    if 1, a lot of stuff will be written at screen
+---------------------------------------------------------------
+ROUTINE print_connection_info(netlun, screenlun, verbose: INTEGER; log_tag: STRING)
+VAR 
+  ls_session, ls_accept, ls_connect : STRING[40]
+  li_remote, li_local, li_options, li_linger : INTEGER
+BEGIN
+  DV_CNTRL(KI_DV_TCP_GET, (netlun), ls_session, ls_accept, ls_connect, li_remote, li_local, li_options, li_linger)
+  IF $DV_STS = 0 THEN
+    IF verbose = 1 THEN
+      -- WRITE screenlun (log_tag,'Session:', ls_session, ' Accept:', ls_accept, NL )
+      -- WRITE screenlun (log_tag,'Connect:', ls_connect, ' Remote Port:', li_remote, ' Local:', li_local, NL )
+      WRITE screenlun (log_tag, 'Session:', ls_session, ' Local Port:', li_local, NL )
+    ENDIF
+  ENDIF
+END print_connection_info
+
+
+----------------------------------------------------------------------------
+--- Routine: tcp_server_accept                                               
+--- Brief: Creates a tcp_server that accepts connections on the given port 
+----------------------------------------------------------------------------
+-- Parameters:
+--    netlun:     The " socket file" corresponding to the network resource
+--    port:       Port of the remote server
+--    screenlun:  The identifier for the output screen 
+--                If -1, the outputs will be written in the TP
+--    verbose:    if 1, a lot of stuff will be written at screen
+--------------------------------------------------------------------------
+ROUTINE tcp_server_accept(netlun, port, screenlun, verbose: INTEGER; log_tag: STRING; si_prog_id: INTEGER) : INTEGER
+VAR vi_sts : INTEGER
+BEGIN
+  IF netlun <> 0 THEN
+    -- tcp_server_disconnect(netlun, screenlun, verbose, log_tag, si_prog_id)
+    CLOSE FILE netlun
+  ENDIF
+
+  REPEAT
+    netlun := 0
+    DELAY 100
+    OPEN FILE netlun ('NETT:', 'rw'),   -- open the LUN on NETT for TCP (NETU: for UDP)
+      WITH $FL_BINARY  = TRUE,
+      --WITH $FL_ADLMT   = as_eos,   -- string terminator 
+      --WITH $FL_SWAP    = ab_swap,
+      --WITH $FL_RDFLUSH = ab_flush ,
+    ENDOPEN
+
+    IF netlun <> 0 THEN   -- check if the LUN is open
+      ERR_TRAP_ON(40040)
+      DV_CNTRL(KI_DV_TCP_CONFIG, (netlun), 0, 0x06, 0, 0)     -- setting TCP\IP parameters: KEEP_ALIVE ON, LINGER OFF
+      DV_CNTRL(KI_DV_TCP_CONFIG, (netlun), 0, 0x40, 0, 0)     -- setting TCP\IP NOT_REUSEADDR parameter
+      DV_CNTRL(KI_DV_TCP_ACCEPT, (netlun), (port), '0.0.0.0') -- open communication (0.0.0.0 means any subnet mask of clients is accepted)
+      ERR_TRAP_OFF(40040)
+      vi_sts := $DV_STS
+      IF $DV_STS <> 0 THEN   -- check connection
+        IF $DV_STS = 15470 THEN   -- check if the address is already used
+          WRITE screenlun (log_tag, 'Address already in use, waiting for timeout connection...', NL)
+          SELECT si_prog_id OF
+            CASE(KI_ID_STATE):
+              _si_error_state := _si_error_state OR KI_ERR_STATE_ACCEPT
+            CASE(KI_ID_ROBOT):
+              _si_error_state := _si_error_state OR KI_ERR_ROBOT_ACCEPT
+            CASE(KI_ID_HANDLER):
+              _si_error_state := _si_error_state OR KI_ERR_HANDLER_ACCEPT
+          ENDSELECT
+          DELAY 2000
+        ENDIF
+        tcp_server_disconnect(netlun, screenlun, verbose, log_tag, si_prog_id)
+        -- CLOSE FILE netlun   -- in case of error close the LUN and retry again
+        -- netlun := 0
+      ENDIF
+    ENDIF
+  UNTIL  vi_sts = 0   -- connection ok
+
+  IF verbose = 1 THEN 
+    WRITE screenlun (log_tag, 'Connection established...', NL)
+    print_connection_info(netlun, screenlun, verbose, log_tag)
+  ENDIF
+
+  SELECT si_prog_id OF
+    CASE(KI_ID_STATE):
+      _vb_tcp_conn_state := TRUE
+      _si_error_state := _si_error_state AND (NOT(KI_RESET_STATE_ERR))
+    CASE(KI_ID_ROBOT):
+      _vb_tcp_conn_robot := TRUE
+      _si_error_state := _si_error_state AND (NOT(KI_RESET_ROBOT_ERR))
+    CASE(KI_ID_HANDLER):
+      _vb_tcp_conn_handler := TRUE
+      _si_error_state := _si_error_state AND (NOT(KI_RESET_HANDLER_ERR))
+  ENDSELECT
+
+  RETURN(netlun)
+END tcp_server_accept  
+
+-----------------------------------------------------------------
+--- Routine: tcp_server                                         
+--- Brief: Disconnects the server at the given socket            
+-----------------------------------------------------------------
+-- Parameters:
+--    netlun:     The " socket file" corresponding to the network
+--                resource
+--    screenlun:  The identifier for the output screen 
+--                If -1, the outputs will be written in the TP
+--    verbose:    if 1, a lot of stuff will be written at screen
+---------------------------------------------------------------
+ROUTINE tcp_server_disconnect(netlun, screenlun, verbose: INTEGER; log_tag: STRING; si_prog_id: INTEGER)
+BEGIN
+
+  IF netlun <> 0 THEN
+    ERR_TRAP_ON(40040)
+    DV_CNTRL(KI_DV_TCP_DISCONNECT, (netlun))
+    ERR_TRAP_OFF(40040)
+    
+    IF $DV_STS <> 0 THEN
+      WRITE screenlun (log_tag, 'DISCONNECT ERROR: ', $DV_STS, NL)
+      SELECT si_prog_id OF
+        CASE (KI_ID_STATE):
+          _si_error_state := _si_error_state OR KI_ERR_STATE_DISCONNECT
+        CASE (KI_ID_ROBOT):
+          _si_error_state := _si_error_state OR KI_ERR_ROBOT_DISCONNECT
+        CASE (KI_ID_HANDLER):
+          _si_error_state := _si_error_state OR KI_ERR_HANDLER_DISCONNECT
+      ENDSELECT
+      DELAY 1000
+    ELSE
+      --WRITE screenlun (log_tag, 'DISCONNECT SUCCEEDED: ', $DV_STS, NL)
+    ENDIF
+    
+    CLOSE FILE netlun   -- free the file descriptor
+    netlun := 0
+  ENDIF
+END tcp_server_disconnect
+
+
+ROUTINE init_global_variables
+BEGIN
+
+  -- Global variables initialization
+  _ss_state         := 'R'
+  _sb_shutdown      := FALSE
+
+  _sb_enable_robot  := FALSE 
+  _sb_reset_motion  := FALSE 
+  _sb_cancel_motion := FALSE 
+  _sb_lock_robot    := FALSE
+  _sb_unlock_robot  := FALSE
+  _si_verbose       := 1
+  _vs_screen_lun    := LUN_CRT
+  _sb_robot_init    := FALSE
+  _vb_first_sns_trk := TRUE
+
+  -- Sensor tracking configuration variables
+  _si_sensor_type           := 0
+  _si_sensor_cnvrsn         := 1
+  _si_sensor_gain           := 100
+  _si_sensor_time           := 0
+  _si_sensor_ofst_lim_trans := 500
+  _si_sensor_ofst_lim_rot   := 800
+
+  -- Digital IO
+  _ai_din_pins[1]  := -1
+  _ai_din_pins[2]  := -1
+  _ai_din_pins[3]  := -1
+  _ai_din_pins[4]  := -1
+  _ai_din_pins[5]  := -1
+  _ai_din_pins[6]  := -1
+  _ai_dout_pins[1] := -1
+  _ai_dout_pins[2] := -1
+  _ai_dout_pins[3] := -1
+  _ai_dout_pins[4] := -1
+  _ai_dout_pins[5] := -1
+  _ai_dout_pins[6] := -1
+
+  _si_error_state      := KI_ERR_NULL
+  _vb_tcp_conn_handler := TRUE
+  _vb_tcp_conn_robot   := TRUE
+  _vb_tcp_conn_state   := TRUE
+
+  _si_publish_freq     := 50 -- State server publishing rate [Hz]
+  IF _si_publish_freq = 0 THEN
+    _si_publish_freq := 50 -- default value
+  ENDIF
+  _si_delay_change_sts := ROUND(1 / _si_publish_freq * 1000) * 2 -- [ms]
+
+END init_global_variables
+
+BEGIN
+
+  init_global_variables
+
+  SYS_CALL('ML','UD:\\USR\\comau_ros2_server\\state_server.cod') 
+  DELAY 200
+  SYS_CALL('ML','UD:\\USR\\comau_ros2_server\\robot_server.cod') 
+  DELAY 200
+  SYS_CALL('ML','UD:\\USR\\comau_ros2_server\\motion_server.cod') 
+  DELAY 200
+  SYS_CALL('ML','UD:\\USR\\comau_ros2_server\\arm1_handler.cod') 
+  DELAY 500
+  ACTIVATE state_server
+  ACTIVATE robot_server
+  ACTIVATE motion_server
+  ACTIVATE arm1_handler
+
+END pdl_tcp_functions

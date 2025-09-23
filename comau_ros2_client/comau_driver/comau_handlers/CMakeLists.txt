@@ -1,3 +1,5 @@
+# Copyright 2024 Comau Robotics S.p.A.
+
 cmake_minimum_required(VERSION 3.8)
 project(comau_handlers)
 
@@ -45,6 +47,7 @@ find_package(tf2_geometry_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(comau_msgs REQUIRED)
+find_package(realtime_tools REQUIRED)
 
 include_directories(
  include
@@ -54,6 +57,7 @@ include_directories(
 set(THIS_PACKAGE_INCLUDE_DEPENDS
 rclcpp
 rclcpp_action
+kdl_parser
 comau_driver
 ros2_control
 tf2
@@ -66,6 +70,7 @@ geometry2
 hardware_interface
 urdf
 rclcpp_components
+realtime_tools
 )
 
 # find dependencies
@@ -83,8 +88,6 @@ add_library(comau_handlers
 ament_export_targets(comau_handlers HAS_LIBRARY_TARGET)
 
 target_link_libraries(comau_handlers
-                      rclcpp
-                      std_msgs
                       ${catkin_LIBRARIES}
 )
 

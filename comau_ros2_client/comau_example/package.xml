@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>comau_example</name>
+  <version>0.1.0</version>
+  <description>The comau_example package</description>
+
+  <author>Comau Robotics S.p.A</author>
+  <maintainer email="andrea.perica@comau.com">Comau Robotics S.p.A.</maintainer>
+  <maintainer email="giulia.nicastro@external.comau.com">Comau Robotics S.p.A.</maintainer>
+
+  <license>BSD-2-Clause</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+  
+  <build_depend>boost</build_depend>
+  
+  <depend>hardware_interface</depend>
+  <depend>rclcpp</depend>
+  <depend>rclcpp_action</depend>
+  <depend>ros2_control</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
+  <depend>tf2_geometry_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>geometry2</depend>
+  <depend>comau_msgs</depend>
+  <depend>comau_driver</depend>
+  <depend>comau_handlers</depend>
+  <depend>urdf</depend>
+  <depend>rclcpp_components</depend>
+  <depend>Boost</depend>
+
+  <doc_depend>doxygen</doc_depend>
+  
+  
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

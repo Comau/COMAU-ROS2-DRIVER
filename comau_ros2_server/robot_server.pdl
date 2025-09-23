@@ -1,0 +1,402 @@
+PROGRAM robot_server NOHOLD, &PA, STACK = 10001, PRIORITY=4
+  ---------------------------------------------------------------
+  --- Author: Comau Robotics S.p.A.                                    
+  --- Brief: Robot Arm handler server for handling motion commands for robot 1 
+  --- over TCP/IP communication  
+  --
+  --  BSD 2-Clause License
+  ---------------------------------------------------------------
+CONST
+  KI_LOCAL_PORT   = 1105                -- TCP server "listening" port (local to the server)
+  KS_MAIN_LOG     = '[ROBOT_SERVER] '   -- Name for main loop used in LUN_CRT 
+  KI_ARM_NUM      =  1                  -- PROG_ARM constant
+  KI_COND_RESTART = 73
+  KI_COND_MOTIONSTART = 74
+  KI_COND_RESET       = 75
+  KI_MAX_NUM_IO   =  6
+  KI_NUM_CMP      =  6
+  -- Error values
+  KI_ERR_NULL               = 0x00000 -- Null error
+  KI_ERR_STATE_ACCEPT       = 0x00001 -- State  Server  error 15470 : Address already in use
+  KI_ERR_ROBOT_ACCEPT       = 0x00002 -- Robot  Server  error 15470 : Address already in use
+  KI_ERR_HANDLER_ACCEPT     = 0x00004 -- Motion Handler error 15470 : Address already in use
+  KI_ERR_STATE_WRITE        = 0x00008 -- State  Server  error 40033 : Error 15474 in write
+  KI_ERR_ROBOT_READ_NCON    = 0x00010 -- Robot  Server  error 39990 : Error 15467 in read
+  KI_ERR_HANDLER_READ_NCON  = 0x00020 -- Motion Handler error 39990 : Error 15467 in read
+  KI_ERR_ROBOT_READ_DCON    = 0x00040 -- Robot  Server  error 39990 : Error 15468 in read
+  KI_ERR_HANDLER_READ_DCON  = 0x00080 -- Motion Handler error 39990 : Error 15468 in read
+  KI_ERR_ROBOT_READ_CANC    = 0x00100 -- Robot  Server  error 39991 
+  KI_ERR_HANDLER_READ_CANC  = 0x00200 -- Motion Handler error 39991 
+  KI_ERR_ROBOT_READ_TOUT    = 0x00400 -- Robot  Server  error 39992 
+  KI_ERR_HANDLER_READ_TOUT  = 0x00800 -- Motion Handler error 39992 
+  KI_ERR_STATE_DISCONNECT   = 0x01000 -- State  Server  error 30767 
+  KI_ERR_ROBOT_DISCONNECT   = 0x02000 -- Robot  Server  error 30767 
+  KI_ERR_HANDLER_DISCONNECT = 0x04000 -- Motion Handler error 30767
+  KI_ERR_STATE_SAFETY_GATE  = 0x08000 -- Safety Gate / External Emergency Stop 
+  KI_ERR_STATE_WRONG_MOTION = 0x10000 -- Program Execution Errors (36864-37191)
+  KI_ERR_ROBOT_ALARM        = 0x20000 -- Sys state in alarm at restarting
+  KI_ERR_MOTION_DRIVEOFF    = 0x40000 -- Ask motion in drive off
+
+  -- Progs ID 
+  KI_ID_STATE   = 1
+  KI_ID_ROBOT   = 2
+  KI_ID_HANDLER = 3
+
+TYPE
+  ---------------------------------------------------------------
+  --- Record: ROBOT_STATE_COMMAND
+  --- Brief: Structure for describing the robot state message. 
+  ---------------------------------------------------------------
+  ROBOT_STATE_COMMAND = RECORD
+    id : INTEGER                        -- Unique identifier of the message
+    robot_state_command : STRING[1]     -- Specifier for the type robot command
+    verbose : INTEGER
+  ENDRECORD
+
+VAR
+  -- Shared variables
+  _ss_state            : STRING[1] EXPORTED FROM pdl_tcp_functions NOSAVE   -- Shared variable for showing the status (TERMINATE:T, READY:R, MOVING:M, CANCELING:C, SUCCEEDED:S, ERROR:E)
+  _sb_shutdown         : BOOLEAN   EXPORTED FROM pdl_tcp_functions NOSAVE   -- Shared variable to sb_shutdown pdl program
+  _sb_enable_robot     : BOOLEAN   EXPORTED FROM pdl_tcp_functions NOSAVE   -- Shared variable to show that the robot is allowed to move
+  _sb_reset_motion     : BOOLEAN   EXPORTED FROM pdl_tcp_functions NOSAVE   -- Shared flag to cancel the motion and then reset
+  _sb_cancel_motion    : BOOLEAN   EXPORTED FROM pdl_tcp_functions NOSAVE   -- Shared flag to cancel the motion and then reset
+  _sb_lock_robot       : BOOLEAN   EXPORTED FROM pdl_tcp_functions NOSAVE   -- Shared flag to lock the arm
+  _sb_unlock_robot     : BOOLEAN   EXPORTED FROM pdl_tcp_functions NOSAVE   -- Shared flag to unlock the arm
+  _si_verbose          : INTEGER   EXPORTED FROM pdl_tcp_functions NOSAVE   -- Level of logging
+  _vs_screen_lun       : INTEGER   EXPORTED FROM pdl_tcp_functions NOSAVE   -- Output screen identifier
+  _sb_robot_init       : BOOLEAN   EXPORTED FROM pdl_tcp_functions NOSAVE   -- Shared variable indicating the robot is initialized
+  _vb_first_sns_trk    : BOOLEAN   EXPORTED FROM pdl_tcp_functions NOSAVE
+  _si_error_state      : INTEGER   EXPORTED FROM pdl_tcp_functions NOSAVE  -- Error state variable
+  _vb_tcp_conn_state   : BOOLEAN   EXPORTED FROM pdl_tcp_functions NOSAVE
+  _vb_tcp_conn_handler : BOOLEAN   EXPORTED FROM pdl_tcp_functions NOSAVE
+  _vb_tcp_conn_robot   : BOOLEAN   EXPORTED FROM pdl_tcp_functions NOSAVE
+  _si_delay_change_sts : INTEGER   EXPORTED FROM pdl_tcp_functions NOSAVE
+
+  -- Shared variables for sensor tracking configuration
+  _si_sensor_type           : INTEGER EXPORTED FROM pdl_tcp_functions NOSAVE -- The mode of Sensor Tracking     
+  _si_sensor_cnvrsn         : INTEGER EXPORTED FROM pdl_tcp_functions NOSAVE -- Convert the values to millimeters : default 1
+  _si_sensor_gain           : INTEGER EXPORTED FROM pdl_tcp_functions NOSAVE -- Percentage value that define the speed to be used for the corrections : default 100
+  _si_sensor_time           : INTEGER EXPORTED FROM pdl_tcp_functions NOSAVE -- period in which the corrections must be applied default : 0ms
+  _si_sensor_ofst_lim_trans : INTEGER EXPORTED FROM pdl_tcp_functions NOSAVE -- Maximum translational offset default 500
+  _si_sensor_ofst_lim_rot   : INTEGER EXPORTED FROM pdl_tcp_functions NOSAVE -- Maximum rotational offset default 800
+
+  _ai_din_pins  : ARRAY[KI_MAX_NUM_IO] OF INTEGER EXPORTED FROM pdl_tcp_functions NOSAVE -- Shared variable for DIN pin numbers
+  _ai_dout_pins : ARRAY[KI_MAX_NUM_IO] OF INTEGER EXPORTED FROM pdl_tcp_functions NOSAVE -- Shared variable for DOUT pin numbers
+
+  -- Global variables 
+  vs_server_host   : STRING[100] ('0.0.0.0')NOSAVE     -- Server IP address
+  vi_server_netlun : INTEGER             (0)NOSAVE     -- TCP socket identifier
+  vb_comm_success  : BOOLEAN          (TRUE)NOSAVE     -- Communication status flag
+  vi_pin           : INTEGER             (0)NOSAVE     -- DOUT pin number to change state
+  vi_pin_state     : INTEGER             (0)NOSAVE     -- DOUT pin state to change to
+  vi_ti            : INTEGER             (0)NOSAVE
+
+-- Declaration of shared functions 
+ROUTINE tcp_server_accept(netlun, port, screenlun, verbose: INTEGER; log_tag: STRING; si_prog_id: INTEGER) : INTEGER EXPORTED FROM pdl_tcp_functions
+ROUTINE tcp_server_disconnect(netlun, screenlun, verbose: INTEGER; log_tag: STRING; si_prog_id: INTEGER) EXPORTED FROM pdl_tcp_functions
+ROUTINE throw_error(error_msg, vs_main_log : STRING) EXPORTED FROM pdl_tcp_functions 
+ROUTINE close_state_tcp EXPORTED FROM state_server
+ROUTINE close_arm1_tcp EXPORTED FROM motion_server
+
+  --------------------------------------------------------------------
+  --- Routine: close_robot_tcp
+  --- Brief: Dsiconnects the tcp socket
+  --------------------------------------------------------------------
+ROUTINE close_robot_tcp
+BEGIN
+   tcp_server_disconnect((vi_server_netlun), _vs_screen_lun, _si_verbose, KS_MAIN_LOG, KI_ID_ROBOT)
+END close_robot_tcp
+
+
+  --------------------------------------------------------------------
+  --- Routine: ru_check_error
+  --- Brief: If error return TRUE
+  --- Return:
+  ---   0 : no error
+  ---   1 : disconnection error
+  ---   2 : wrong read
+  --------------------------------------------------------------------
+ROUTINE ru_check_error : INTEGER
+BEGIN
+
+  IF $ERROR <> 0 THEN
+    IF $ERROR = 39990 THEN   -- Error is trapped so the connection is not active
+      WRITE _vs_screen_lun (KS_MAIN_LOG, ' READ_ERR ', '$ERROR ', $ERROR,' $FL_STS ', $FL_STS, NL)   -- debug print for READ_ERR
+      IF $FL_STS = 15467 THEN   
+        _si_error_state := _si_error_state OR KI_ERR_ROBOT_READ_NCON
+      ELSE
+        IF $FL_STS = 15468 THEN
+          _si_error_state := _si_error_state OR KI_ERR_ROBOT_READ_DCON
+        ELSE
+          IF $FL_STS = 0 THEN
+            RETURN(2) -- wrong read, try again
+          ENDIF
+        ENDIF
+      ENDIF 
+    ELSE
+      IF $ERROR = 39991 THEN   -- Error is trapped so A READ operation has been canceled
+        WRITE _vs_screen_lun (KS_MAIN_LOG, ' READ_CANC ', '$ERROR ', $ERROR,' $FL_STS ', $FL_STS, NL)   -- debug print for READ_CANC
+        _si_error_state := _si_error_state OR KI_ERR_ROBOT_READ_CANC
+      ELSE
+        IF $ERROR = 39992 THEN   -- timout triggered
+          WRITE _vs_screen_lun (KS_MAIN_LOG, ' READ_TOUT ', '$ERROR ', $ERROR,' $FL_STS ', $FL_STS, NL)   -- READ_TOUT
+          _si_error_state := _si_error_state OR KI_ERR_ROBOT_READ_TOUT
+        ENDIF
+      ENDIF
+    ENDIF
+    RETURN(1) -- Disconnection error
+  ENDIF
+
+  RETURN(0) -- No error
+  
+END ru_check_error
+
+
+  ------------------------------------------------------------------
+  --- Routine: receive_robot_command_message
+  --- Brief: Receiving the robot command state 
+  ------------------------------------------------------------------
+ROUTINE receive_robot_command_message : BOOLEAN
+VAR
+  t_msg : ROBOT_STATE_COMMAND
+  local_state : STRING[1]
+BEGIN
+  
+  $ERROR  := 0
+  ERR_TRAP_ON(39990, 39991, 39992)
+  READ vi_server_netlun (t_msg.id::4, t_msg.robot_state_command::1)
+  ERR_TRAP_OFF(39990, 39991, 39992)  
+  IF (ru_check_error = 1) THEN -- Return and try restarting in error case
+    RETURN(FALSE)
+  ELSE
+    IF (ru_check_error = 2) THEN
+      RETURN(TRUE) -- Keep trying
+    ENDIF
+  ENDIF
+
+  IF _si_verbose = 1 THEN
+    WRITE _vs_screen_lun (KS_MAIN_LOG, 'The robot state command is : ', t_msg.robot_state_command, NL)
+  ENDIF
+  SELECT t_msg.robot_state_command OF
+    CASE('I'):
+      _ss_state        := 'C'
+      _sb_enable_robot := FALSE
+      _sb_reset_motion := TRUE
+      _sb_cancel_motion := TRUE
+      ERR_TRAP_ON(39990, 39991, 39992)
+      -- Read verbose flag and sensor tracking configuration
+      READ vi_server_netlun (t_msg.verbose::4, _si_sensor_type::4, _si_sensor_cnvrsn::4, _si_sensor_gain::4, _si_sensor_time::4, _si_sensor_ofst_lim_trans::4, _si_sensor_ofst_lim_rot::4) 
+      _si_verbose := t_msg.verbose
+      FOR vi_ti := 1 TO KI_MAX_NUM_IO DO
+        READ vi_server_netlun (_ai_din_pins[vi_ti]::4)
+      ENDFOR
+      FOR vi_ti := 1 TO KI_MAX_NUM_IO DO
+        READ vi_server_netlun (_ai_dout_pins[vi_ti]::4)
+      ENDFOR
+      ERR_TRAP_OFF(39990, 39991, 39992)  
+      IF (ru_check_error = 1) THEN -- Return and try restarting in error case
+        RETURN(FALSE)
+      ENDIF
+
+      IF _si_verbose = 1 THEN
+        WRITE _vs_screen_lun (KS_MAIN_LOG, 'Robot state Initialize', NL)
+      ENDIF
+      DELAY _si_delay_change_sts
+      _ss_state         := 'R'
+      _vb_first_sns_trk := TRUE
+    CASE('S'):
+      --_sb_enable_robot := TRUE
+      IF (BIT_TEST($SYS_STATE, 27, ON)) THEN -- ALARM state
+        _si_error_state := _si_error_state OR KI_ERR_ROBOT_ALARM
+        throw_error('Sys State in alarm', KS_MAIN_LOG)
+        ENABLE CONDITION[KI_COND_RESET]
+      ELSE
+        _ss_state := 'R'
+      ENDIF
+
+      IF _si_verbose = 1 THEN
+        WRITE _vs_screen_lun (KS_MAIN_LOG, 'Robot state Start', NL)
+      ENDIF
+      _sb_robot_init := TRUE
+      DELAY _si_delay_change_sts
+    CASE('T'):  -- Terminate all server case
+      IF _si_verbose = 1 THEN
+        WRITE _vs_screen_lun (KS_MAIN_LOG, 'Terminating PDL Programs', NL)
+      ENDIF
+      -- TODO : with close tcp programs go into error state, but do not de-activate, also port makes sometime to re-open
+      --close_state_tcp
+      --close_arm1_tcp
+      --close_robot_tcp
+      -- TODO : with Deactivate program closes without error, but port makes sometime to re-open
+      DEACTIVATE arm1_handler
+      DEACTIVATE motion_server
+      DEACTIVATE state_server
+      DEACTIVATE robot_server
+    CASE('D'):  -- Disconnect : Disconnect all states -> reset
+      IF _si_verbose = 1 THEN 
+        WRITE _vs_screen_lun (KS_MAIN_LOG, 'Disconnect', NL)
+      ENDIF
+      _vb_tcp_conn_robot   := FALSE -- Try to reconnect
+      _vb_tcp_conn_state   := FALSE -- Try to reconnect
+      _vb_tcp_conn_handler := FALSE -- Try to reconnect
+    CASE('R'):  -- Reset : Cancel all motions -> reset
+      IF _si_verbose = 1 THEN 
+        WRITE _vs_screen_lun (KS_MAIN_LOG, 'Ask for resetting motion commands', NL)
+      ENDIF
+      _ss_state         := 'I'
+      _sb_enable_robot  := FALSE
+      _sb_reset_motion  := TRUE
+      DELAY _si_delay_change_sts
+      IF ($CRNT_DATA[KI_ARM_NUM].MOVE_STATE > 0) THEN
+        ENABLE CONDITION[KI_COND_MOTIONSTART]
+        _ss_state := 'P'
+      ELSE
+        _ss_state := 'R' 
+      ENDIF
+      _vb_first_sns_trk := TRUE
+    CASE('X'):
+      IF _si_verbose = 1 THEN 
+        WRITE _vs_screen_lun (KS_MAIN_LOG, 'Ask for cancel motion commands', NL)
+      ENDIF
+      local_state := _ss_state
+      _ss_state         := 'T'
+      _sb_enable_robot  := FALSE
+      _sb_cancel_motion := TRUE
+      DELAY _si_delay_change_sts
+      IF (_si_error_state = 0) THEN
+        _ss_state := 'R'
+      ELSE
+        _ss_state := local_state
+      ENDIF
+      _vb_first_sns_trk := TRUE
+    CASE('C'):  -- Sensor Tracking Configuration
+      ERR_TRAP_ON(39990, 39991, 39992)
+      READ vi_server_netlun (_si_sensor_type::4, _si_sensor_cnvrsn::4, _si_sensor_gain::4, _si_sensor_time::4, _si_sensor_ofst_lim_trans::4, _si_sensor_ofst_lim_rot::4) 
+      ERR_TRAP_OFF(39990, 39991, 39992)  
+      IF (ru_check_error = 1) THEN -- Return and try restarting in error case
+        RETURN(FALSE)
+      ENDIF
+      _vb_first_sns_trk := TRUE -- Set updated sensor tracking params
+    CASE('O'):  -- IO set
+      ERR_TRAP_ON(39990, 39991, 39992)
+      READ vi_server_netlun (vi_pin::4) 
+      READ vi_server_netlun (vi_pin_state::4) 
+      ERR_TRAP_OFF(39990, 39991, 39992)  
+      IF (ru_check_error = 1) THEN -- Return and try restarting in error case
+        RETURN(FALSE)
+      ENDIF
+      -- Set pins
+      IF vi_pin_state = 1 THEN
+        $DOUT[vi_pin] := TRUE
+      ENDIF
+      IF vi_pin_state = 0 THEN
+        $DOUT[vi_pin] := FALSE
+      ENDIF
+    CASE('L'):  -- Lock robot
+      _sb_lock_robot := TRUE
+    CASE('U'):  -- Unlock robot
+      _sb_unlock_robot := TRUE
+    ELSE:
+      throw_error('Wrong robot command type', KS_MAIN_LOG)
+      RETURN(TRUE)
+  ENDSELECT
+  
+  RETURN(TRUE)
+
+END receive_robot_command_message
+
+-- +---------------------------------------------------------+
+-- | Name: ru_restart_motion                                 |
+-- | Description: Restart pending motion                     |
+-- +---------------------------------------------------------+
+ROUTINE ru_restart_motion
+BEGIN
+  IF _si_verbose = 1 THEN 
+    WRITE _vs_screen_lun (KS_MAIN_LOG, 'Restarting Robot pending motion ... ', NL)
+  ENDIF
+  _ss_state := 'M'
+END ru_restart_motion
+ 
+-- +---------------------------------------------------------+
+-- | Name: ru_restart_server                                 |
+-- | Description: Reconnection Server                        |
+-- +---------------------------------------------------------+
+ROUTINE ru_restart_server
+BEGIN
+  IF _si_verbose = 1 THEN 
+    WRITE _vs_screen_lun (KS_MAIN_LOG, 'Restarting Robot Server ... ', NL)
+  ENDIF
+  DELAY 200
+  tcp_server_disconnect(vi_server_netlun, _vs_screen_lun, _si_verbose, KS_MAIN_LOG, KI_ID_ROBOT)   -- close LUN
+  DELAY 200
+  vi_server_netlun := tcp_server_accept(vi_server_netlun, KI_LOCAL_PORT, _vs_screen_lun, _si_verbose, KS_MAIN_LOG, KI_ID_ROBOT)
+  ENABLE CONDITION[KI_COND_RESTART]   -- enable the condition
+END ru_restart_server
+
+ROUTINE ru_reset_alarm
+BEGIN
+  _si_error_state := _si_error_state AND (NOT(KI_ERR_ROBOT_ALARM))
+END ru_reset_alarm
+
+-- +---------------------------------------------------------+
+-- | Name: ru_restart_server                                 |
+-- | Description: Init CONDITION                             |
+-- +---------------------------------------------------------+
+ROUTINE ru_init_condition
+BEGIN
+  -- condition for restarting
+  CONDITION[KI_COND_RESTART] :
+    WHEN _vb_tcp_conn_robot = FALSE DO
+      ru_restart_server
+  ENDCONDITION
+
+  -- condition for restarting motion
+  CONDITION[KI_COND_MOTIONSTART] :
+    WHEN BIT_TEST($SYS_STATE, 26, TRUE) DO
+      ru_restart_motion
+  ENDCONDITION
+
+  CONDITION[KI_COND_RESET] :
+    WHEN $GO[4]+ DO
+      ru_reset_alarm
+  ENDCONDITION
+END ru_init_condition
+
+  ------------------
+  ---- MAIN LOOP 
+  ------------------
+BEGIN
+  vb_comm_success  := TRUE       -- init communication status flag
+  vs_server_host   := $NET_L[1]  -- get IP from controller settings
+  vi_server_netlun := 0
+  
+  -- Copyright printout should be included in all PDL programs
+  --WRITE _vs_screen_lun (NL, 'Copyright (c) 2020, Laboratory for Manufacturing Systems & Automation (LMS) - University of Patras', NL)
+  WRITE _vs_screen_lun (NL, '------', NL, 'Robot Motion Server starting... ', NL)
+
+  -- Initialize conditions
+  ru_init_condition
+  ENABLE CONDITION[KI_COND_RESTART]   -- enable the condition
+  $DV_TOUT := 0
+
+  WRITE _vs_screen_lun (KS_MAIN_LOG, 'Server Address : ', vs_server_host, NL)
+  WRITE _vs_screen_lun (KS_MAIN_LOG, 'Server Port    :', KI_LOCAL_PORT, NL)
+  WRITE _vs_screen_lun (KS_MAIN_LOG, 'Waiting for connections...', NL)
+  vi_server_netlun := tcp_server_accept(vi_server_netlun, KI_LOCAL_PORT, _vs_screen_lun, _si_verbose, KS_MAIN_LOG, KI_ID_STATE)
+  WRITE _vs_screen_lun (KS_MAIN_LOG, 'Starting cycle...', NL)
+
+  REPEAT
+
+    vb_comm_success := receive_robot_command_message
+    IF vb_comm_success = FALSE THEN
+      throw_error('Receive robot command failed', KS_MAIN_LOG)
+      _vb_tcp_conn_robot := FALSE -- Try to reconnect
+      DELAY 100
+    ENDIF
+
+  UNTIL _sb_shutdown   -- Main loop
+
+  WRITE _vs_screen_lun (KS_MAIN_LOG, 'Connection closed.', NL)
+  CLOSE FILE vi_server_netlun
+  
+END robot_server

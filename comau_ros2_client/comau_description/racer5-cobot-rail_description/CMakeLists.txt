@@ -1,3 +1,5 @@
+# Copyright 2024 Comau Robotics S.p.A.
+
 cmake_minimum_required(VERSION 3.8)
 project(racer5-cobot-rail_description)
 
@@ -19,7 +21,8 @@ install(
     launch 
     meshes 
     robots 
-    urdf 
+    urdf
+    ros2_control
   DESTINATION share/${PROJECT_NAME})
 
 ament_export_dependencies(${THIS_PACKAGE_INCLUDE_DEPENDS})

@@ -1,3 +1,5 @@
+# Copyright 2024 Comau Robotics S.p.A.
+
 cmake_minimum_required(VERSION 3.8)
 project(comau_viz)
 

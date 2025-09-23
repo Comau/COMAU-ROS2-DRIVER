@@ -1,3 +1,5 @@
+# Copyright 2024 Comau Robotics S.p.A.
+
 cmake_minimum_required(VERSION 3.8)
 project(nj4-170-29_description)
 
@@ -17,9 +19,10 @@ find_package(xacro REQUIRED)
 install(
   DIRECTORY 
     launch 
-    meshes 
-    robots 
+    meshes
+    robots
     urdf 
+    ros2_control
   DESTINATION share/${PROJECT_NAME})
 
 ament_export_dependencies(${THIS_PACKAGE_INCLUDE_DEPENDS})

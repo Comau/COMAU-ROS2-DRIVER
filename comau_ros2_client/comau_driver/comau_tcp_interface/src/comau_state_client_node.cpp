@@ -1,11 +1,11 @@
 /**
  * @file comau_state_client_node.cpp
- * @author Laboratory for Manufacturing Systems & Automation (LMS) - University of Patras
- * @brief The rclcpp node that publishes the robot information
- * @version 0.1
- * @date 25-02-2020
+ * @author Comau Robotics S.p.A.
+ * @brief The ROS2 node that composes TCP message
+ * @version 1.0
+ * @date 02/07/2024
  *
- * @copyright (c) 2020 Laboratory for Manufacturing Systems & Automation (LMS) - University of Patras
+ * @copyright (c) Comau Robotics S.p.A.
  *
  */
 
@@ -67,12 +67,12 @@ int main(int argc, char **argv) {
             rclcpp::sleep_for(rclcpp::Duration::from_seconds(2).to_chrono<std::chrono::nanoseconds>());
             //if (state_client->getLastMessage(*msg)) 
             {
-             // RCLCPP_INFO_STREAM(rclcpp::get_logger("comau_state_client_node"),"Still Connected." << msg->toString());
+            RCLCPP_INFO_STREAM(rclcpp::get_logger("comau_state_client_node"),"Still Connected.");
             } 
            // else 
-            {
+            /*{
               RCLCPP_ERROR_STREAM(rclcpp::get_logger("comau_state_client_node")," Could not get Last Message Package");
-            }
+            }*/
           }
           //RCLCPP_INFO_STREAM(msg.toString());
         }

@@ -1,11 +1,11 @@
 /**
  * @file comau_driver.cpp
- * @author Laboratory for Manufacturing Systems & Automation (LMS) - University of Patras
- * @brief The ROS node that publishes the robot information
- * @version 0.1
- * @date 25-02-2020
+ * @author Comau Robotics S.p.A.
+ * @brief The ROS2 node that publishes the robot information
+ * @version 1.0
+ * @date 02/07/2024
  *
- * @copyright (c) 2020 Laboratory for Manufacturing Systems & Automation (LMS) - University of Patras
+ * @copyright (c) Comau Robotics S.p.A.
  *
  */
 
@@ -23,45 +23,47 @@ namespace comau_driver {
   ComauRobot::ComauRobot(rclcpp::Node::SharedPtr &nh) : name_("comau_driver"), nh_(nh) 
   {
     // Load rosparams
-    auto nh_priv_ = std::make_shared<rclcpp::Node>(nh->get_name(), name_);
+    //auto nh_priv_ = std::make_shared<rclcpp::Node>(nh->get_name(), name_);
 
     // Read parameters through ros parameter server
     //std::size_t error = 0;
-    state_params_.server_ip_address = nh_priv_->declare_parameter<std::string>("robot_ip", "192.168.56.2");
-    state_params_.server_ip_address = nh_priv_->get_parameter("robot_ip").as_string();
-    state_params_.server_port = nh_priv_->declare_parameter<std::string>("state_server_port", "1104");
-    state_params_.server_port = nh_priv_->get_parameter("state_server_port").as_string();
-    robot_params_.server_port = nh_priv_->declare_parameter("robot_server_port", "1105");
-    robot_params_.server_port = nh_priv_->get_parameter("robot_server_port").as_string();
-    arm1_params_.server_port = nh_priv_->declare_parameter<std::string>("arm1_server_port", "1101");
-    arm1_params_.server_port = nh_priv_->get_parameter("arm1_server_port").as_string();
-    default_linear_velocity_ = nh_priv_->declare_parameter<double>("default_linear_velocity", 1.0);
-    default_linear_velocity_ = nh_priv_->get_parameter("default_linear_velocity").as_double();
-    threshold_ = nh_priv_->declare_parameter<double>("threshold", 0.2);
-    threshold_ = nh_priv_->get_parameter("threshold").as_double();
-    fly_lin_velocity_ = nh_priv_->declare_parameter<double>("fly_lin_velocity", 0.2);
-    fly_lin_velocity_ = nh_priv_->get_parameter("fly_lin_velocity").as_double();
-    fly_dist_ = nh_priv_->declare_parameter<double>("fly_dist", 5.0);
-    fly_dist_ = nh_priv_->get_parameter("fly_dist").as_double();
-    verbose_ = nh_priv_->declare_parameter<bool>("verbose", true);
-    verbose_ = nh_priv_->get_parameter("verbose").as_bool();
-    sensor_type_ = nh_priv_->declare_parameter<int>("sensor_type", 10);
-    sensor_type_ = nh_priv_->get_parameter("sensor_type").as_int();
-    sensor_cnvrsn_ = nh_priv_->declare_parameter<int>("sensor_cnvrsn", 1);
-    sensor_cnvrsn_ = nh_priv_->get_parameter("sensor_cnvrsn").as_int();
-    sensor_gain_ = nh_priv_->declare_parameter<int>("sensor_gain", 100);
-    sensor_gain_ = nh_priv_->get_parameter("sensor_gain").as_int();
-    sensor_time_ = nh_priv_->declare_parameter<int>("sensor_time", 0);
-    sensor_time_ = nh_priv_->get_parameter("sensor_time").as_int();
-    sensor_ofst_lim_trans_ = nh_priv_->declare_parameter<int>("sensor_ofst_lim_trans", 500);
-    sensor_ofst_lim_trans_ = nh_priv_->get_parameter("sensor_ofst_lim_trans").as_int();
-    sensor_ofst_lim_rot_ = nh_priv_->declare_parameter<int>("sensor_ofst_lim_rot", 800);
-    sensor_ofst_lim_rot_ = nh_priv_->get_parameter("sensor_ofst_lim_rot").as_int();
+    state_params_.server_ip_address = nh_->declare_parameter<std::string>("robot_ip", "192.168.56.2");
+    state_params_.server_ip_address = nh_->get_parameter("robot_ip").as_string();
+    state_params_.server_port = nh_->declare_parameter<std::string>("state_server_port", "1104");
+    state_params_.server_port = nh_->get_parameter("state_server_port").as_string();
+    robot_params_.server_port = nh_->declare_parameter("robot_server_port", "1105");
+    robot_params_.server_port = nh_->get_parameter("robot_server_port").as_string();
+    arm1_params_.server_port = nh_->declare_parameter<std::string>("arm1_server_port", "1101");
+    arm1_params_.server_port = nh_->get_parameter("arm1_server_port").as_string();
+    default_linear_velocity_ = nh_->declare_parameter<double>("default_linear_velocity", 1.0);
+    default_linear_velocity_ = nh_->get_parameter("default_linear_velocity").as_double();
+    threshold_ = nh_->declare_parameter<double>("threshold", 0.2);
+    threshold_ = nh_->get_parameter("threshold").as_double();
+    fly_lin_velocity_ = nh_->declare_parameter<double>("fly_lin_velocity", 0.2);
+    fly_lin_velocity_ = nh_->get_parameter("fly_lin_velocity").as_double();
+    fly_dist_ = nh_->declare_parameter<double>("fly_dist", 5.0);
+    fly_dist_ = nh_->get_parameter("fly_dist").as_double();
+    //verbose_ = nh_->declare_parameter<bool>("verbose", true);
+    verbose_ = nh_->get_parameter("verbose").as_bool();
+    sensor_type_ = nh_->declare_parameter<int>("sensor_type", 10);
+    sensor_type_ = nh_->get_parameter("sensor_type").as_int();
+    sensor_cnvrsn_ = nh_->declare_parameter<int>("sensor_cnvrsn", 1);
+    sensor_cnvrsn_ = nh_->get_parameter("sensor_cnvrsn").as_int();
+    sensor_gain_ = nh_->declare_parameter<int>("sensor_gain", 100);
+    sensor_gain_ = nh_->get_parameter("sensor_gain").as_int();
+    sensor_time_ = nh_->declare_parameter<int>("sensor_time", 0);
+    sensor_time_ = nh_->get_parameter("sensor_time").as_int();
+    sensor_ofst_lim_trans_ = nh_->declare_parameter<int>("sensor_ofst_lim_trans", 500);
+    sensor_ofst_lim_trans_ = nh_->get_parameter("sensor_ofst_lim_trans").as_int();
+    sensor_ofst_lim_rot_ = nh_->declare_parameter<int>("sensor_ofst_lim_rot", 800);
+    sensor_ofst_lim_rot_ = nh_->get_parameter("sensor_ofst_lim_rot").as_int();
 
     din_pins_ = {-1, -1, -1, -1, -1, -1};
     dout_pins_ = {-1, -1, -1, -1, -1, -1};
-    nh_priv_->declare_parameter("din_pins", din_pins_);
-    nh_priv_->declare_parameter("dout_pins", dout_pins_);
+    nh_->declare_parameter("din_pins", rclcpp::PARAMETER_INTEGER_ARRAY);
+    nh_->declare_parameter("dout_pins", rclcpp::PARAMETER_INTEGER_ARRAY);
+    din_pins_  = nh_->get_parameter("din_pins").as_integer_array();
+    dout_pins_ = nh_->get_parameter("dout_pins").as_integer_array();
     if (din_pins_.size() != 6 || dout_pins_.size() != 6) {
       RCLCPP_ERROR(rclcpp::get_logger("comau_driver")," The size of the dout and din parameters must be 6");
       rclcpp::shutdown();
@@ -160,29 +162,30 @@ bool ComauRobot::setMoveflyParams(double &threshold, double &lin_velocity, doubl
 void ComauRobot::getJointPosition(std::vector<double> &joint_position, uint32_t &num_robot_joints, std::vector<int> &jnt_type) { /*ANDY vedere se fare un metodo per scegliere il tipo di giunto*/
   msg->getData("joint_position", joints_float_);
   if (parallel_link_fix_)
-    joints_float_.at(2) += joints_float_.at(1);
-  
+    joints_float_[2] += joints_float_[1];
   //joints_float_ = comau_tcp_interface::utils::toRad(joints_float_);
-  //joint_position.clear();
-  for(size_t si_i = 0; si_i < num_robot_joints; si_i++)
+  for(size_t si_i = 0; si_i < num_robot_joints; /*jnt_type_.size()*/ si_i++)
   {
     switch (jnt_type_.at(si_i))
     {
       case 0:
-        joint_position.at(si_i) = comau_tcp_interface::utils::toRad(joints_float_.at(si_i));
+        joints_float_.at(si_i) =  comau_tcp_interface::utils::toRad(joints_float_.at(si_i));
         //joint_position.push_back(joints_float_.at(si_i));
-        //joint_position.at(si_i) = joints_float_.at(si_i);
+        joint_position.at(si_i) = joints_float_.at(si_i);
         break;
       case 1:
-        joint_position.at(si_i) = comau_tcp_interface::utils::toMeter(joints_float_.at(si_i));
+        joints_float_.at(si_i) = comau_tcp_interface::utils::toMeter(joints_float_.at(si_i));
         //joint_position.push_back(joints_float_.at(si_i));
-        //joint_position.at(si_i) = joints_float_.at(si_i);
+        joint_position.at(si_i) = joints_float_.at(si_i);
         break;
-      default:
-        joint_position.at(si_i) = comau_tcp_interface::utils::toRad(joints_float_.at(si_i));
+      default: /* No error */
+        joints_float_.at(si_i) =  comau_tcp_interface::utils::toRad(joints_float_.at(si_i));
+        //joint_position.push_back(joints_float_.at(si_i));
+        joint_position.at(si_i) = joints_float_.at(si_i);
         break;
-    } 
+    }
   }
+  
   //joint_position.assign(joints_float_.begin(), joints_float_.end());
 }
 
@@ -190,7 +193,7 @@ void ComauRobot::getJointPosition(std::vector<double> &joint_position, uint32_t 
 void ComauRobot::getPinsIN(std::vector<int> &pins_in) {
   pins_in.assign(din_pins_.begin(), din_pins_.end());
 }
-void ComauRobot::getPinsStatesIN(std::vector<int> &pins_state_in) {
+void ComauRobot::getPinsStatesIN(std::vector<int64_t> &pins_state_in) {
 
   msg->getData("pins_state_in", pins_state_in_);
   pins_state_in.assign(pins_state_in_.begin(), pins_state_in_.end());
@@ -198,7 +201,7 @@ void ComauRobot::getPinsStatesIN(std::vector<int> &pins_state_in) {
 void ComauRobot::getPinsOUT(std::vector<int> &pins_out) {
   pins_out.assign(dout_pins_.begin(), dout_pins_.end());
 }
-void ComauRobot::getPinsStatesOUT(std::vector<int> &pins_state_out) {
+void ComauRobot::getPinsStatesOUT(std::vector<int64_t> &pins_state_out) {
   msg->getData("pins_state_out", pins_state_out_);
   pins_state_out.assign(pins_state_out_.begin(), pins_state_out_.end());
 }
@@ -294,7 +297,7 @@ bool ComauRobot::writeCommand(const std::vector<double> &joint_command, double c
   return true;
 }
 
-bool ComauRobot::setIO(int &pin, bool state) {
+bool ComauRobot::setIO(int &pin, bool &state) {
   return robot_client_ptr_->sendIOMessage(pin, state);
 }
 bool ComauRobot::setSensorParams(int &sensor_type, int &sensor_cnvrsn, int &sensor_gain, int &sensor_time,

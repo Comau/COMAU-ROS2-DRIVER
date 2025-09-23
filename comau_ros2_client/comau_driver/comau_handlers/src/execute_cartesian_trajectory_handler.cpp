@@ -1,11 +1,11 @@
 /**
  * @file execute_cartesian_trajectory_handler.cpp
- * @author Laboratory for Manufacturing Systems & Automation (LMS) - University of Patras
- * @brief The ROS node that publishes the robot information
- * @version 0.1
- * @date 25-02-2020
+ * @author Comau Robotics S.p.A.
+ * @brief The ROS2 node that publishes the cartesian trajectory action
+ * @version 1.0
+ * @date 02/07/2024
  *
- * @copyright (c) 2020 Laboratory for Manufacturing Systems & Automation (LMS) - University of Patras
+ * @copyright (c) Comau Robotics S.p.A.
  *
  */
 
@@ -79,16 +79,16 @@ void ExecuteCartesianTrajectoryHandler::handle_accepted(const std::shared_ptr<rc
   std::thread{std::bind(&ExecuteCartesianTrajectoryHandler::executeCallback, this, _1), goal_handle}.detach();
 }
 
-geometry_msgs::msg::PoseStamped
-ExecuteCartesianTrajectoryHandler::changePoseFrame(const std::string &target_frame,
+geometry_msgs::msg::PoseStamped ExecuteCartesianTrajectoryHandler::changePoseFrame(const std::string &target_frame,
                                                    const geometry_msgs::msg::PoseStamped &goal_pose) {
   //tf2_ros::Buffer br;
-  std::unique_ptr<tf2_ros::Buffer> br;
+  std::shared_ptr<tf2_ros::Buffer> br;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr};
-  br = std::make_unique<tf2_ros::Buffer>(nh_->get_clock());
+  br = std::make_shared<tf2_ros::Buffer>(nh_->get_clock());
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*br);
-  //br.setUsingDedicatedThread(true);
   tf2_ros::TransformListener tf2_listener(*br);
+  //tf2_ros::TransformListener tf2_listener(br);
+  br->setUsingDedicatedThread(true);
   geometry_msgs::msg::TransformStamped transform;
   geometry_msgs::msg::PoseStamped transformed_pose;
 
@@ -96,11 +96,11 @@ ExecuteCartesianTrajectoryHandler::changePoseFrame(const std::string &target_fra
     rclcpp::Time now = nh_->get_clock()->now();
     transform = br->lookupTransform(target_frame, goal_pose.header.frame_id, now,1s);//, ros::Duration(1.0));
     tf2::doTransform(goal_pose, transformed_pose, transform);
-    RCLCPP_INFO_STREAM(rclcpp::get_logger(action_name_),"Change transform pose to..   " << transformed_pose.pose.position.x);/*ANDY*/
+    RCLCPP_WARN_STREAM(rclcpp::get_logger("ChangePoseFrame"),"Pose Transformed!");
     return transformed_pose;
-  } catch (tf2::LookupException &e) {
+  } catch (const tf2::LookupException &e) {
     RCLCPP_ERROR(rclcpp::get_logger(action_name_),"[%s] %s", action_name_.c_str(), e.what());
-    transformed_pose.header.frame_id = "tool_controller";
+    transformed_pose.header.frame_id = "ee_link";//"tool_controller";
     return transformed_pose;
   }
 }
@@ -112,7 +112,7 @@ trajectoryf_t ExecuteCartesianTrajectoryHandler::parseCartesianTrajectoryGoal(
   for (comau_msgs::msg::CartesianPoseStamped cart_pose : goal->trajectory)
   {
     comau_tcp_interface::utils::cart_traj_node comau_node;
-    if (cart_pose.header.frame_id != "") {
+    /*if (cart_pose.header.frame_id != "") {
       // construct tf pose from cart pose
       geometry_msgs::msg::PoseStamped pose;
       tf2::Quaternion q;
@@ -128,12 +128,13 @@ trajectoryf_t ExecuteCartesianTrajectoryHandler::parseCartesianTrajectoryGoal(
       pose.pose.orientation.w = q[3];
       // Transform the pose relative on existing TF frame (if frame not equal to pass)
       geometry_msgs::msg::PoseStamped transformed_pose;
-      transformed_pose = changePoseFrame("base_link", pose);
+      transformed_pose = ExecuteCartesianTrajectoryHandler::changePoseFrame("base_link", pose);
+      RCLCPP_INFO_STREAM(rclcpp::get_logger(action_name_),"transformed_pose| "<< "X: " << transformed_pose.pose.position.x * 1000.0 << " Y: " << transformed_pose.pose.position.y * 1000.0 << " Z: " << transformed_pose.pose.position.z * 1000.0);
       vector6f_t pose_values_array;
       // first 3 points correspond to position - PDL wants millimiters
-      pose_values_array.at(0) = static_cast<float>(transformed_pose.pose.position.x * 1000.);
-      pose_values_array.at(1) = static_cast<float>(transformed_pose.pose.position.y * 1000.);
-      pose_values_array.at(2) = static_cast<float>(transformed_pose.pose.position.z * 1000.);
+      pose_values_array.at(0) = (transformed_pose.pose.position.x * 1000.0);
+      pose_values_array.at(1) = (transformed_pose.pose.position.y * 1000.0);
+      pose_values_array.at(2) = (transformed_pose.pose.position.z * 1000.0);
       // Revert back to euler
       // POS_SET_RPY IN PDL
       tf2::Quaternion q_transformed;
@@ -145,23 +146,26 @@ trajectoryf_t ExecuteCartesianTrajectoryHandler::parseCartesianTrajectoryGoal(
       double roll, pitch, yaw;
       tf2::Matrix3x3 m(q_transformed);
       m.getRPY(roll, pitch, yaw);
-      pose_values_array.at(3) = static_cast<float>(roll * 180. / M_PI);
-      pose_values_array.at(4) = static_cast<float>(pitch * 180. / M_PI);
-      pose_values_array.at(5) = static_cast<float>(yaw * 180. / M_PI);
+      RCLCPP_INFO_STREAM(rclcpp::get_logger(action_name_),"(Rad) Roll: " << roll << " Pitch: " << pitch << " Yaw: " << yaw);
+      pose_values_array.at(3) = static_cast<float>(roll * 180.0 / M_PI);
+      pose_values_array.at(4) = static_cast<float>(pitch * 180.0 / M_PI);
+      pose_values_array.at(5) = static_cast<float>(yaw * 180.0 / M_PI);
+      RCLCPP_INFO_STREAM(rclcpp::get_logger(action_name_),"(Degree) Roll: " << pose_values_array.at(3) << " Pitch: " << pose_values_array.at(4) << " Yaw: " << pose_values_array.at(5));
       // pose_traj.push_back(pose_values_array);
       comau_node.pose = pose_values_array;
-    } else {
+    } else {*/
       vector6f_t pose_values_array;
       // first 3 points correspond to position - PDL wants millimiters
-      pose_values_array.at(0) = static_cast<float>(cart_pose.x * 1000.);
-      pose_values_array.at(1) = static_cast<float>(cart_pose.y * 1000.);
-      pose_values_array.at(2) = static_cast<float>(cart_pose.z * 1000.);
+      pose_values_array.at(0) = static_cast<float>(cart_pose.x * 1000.0);
+      pose_values_array.at(1) = static_cast<float>(cart_pose.y * 1000.0);
+      pose_values_array.at(2) = static_cast<float>(cart_pose.z * 1000.0);
       // euler angles
-      pose_values_array.at(3) = static_cast<float>(cart_pose.roll * 180. / M_PI);
-      pose_values_array.at(4) = static_cast<float>(cart_pose.pitch * 180. / M_PI);
-      pose_values_array.at(5) = static_cast<float>(cart_pose.yaw * 180. / M_PI);
+      pose_values_array.at(3) = static_cast<float>(cart_pose.roll * 180.0 / M_PI);
+      pose_values_array.at(4) = static_cast<float>(cart_pose.pitch * 180.0 / M_PI);
+      pose_values_array.at(5) = static_cast<float>(cart_pose.yaw * 180.0 / M_PI);
       comau_node.pose = pose_values_array;
-    }
+    //}
+    RCLCPP_INFO_STREAM(rclcpp::get_logger(action_name_),"comau_node.pose: [x,y,z,R,P,Y] <-> [" << comau_node.pose.at(0) << ", " << comau_node.pose.at(1) << ", " << comau_node.pose.at(2) << ", " << comau_node.pose.at(3) << ", " << comau_node.pose.at(4) << ", " << comau_node.pose.at(5) << "]");
     if (cart_pose.lin_vel)
       comau_node.lin_vel   = cart_pose.lin_vel;
     else
@@ -207,16 +211,16 @@ void ExecuteCartesianTrajectoryHandler::executeCallback(const std::shared_ptr<rc
   RCLCPP_INFO(rclcpp::get_logger(action_name_), "Executing goal");
   double start_time = rclcpp::Clock{RCL_ROS_TIME}.now().nanoseconds();//double start_time = ros::Time::now().toNSec() / 1e-6; // to convert nanoseconds to milliseconds
   action_active_ = false;
+  bool pub_moving = false;
   goal_handle_ = goal_handle;
   feedback_ = std::make_shared<comau_msgs::action::ExecuteCartesianTrajectory::Feedback>();
   result_   = std::make_shared<comau_msgs::action::ExecuteCartesianTrajectory::Result>();
   if (robot_status_ == RobotStatus::READY && allow_async_) {
     const auto goal = goal_handle->get_goal();
     RCLCPP_INFO(rclcpp::get_logger(action_name_),"[%s]: Parsing Cartesian trajectory", action_name_.c_str());
-    goal_cartesian_trajectory_ = parseCartesianTrajectoryGoal(goal);
+    goal_cartesian_trajectory_ = ExecuteCartesianTrajectoryHandler::parseCartesianTrajectoryGoal(goal);
     if (use_arm1_server_)
-      robot_ptr_->writeTrajectoryCommand(goal_cartesian_trajectory_,
-                                         comau_driver::ControlMode::MODE_CARTESIAN_TRAJECTORY);
+      robot_ptr_->writeTrajectoryCommand(goal_cartesian_trajectory_, comau_driver::ControlMode::MODE_CARTESIAN_TRAJECTORY);
     action_active_ = true;
     RCLCPP_INFO(rclcpp::get_logger(action_name_),"[%s]: Received trajectory sended for execution", action_name_.c_str());
   } else {
@@ -244,7 +248,7 @@ void ExecuteCartesianTrajectoryHandler::executeCallback(const std::shared_ptr<rc
       if (use_robot_server_)
         robot_ptr_->cancelMotionPDL();
       goal_handle->canceled(result_);
-
+      pub_moving = false;
       return;
     } else if (robot_status_ == RobotStatus::SUCCEEDED) { // SUCCEEDED
       RCLCPP_INFO(rclcpp::get_logger(action_name_), "[%s]: Trajectory execution Succeeded", action_name_.c_str());
@@ -252,16 +256,20 @@ void ExecuteCartesianTrajectoryHandler::executeCallback(const std::shared_ptr<rc
       result_->action_result.status = comau_msgs::msg::ActionResultStatusConstants::SUCCESS;
       result_->action_result.success = true;
       result_->action_result.millis_passed = feedback_->action_feedback.millis_passed;
+      feedback_->action_feedback.success = result_->action_result.success;
       /* After motion is correctly executed, the server clean the traj then the reset cmd is not necessary
       if (use_robot_server_)
         robot_ptr_->resetPDL();
       */
-      while (robot_status_ == RobotStatus::SUCCEEDED) /* Wait for the READY status to Ack the motion command */
+      goal_handle->succeed(result_);
+      goal_handle->publish_feedback(feedback_);
+      /*
+      while (robot_status_ == RobotStatus::SUCCEEDED)
       {
         rclcpp::sleep_for(rclcpp::Duration::from_seconds(0.002).to_chrono<std::chrono::nanoseconds>());
       }
-      goal_handle->succeed(result_);
-
+      goal_handle->succeed(result_);*/
+      pub_moving = false;
       return;
     } else if (robot_status_ == RobotStatus::ERROR) { // ERROR
       //ROS_ERROR("[%s]: Unexpected error, closing action server", action_name_.c_str());
@@ -283,18 +291,24 @@ void ExecuteCartesianTrajectoryHandler::executeCallback(const std::shared_ptr<rc
       result_->action_result.millis_passed = feedback_->action_feedback.millis_passed;
       result_->action_result.success = false;
       goal_handle->abort(result_);
-
+      pub_moving = false;
       return;
     } else if (robot_status_ == RobotStatus::MOVING) { // MOVING
-
-      RCLCPP_DEBUG(rclcpp::get_logger(action_name_), "[%s]: Trajectory execution is active", action_name_.c_str());
-      feedback_->action_feedback.millis_passed = uint((rclcpp::Clock{RCL_ROS_TIME}.now().nanoseconds() / 1e-6) - start_time);
-
-      goal_handle->publish_feedback(feedback_);
+      if(pub_moving == false)
+      {
+        RCLCPP_DEBUG(rclcpp::get_logger(action_name_), "[%s]: Trajectory execution is active", action_name_.c_str());
+        feedback_->action_feedback.success = false;
+        feedback_->action_feedback.millis_passed = uint((rclcpp::Clock{RCL_ROS_TIME}.now().nanoseconds() / 1e-6) - start_time);
+        feedback_->action_feedback.status = robot_status_;
+        goal_handle->publish_feedback(feedback_);
+      }
+      pub_moving = true;
     }
 
     rclcpp::sleep_for(rclcpp::Duration::from_seconds(0.001).to_chrono<std::chrono::nanoseconds>());
   }
+  pub_moving = false;
+  goal_handle_ = goal_handle;
 }
 
 void ExecuteCartesianTrajectoryHandler::set_status(char &status) {

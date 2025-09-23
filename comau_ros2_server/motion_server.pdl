@@ -1,0 +1,533 @@
+PROGRAM motion_server &PA, NOHOLD, PROG_ARM = 1, PRIORITY = 5, STACK = 10003
+  ---------------------------------------------------------------
+  --- Author: Comau Robotics S.p.A.                                    
+  --- Brief: Robot Arm handler server for handling motion commands for robot 1 
+  --- over TCP/IP communication  
+  --
+  --  BSD 2-Clause License
+  ---------------------------------------------------------------
+CONST
+  KI_LOCAL_PORT   = 1101                -- TCP server "listening" port (local to the server)
+  KS_MAIN_LOG     = '[MTION_SERVER] '   -- Name for main loop used in _vs_screen_lun 
+  KI_ARM_NUM      =  1                  -- PROG_ARM constant
+  KI_COND_RESTART = 74                  -- Condition number for restarting tcp/ip connection
+  KI_COND_RESET   = 73                  -- Condition number for resetting error when reset button is pushed
+  KI_COND_LOCK    =  2                  -- Condition number for locking the arm
+  KI_COND_UNLOCK  =  3                  -- Condition number for unlocking the arm
+  KI_NUM_JNT      =  10
+  KI_NUM_CMP      =  6
+  -- Error values
+  KI_ERR_NULL               = 0x00000 -- Null error
+  KI_ERR_STATE_ACCEPT       = 0x00001 -- State  Server  error 15470 : Address already in use
+  KI_ERR_ROBOT_ACCEPT       = 0x00002 -- Robot  Server  error 15470 : Address already in use
+  KI_ERR_HANDLER_ACCEPT     = 0x00004 -- Motion Handler error 15470 : Address already in use
+  KI_ERR_STATE_WRITE        = 0x00008 -- State  Server  error 40033 : Error 15474 in write
+  KI_ERR_ROBOT_READ_NCON    = 0x00010 -- Robot  Server  error 39990 : Error 15467 in read
+  KI_ERR_HANDLER_READ_NCON  = 0x00020 -- Motion Handler error 39990 : Error 15467 in read
+  KI_ERR_ROBOT_READ_DCON    = 0x00040 -- Robot  Server  error 39990 : Error 15468 in read
+  KI_ERR_HANDLER_READ_DCON  = 0x00080 -- Motion Handler error 39990 : Error 15468 in read
+  KI_ERR_ROBOT_READ_CANC    = 0x00100 -- Robot  Server  error 39991 
+  KI_ERR_HANDLER_READ_CANC  = 0x00200 -- Motion Handler error 39991 
+  KI_ERR_ROBOT_READ_TOUT    = 0x00400 -- Robot  Server  error 39992 
+  KI_ERR_HANDLER_READ_TOUT  = 0x00800 -- Motion Handler error 39992 
+  KI_ERR_STATE_DISCONNECT   = 0x01000 -- State  Server  error 30767 
+  KI_ERR_ROBOT_DISCONNECT   = 0x02000 -- Robot  Server  error 30767 
+  KI_ERR_HANDLER_DISCONNECT = 0x04000 -- Motion Handler error 30767
+  KI_ERR_STATE_SAFETY_GATE  = 0x08000 -- Safety Gate / External Emergency Stop 
+  KI_ERR_STATE_WRONG_MOTION = 0x10000 -- Program Execution Errors (36864-37191) 
+  KI_ERR_ROBOT_ALARM        = 0x20000 -- Sys state in alarm at restarting
+  KI_ERR_MOTION_DRIVEOFF    = 0x40000 -- Ask motion in drive off
+  -- Progs ID 
+  KI_ID_STATE   = 1
+  KI_ID_ROBOT   = 2
+  KI_ID_HANDLER = 3  
+  -- Internal error codes for the appended nodes in the trajectory
+  KI_TRAJ_OK        =  0  -- Append trajectory is valid
+  KI_INDEX_NCORRECT = -1  -- Incorrect trajectory index
+  KI_NODE_OUT_WS    = -2  -- Node is out of workspace
+
+TYPE
+  ---------------------------------------------------------------
+  --- Node: JOINT_NODE
+  --- Brief: Structure for describing an joint value . 
+  ---------------------------------------------------------------
+  JOINT_NODE = NODEDEF
+    $MAIN_JNTP FOR ARM[1]
+    $MOVE_TYPE -- JOINT, LINEAR,  CIRCULAR, SEG_VIA (for defining the VIA node)
+    $SEG_OVR
+  ENDNODEDEF
+  ---------------------------------------------------------------
+  --- Node: POSE_NODE
+  --- Brief: Structure for describing an position value . 
+  ---------------------------------------------------------------
+  POSE_NODE = NODEDEF
+    $MAIN_POS
+    $LIN_SPD
+    $MOVE_TYPE -- JOINT, LINEAR,  CIRCULAR, SEG_VIA (for defining the VIA node)
+    $SPD_EMT
+    $SEG_OVR
+  ENDNODEDEF
+
+  ---------------------------------------------------------------
+  --- Record: MOTION_MESSAGE_TYPE
+  --- Brief: Structure for describing the motion message. 
+  ---------------------------------------------------------------
+  MOTION_MESSAGE_TYPE = RECORD
+    id                         : INTEGER                   -- Unique identifier of the message
+    vs_motion_type             : STRING[1]                 -- Motion Type Identifier
+    sensor_tracking_correction : ARRAY[KI_NUM_CMP] OF REAL -- The cartesian correction relative to BASE FRAME
+    joint_position_command     : ARRAY[KI_NUM_JNT] OF REAL -- The Synchronous Joint Position command
+    linear_velocity            : REAL                      -- $LIN_SPD (in m/s)
+    segment_ovr                : INTEGER
+    move_type                  : INTEGER                   -- $MOVE_TYPE
+    trajectory_size            : INTEGER                   -- Shows how many points are included in trajectory. The default is 1 for performing one motion
+    joint_traj_point           : ARRAY[KI_NUM_JNT] OF REAL -- The goal of each joint in degrees
+    cart_traj_point            : ARRAY[KI_NUM_CMP] OF REAL -- The goal in cartesian position relative to BASE FRAME
+    fly_distance               : REAL                      -- Used for MoveFly command
+  ENDRECORD
+ 
+VAR
+  -- Shared variables
+  _ss_state            : STRING[1] EXPORTED FROM pdl_tcp_functions NOSAVE -- Shared variable for showing the status (TERMINATE:T, READY:R, MOVING:M, CANCELING:C, SUCCEEDED:S, ERROR:E)
+  _sb_shutdown         : BOOLEAN   EXPORTED FROM pdl_tcp_functions NOSAVE -- shared variable for stopping the program
+  _sb_enable_robot     : BOOLEAN   EXPORTED FROM pdl_tcp_functions NOSAVE -- Shared variable to show that the robot is allowed to move 
+  _sb_reset_motion     : BOOLEAN   EXPORTED FROM pdl_tcp_functions NOSAVE -- Shared flag to cancel the motion and then reset
+  _sb_lock_robot       : BOOLEAN   EXPORTED FROM pdl_tcp_functions NOSAVE -- Shared flag to lock the arm
+  _sb_unlock_robot     : BOOLEAN   EXPORTED FROM pdl_tcp_functions NOSAVE -- Shared flag to unlock the arm
+  _si_verbose          : INTEGER   EXPORTED FROM pdl_tcp_functions NOSAVE -- Level of logging
+  _vs_screen_lun       : INTEGER   EXPORTED FROM pdl_tcp_functions NOSAVE -- Output screen identifier
+  _vb_first_sns_trk    : BOOLEAN   EXPORTED FROM pdl_tcp_functions NOSAVE
+  _si_error_state      : INTEGER   EXPORTED FROM pdl_tcp_functions NOSAVE -- Error state variable
+  _vb_tcp_conn_handler : BOOLEAN   EXPORTED FROM pdl_tcp_functions NOSAVE
+
+  -- Shared variables for sensor tracking configuration
+  _si_sensor_type           : INTEGER EXPORTED FROM pdl_tcp_functions NOSAVE  -- The mode of Sensor Tracking     
+  _si_sensor_cnvrsn         : INTEGER EXPORTED FROM pdl_tcp_functions NOSAVE  -- Convert the values to millimeters : default 1
+  _si_sensor_gain           : INTEGER EXPORTED FROM pdl_tcp_functions NOSAVE  -- Percentage value that define the speed to be used for the corrections : default 100
+  _si_sensor_time           : INTEGER EXPORTED FROM pdl_tcp_functions NOSAVE  -- period in which the corrections must be applied default : 0ms
+  _si_sensor_ofst_lim_trans : INTEGER EXPORTED FROM pdl_tcp_functions NOSAVE  -- Maximum translational offset default 500
+  _si_sensor_ofst_lim_rot   : INTEGER EXPORTED FROM pdl_tcp_functions NOSAVE  -- Maximum rotational offset default 800
+
+  -- Global variables 
+  vs_server_host          : STRING[100]    ('0.0.0.0')NOSAVE     -- Server IP address
+  vi_server_netlun        : INTEGER                (0)NOSAVE     -- TCP socket identifier
+  vb_comm_success         : BOOLEAN             (TRUE)NOSAVE     -- Communication status flag
+  vi_ti                   : INTEGER                (0)NOSAVE
+  vs_motion_type          : STRING[1]                 EXPORTED FROM motion_server NOSAVE -- Motion Type
+  va_sns_trk_corr         : ARRAY[KI_NUM_CMP] OF REAL EXPORTED FROM motion_server NOSAVE -- Sensor Tracking Corrections
+  va_sns_trk_ofst         : ARRAY[KI_NUM_CMP] OF REAL EXPORTED FROM motion_server NOSAVE -- Sensor Tracking Offsets
+  vp_joint_trajectory     : PATH of JOINT_NODE        EXPORTED FROM motion_server NOSAVE -- joint trajectory that will be executed  
+  vp_cartesian_trajectory : PATH of POSE_NODE         EXPORTED FROM motion_server NOSAVE -- pose trajectory that will be executed   
+  -- For Movefly
+  vj_joint_pos            : JOINTPOS FOR ARM[KI_ARM_NUM] EXPORTED FROM motion_server -- Goal JointPos
+  vr_lin_spd              : REAL                 (0.0)NOSAVE
+  vr_fly_dist             : REAL                 (0.0)NOSAVE
+  -- tcp/ip msg id
+  t_msg_id                : INTEGER                (0)NOSAVE
+  -- Check move workspace
+  vs_errcode              : STRING[50]                NOSAVE
+  vb_workspace_in         : BOOLEAN                   EXPORTED FROM motion_server NOSAVE -- Workspace check for all moves
+
+  -- Declaration of shared functions 
+ROUTINE tcp_server_accept(netlun, port, screenlun, verbose: INTEGER; log_tag: STRING; si_prog_id: INTEGER) : INTEGER EXPORTED FROM pdl_tcp_functions
+ROUTINE tcp_server_disconnect(netlun, screenlun, verbose: INTEGER; log_tag: STRING; si_prog_id: INTEGER) EXPORTED FROM pdl_tcp_functions
+ROUTINE throw_error(error_msg, vs_main_log : STRING) EXPORTED FROM pdl_tcp_functions
+ROUTINE close_arm1_tcp EXPORTED FROM motion_server
+
+  --------------------------------------------------------------------
+  --- Routine: close_arm1_tcp
+  --- Brief: Dsiconnects the tcp socket
+  --------------------------------------------------------------------
+ROUTINE close_arm1_tcp
+BEGIN
+   tcp_server_disconnect((vi_server_netlun), _vs_screen_lun, _si_verbose, KS_MAIN_LOG, KI_ID_HANDLER)
+END close_arm1_tcp
+
+
+  --------------------------------------------------------------------
+  --- Routine: append_to_joint_trajectory
+  --- Brief: Appends new point to shared PATH variable vp_joint_trajectory
+  --- Return: Integer 0-OK,-1-INDEX_NCORRECT,1-MOVE_NOT_IN_RANGE
+  --------------------------------------------------------------------
+ROUTINE append_to_joint_trajectory(new_joint_point: JOINTPOS; seg_ovr, move_type : INTEGER; trajectory_index: INTEGER; trajectory_size: INTEGER): INTEGER
+VAR
+  t_i : INTEGER
+BEGIN
+  -- Checks if index is within the max limits of the trajectory
+  IF trajectory_index > trajectory_size THEN
+    RETURN(KI_INDEX_NCORRECT)
+  ENDIF
+
+  -- If one of the previous nodes of the traj is out of workspace, the other nodes are read from TCP channel but nod appended
+  IF (vb_workspace_in = FALSE) THEN
+    RETURN(KI_NODE_OUT_WS)
+  ENDIF
+
+  POS_IN_RANGE(new_joint_point,vb_workspace_in)
+  IF vb_workspace_in THEN
+    NODE_APP(vp_joint_trajectory) -- Appends uninitialized nodes to the end of trajectory
+    vp_joint_trajectory.NODE[trajectory_index].$MAIN_JNTP := new_joint_point
+    vp_joint_trajectory.NODE[trajectory_index].$MOVE_TYPE := move_type
+    vp_joint_trajectory.NODE[trajectory_index].$SEG_OVR   := seg_ovr
+  ELSE
+    $ERROR := 0
+    RETURN(KI_NODE_OUT_WS)
+  ENDIF
+  
+  RETURN(KI_TRAJ_OK)
+END append_to_joint_trajectory
+
+  --------------------------------------------------------------------
+  --- Routine: append_to_cartesian_trajectory
+  --- Brief: Appends new point to shared PATH variable vp_cartesian_trajectory
+  --- Return: Integer 0-OK,-1-INDEX_NCORRECT or MOVE_NOT_IN_RANGE
+  --------------------------------------------------------------------
+ROUTINE append_to_cartesian_trajectory(new_pose_point: POSITION; linear_vel: REAL; seg_ovr : INTEGER; move_type: INTEGER; trajectory_index: INTEGER; trajectory_size: INTEGER): INTEGER
+VAR
+  t_i : INTEGER
+BEGIN
+  -- Checks if index is within the max limits of the trajectory
+  IF trajectory_index > trajectory_size THEN
+    RETURN(KI_INDEX_NCORRECT)
+  ENDIF
+
+  -- If one of the previous nodes of the traj is out of workspace, the other nodes are read from TCP channel but nod appended
+  IF (vb_workspace_in = FALSE) THEN
+    RETURN(KI_NODE_OUT_WS)
+  ENDIF
+
+  POS_IN_RANGE(new_pose_point,vb_workspace_in)
+  IF vb_workspace_in THEN
+    NODE_APP(vp_cartesian_trajectory) -- Appends uninitialized nodes to the end of trajectory
+    vp_cartesian_trajectory.NODE[trajectory_index].$MAIN_POS  := new_pose_point
+    vp_cartesian_trajectory.NODE[trajectory_index].$SPD_EMT   := SPD_LIN
+    vp_cartesian_trajectory.NODE[trajectory_index].$LIN_SPD   := linear_vel
+    vp_cartesian_trajectory.NODE[trajectory_index].$SEG_OVR   := seg_ovr
+    vp_cartesian_trajectory.NODE[trajectory_index].$MOVE_TYPE := move_type
+  ELSE
+    $ERROR := 0
+    RETURN(KI_NODE_OUT_WS)
+  ENDIF
+
+  RETURN(KI_TRAJ_OK) 
+END append_to_cartesian_trajectory
+
+  --------------------------------------------------------------------
+  --- Routine: clear_joint_trajectory
+  --- Brief: Deletes all points from the shared PATH variable vp_joint_trajectory
+  --------------------------------------------------------------------
+ROUTINE clear_joint_trajectory
+BEGIN
+  IF PATH_LEN(vp_joint_trajectory) > 0 THEN
+    NODE_DEL(vp_joint_trajectory, 1, PATH_LEN(vp_joint_trajectory))
+  ENDIF
+END clear_joint_trajectory
+
+  --------------------------------------------------------------------
+  --- Routine: clear_cartesian_trajectory
+  --- Brief: Deletes all points from the shared PATH variable vp_cartesian_trajectory
+  --------------------------------------------------------------------
+ROUTINE clear_cartesian_trajectory
+BEGIN
+  IF PATH_LEN(vp_cartesian_trajectory) > 0 THEN
+    NODE_DEL(vp_cartesian_trajectory, 1, PATH_LEN(vp_cartesian_trajectory))
+  ENDIF
+END clear_cartesian_trajectory
+
+  --------------------------------------------------------------------
+  --- Routine: print_joint_trajectory
+  --- Brief: Prints all points of a PATH variable 
+  --------------------------------------------------------------------
+ROUTINE print_joint_trajectory(trajectory: PATH of JOINT_NODE)
+VAR
+  t_i: INTEGER
+BEGIN
+  WRITE _vs_screen_lun (KS_MAIN_LOG, 'Joint Trajectory :', NL)
+  FOR t_i := 1 TO PATH_LEN(trajectory) DO
+    WRITE _vs_screen_lun (KS_MAIN_LOG, 'Joint Traj Point ', t_i ,' ', trajectory.NODE[t_i].$MAIN_JNTP, NL)
+  ENDFOR
+END print_joint_trajectory
+
+  --------------------------------------------------------------------
+  --- Routine: print_cartesian_trajectory
+  --- Brief: Prints all points of a PATH variable 
+  --------------------------------------------------------------------
+ROUTINE print_cartesian_trajectory(trajectory: PATH of POSE_NODE)
+VAR
+  t_i: INTEGER
+BEGIN
+  WRITE _vs_screen_lun (KS_MAIN_LOG, 'Cartesian Trajectory :', NL)
+  FOR t_i := 1 TO PATH_LEN(trajectory) DO
+    WRITE _vs_screen_lun (KS_MAIN_LOG, 'Cart Traj Point ', t_i ,' ', trajectory.NODE[t_i].$MAIN_POS, NL)
+  ENDFOR
+END print_cartesian_trajectory
+
+
+  --------------------------------------------------------------------
+  --- Routine: ru_check_error
+  --- Brief: If error return TRUE
+  --- Return:
+  ---   0 : no error
+  ---   1 : disconnection error
+  ---   2 : wrong read
+  --------------------------------------------------------------------
+ROUTINE ru_check_error : INTEGER
+BEGIN
+
+  IF $ERROR <> 0 THEN
+    IF $ERROR = 39990 THEN   -- Error is trapped so the connection is not active
+      WRITE _vs_screen_lun (KS_MAIN_LOG, ' READ_ERR ', '$ERROR ', $ERROR,' $FL_STS ', $FL_STS, NL)   -- debug print for READ_ERR
+      IF $FL_STS = 15467 THEN   
+        _si_error_state := _si_error_state OR KI_ERR_HANDLER_READ_NCON
+      ELSE
+        IF $FL_STS = 15468 THEN
+          _si_error_state := _si_error_state OR KI_ERR_HANDLER_READ_DCON
+        ELSE
+          IF $FL_STS = 0 THEN
+            RETURN(2) -- wrong read, try again
+          ENDIF
+        ENDIF
+      ENDIF 
+    ELSE
+      IF $ERROR = 39991 THEN   -- Error is trapped so A READ operation has been canceled
+        WRITE _vs_screen_lun (KS_MAIN_LOG, ' READ_CANC ', '$ERROR ', $ERROR,' $FL_STS ', $FL_STS, NL)   -- debug print for READ_CANC
+        _si_error_state := _si_error_state OR KI_ERR_HANDLER_READ_CANC
+      ELSE
+        IF $ERROR = 39992 THEN   -- timout triggered
+          WRITE _vs_screen_lun (KS_MAIN_LOG, ' READ_TOUT ', '$ERROR ', $ERROR,' $FL_STS ', $FL_STS, NL)   -- READ_TOUT
+          _si_error_state := _si_error_state OR KI_ERR_HANDLER_READ_TOUT
+        ENDIF
+      ENDIF
+    ENDIF
+    RETURN(1) -- Disconnection error
+  ENDIF
+  RETURN(0) -- No error
+  
+END ru_check_error
+
+  ------------------------------------------------------------------
+  --- Routine: receive_motion_message
+  --- Brief: Receiving the motion command and send it for execution 
+  ------------------------------------------------------------------
+ROUTINE receive_motion_message : BOOLEAN
+VAR
+  t_i           : INTEGER
+  t_msg         : MOTION_MESSAGE_TYPE
+  t_joint_pos   : JOINTPOS FOR ARM[1]
+  t_position    : POSITION 
+  vs_err_string : STRING[50]
+BEGIN
+  $ERROR := 0
+  ERR_TRAP_ON(39990, 39991, 39992)
+  READ vi_server_netlun (t_msg.id::4, t_msg.vs_motion_type::1)
+  ERR_TRAP_OFF(39990, 39991, 39992)
+  IF (ru_check_error = 1) THEN -- Return and try restarting in error case
+    RETURN(FALSE)
+  ELSE
+    IF (ru_check_error = 2) THEN
+      RETURN(TRUE) -- Keep trying
+    ENDIF
+  ENDIF
+
+  t_msg_id       := t_msg.id
+  vs_motion_type := t_msg.vs_motion_type
+  WRITE _vs_screen_lun (KS_MAIN_LOG, 'vs_motion_type: ', vs_motion_type, NL)
+  SELECT vs_motion_type OF  
+    CASE ('S'): -- Sensor Tracking motion case
+      ERR_TRAP_ON(39990, 39991, 39992)
+      READ vi_server_netlun (t_msg.sensor_tracking_correction[1]::4,t_msg.sensor_tracking_correction[2]::4, t_msg.sensor_tracking_correction[3]::4,t_msg.sensor_tracking_correction[4]::4,t_msg.sensor_tracking_correction[5]::4, t_msg.sensor_tracking_correction[6]::4)
+      ERR_TRAP_OFF(39990, 39991, 39992)
+      IF (ru_check_error = 1) THEN -- Return and try restarting in error case
+        RETURN(FALSE)
+      ENDIF
+
+      FOR t_i :=1 TO KI_NUM_CMP DO
+        va_sns_trk_corr[t_i] := t_msg.sensor_tracking_correction[t_i]
+      ENDFOR
+    CASE ('T'):-- Joint Trajectory motion case
+      ERR_TRAP_ON(39990, 39991, 39992)
+      READ vi_server_netlun (t_msg.trajectory_size::4) 
+      -- Decode the trajectory into PATH variable
+      FOR t_i := 1 TO t_msg.trajectory_size DO
+        READ vi_server_netlun (t_msg.joint_traj_point[1]::4, t_msg.joint_traj_point[2]::4, t_msg.joint_traj_point[3]::4, t_msg.joint_traj_point[4]::4, t_msg.joint_traj_point[5]::4, t_msg.joint_traj_point[6]::4, t_msg.joint_traj_point[7]::4, t_msg.joint_traj_point[8]::4, t_msg.joint_traj_point[9]::4, t_msg.joint_traj_point[10]::4)
+        READ vi_server_netlun (t_msg.segment_ovr::4, t_msg.move_type::4)
+        SELECT $LAST_JNT_AXIS OF
+          CASE(6):
+            JNT(t_joint_pos, t_msg.joint_traj_point[1], t_msg.joint_traj_point[2], t_msg.joint_traj_point[3], t_msg.joint_traj_point[4], t_msg.joint_traj_point[5], t_msg.joint_traj_point[6])
+          CASE(7):
+            JNT(t_joint_pos, t_msg.joint_traj_point[1], t_msg.joint_traj_point[2], t_msg.joint_traj_point[3], t_msg.joint_traj_point[4], t_msg.joint_traj_point[5], t_msg.joint_traj_point[6],t_msg.joint_traj_point[7])
+          CASE(8):
+            JNT(t_joint_pos, t_msg.joint_traj_point[1], t_msg.joint_traj_point[2], t_msg.joint_traj_point[3], t_msg.joint_traj_point[4], t_msg.joint_traj_point[5], t_msg.joint_traj_point[6],t_msg.joint_traj_point[7], t_msg.joint_traj_point[8])
+          CASE(9):
+            JNT(t_joint_pos, t_msg.joint_traj_point[1], t_msg.joint_traj_point[2], t_msg.joint_traj_point[3], t_msg.joint_traj_point[4], t_msg.joint_traj_point[5], t_msg.joint_traj_point[6],t_msg.joint_traj_point[7], t_msg.joint_traj_point[8], t_msg.joint_traj_point[9])
+          CASE(10):
+            JNT(t_joint_pos, t_msg.joint_traj_point[1], t_msg.joint_traj_point[2], t_msg.joint_traj_point[3], t_msg.joint_traj_point[4], t_msg.joint_traj_point[5], t_msg.joint_traj_point[6],t_msg.joint_traj_point[7], t_msg.joint_traj_point[8], t_msg.joint_traj_point[9],t_msg.joint_traj_point[10])
+        ENDSELECT
+        IF append_to_joint_trajectory(t_joint_pos, t_msg.segment_ovr, t_msg.move_type, t_i, t_msg.trajectory_size) = KI_INDEX_NCORRECT THEN
+          ENCODE(vs_err_string, t_i)
+          vs_err_string := STR_CAT(vs_err_string, 'th node is out of traj. size')
+          throw_error(vs_err_string, KS_MAIN_LOG)
+          ERR_TRAP_OFF(39990, 39991, 39992) -- ANDY
+          RETURN(TRUE) -- VE_ATTENTION : Errore che non porta a disconnessione
+        ENDIF
+      ENDFOR
+      ERR_TRAP_OFF(39990, 39991, 39992)
+      IF (ru_check_error = 1) THEN -- Return and try restarting in error case
+        RETURN(FALSE)
+      ENDIF
+
+      IF _si_verbose = 1 THEN
+        WRITE _vs_screen_lun (KS_MAIN_LOG, 'Joint Trajectory Read : ', NL)
+      ENDIF
+    CASE ('C'): -- Cartesian Trajectory motion case
+      ERR_TRAP_ON(39990, 39991, 39992)
+      READ vi_server_netlun (t_msg.trajectory_size::4)
+      -- Decode the trajectory into PATH variable
+      FOR t_i := 1 TO t_msg.trajectory_size DO
+        READ vi_server_netlun (t_msg.cart_traj_point[1]::4, t_msg.cart_traj_point[2]::4, t_msg.cart_traj_point[3]::4, t_msg.cart_traj_point[4]::4, t_msg.cart_traj_point[5]::4, t_msg.cart_traj_point[6]::4)
+        READ vi_server_netlun (t_msg.linear_velocity::4, t_msg.segment_ovr::4, t_msg.move_type::4)
+        t_position := POS(t_msg.cart_traj_point[1], t_msg.cart_traj_point[2], t_msg.cart_traj_point[3], t_msg.cart_traj_point[4], t_msg.cart_traj_point[5], t_msg.cart_traj_point[6])
+        POS_SET_RPY(t_position, t_msg.cart_traj_point[4], t_msg.cart_traj_point[5], t_msg.cart_traj_point[6])
+        IF append_to_cartesian_trajectory(t_position, t_msg.linear_velocity, t_msg.segment_ovr, t_msg.move_type, t_i, t_msg.trajectory_size) = KI_INDEX_NCORRECT THEN
+          ENCODE(vs_err_string, t_i)
+          vs_err_string := STR_CAT(vs_err_string, 'th node is out of traj. size')
+          throw_error(vs_err_string, KS_MAIN_LOG)
+          ERR_TRAP_OFF(39990, 39991, 39992) -- ANDY
+          RETURN(TRUE) -- VE_ATTENTION : Errore che non porta a disconnessione
+        ENDIF
+      ENDFOR
+      ERR_TRAP_OFF(39990, 39991, 39992)
+      IF (ru_check_error = 1) THEN -- Return and try restarting in error case
+        RETURN(FALSE)
+      ENDIF
+
+      IF _si_verbose = 1 THEN
+        WRITE _vs_screen_lun (KS_MAIN_LOG, 'Cartesian Trajectory Read', NL)
+      ENDIF
+    CASE ('F'): -- Movefly motion case
+      ERR_TRAP_ON(39990, 39991, 39992)
+      READ vi_server_netlun (t_msg.linear_velocity::4, t_msg.fly_distance::4)
+      vr_lin_spd := t_msg.linear_velocity
+      vr_fly_dist := t_msg.fly_distance  
+      FOR t_i :=1 TO 6 DO
+        READ vi_server_netlun (t_msg.joint_position_command[t_i]::4)
+      ENDFOR
+      ERR_TRAP_OFF(39990, 39991, 39992)
+      IF (ru_check_error = 1) THEN -- Return and try restarting in error case
+        RETURN(FALSE)
+      ENDIF
+
+      JNT(vj_joint_pos, t_msg.joint_position_command[1], t_msg.joint_position_command[2], t_msg.joint_position_command[3], t_msg.joint_position_command[4], t_msg.joint_position_command[5], t_msg.joint_position_command[6])
+      POS_IN_RANGE(vj_joint_pos,vb_workspace_in)
+      IF (vb_workspace_in = FALSE) THEN
+        $ERROR := 0
+        RETURN(TRUE)
+      ENDIF
+    ELSE:
+      _sb_enable_robot  := FALSE
+      WRITE _vs_screen_lun (KS_MAIN_LOG, 'Wrong Motion Type is Got: ', vs_motion_type, NL)
+      RETURN(TRUE)
+
+  ENDSELECT
+
+  IF (BIT_TEST($SYS_STATE, 31, ON) OR BIT_TEST($SYS_STATE, 26, OFF)) THEN -- DRIVE OFF or NOT START
+    IF ((_si_error_state AND KI_ERR_MOTION_DRIVEOFF) <> KI_ERR_MOTION_DRIVEOFF) THEN
+      throw_error('Arm is in Drive Off or not in start state', KS_MAIN_LOG);
+      _si_error_state := _si_error_state OR KI_ERR_MOTION_DRIVEOFF
+      ERR_POST (43008, 'ROS trajectory sent in not-correct state (Drive on and start necessary)', 10)
+      ENABLE CONDITION[KI_COND_RESET]
+    ENDIF
+    _sb_reset_motion := TRUE
+    _sb_enable_robot := FALSE
+  ELSE
+    _sb_enable_robot := TRUE
+  ENDIF
+  
+  RETURN(TRUE)
+END receive_motion_message
+
+
+-- +---------------------------------------------------------+
+-- | Name: ru_restart_server                                 |
+-- | Description: Reconnection Server                        |
+-- +---------------------------------------------------------+
+ROUTINE ru_restart_server
+BEGIN
+  WRITE _vs_screen_lun (KS_MAIN_LOG, 'Restarting Arm Server ... ', NL)
+  DELAY 200
+  tcp_server_disconnect(vi_server_netlun, _vs_screen_lun, _si_verbose, KS_MAIN_LOG, KI_ID_HANDLER)
+  DELAY 200
+  vi_server_netlun := tcp_server_accept(vi_server_netlun, KI_LOCAL_PORT, _vs_screen_lun, _si_verbose, KS_MAIN_LOG, KI_ID_HANDLER)
+  ENABLE CONDITION[KI_COND_RESTART]
+END ru_restart_server
+  
+ROUTINE ru_reset_driveOffError
+BEGIN
+  _si_error_state := _si_error_state AND (NOT(KI_ERR_MOTION_DRIVEOFF))
+END ru_reset_driveOffError
+
+-- +---------------------------------------------------------+
+-- | Name: ru_restart_server                                 |
+-- | Description: Init CONDITION                             |
+-- +---------------------------------------------------------+
+ROUTINE ru_init_condition
+BEGIN
+  -- condition for conection control
+  CONDITION[KI_COND_RESTART] :
+    WHEN _vb_tcp_conn_handler = FALSE DO   -- if server connection is NOK
+      ru_restart_server  -- retry 
+  ENDCONDITION
+  ENABLE CONDITION[KI_COND_RESTART]
+
+  CONDITION[KI_COND_RESET] :
+    WHEN $GO[4]+ DO
+      ru_reset_driveOffError
+  ENDCONDITION
+END ru_init_condition
+
+
+  ------------------
+  ---- MAIN LOOP 
+  ------------------
+BEGIN
+  vb_comm_success  := TRUE       -- init communication status flag
+  vs_server_host   := $NET_L[1]  -- get IP from controller settings
+  vi_server_netlun := 0
+  vb_workspace_in  := TRUE
+  vs_errcode       := ''
+
+  -- Copyright printout should be included in all PDL programs
+  --WRITE _vs_screen_lun (NL, 'Copyright (c) 2020, Laboratory for Manufacturing Systems & Automation (LMS) - University of Patras', NL)
+  WRITE _vs_screen_lun (NL, '------', NL, 'Motion Server starting... ', NL)
+
+  -- Initialize parameters
+  vs_motion_type := 'N'
+  t_msg_id       := 0
+
+  -- Initialize conditions for restarting
+  ru_init_condition
+  $DV_TOUT := 0
+
+  WRITE _vs_screen_lun (KS_MAIN_LOG, 'Server Address : ', vs_server_host, NL)
+  WRITE _vs_screen_lun (KS_MAIN_LOG, 'Server Port    :', KI_LOCAL_PORT, NL)
+  WRITE _vs_screen_lun (KS_MAIN_LOG, 'Waiting for connections...', NL)
+  vi_server_netlun := tcp_server_accept(vi_server_netlun, KI_LOCAL_PORT, _vs_screen_lun, _si_verbose, KS_MAIN_LOG, KI_ID_HANDLER)
+  WRITE _vs_screen_lun (KS_MAIN_LOG, 'Starting cycle...', NL)
+
+  REPEAT
+
+    -- Receive command
+    vb_comm_success := receive_motion_message
+    IF vb_comm_success = FALSE THEN
+      throw_error('Receive arm 1 motion command failed', KS_MAIN_LOG)
+      _vb_tcp_conn_handler := FALSE -- Try to reconnect
+      DELAY 100
+    ENDIF
+
+  UNTIL _sb_shutdown   -- Main loop
+
+  WRITE _vs_screen_lun (KS_MAIN_LOG, 'Connection closed.', NL)
+  DELAY 500
+  CLOSE FILE vi_server_netlun
+  
+END motion_server

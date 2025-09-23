@@ -1,0 +1,426 @@
+PROGRAM arm1_handler &PA, HOLD, PROG_ARM = 1, PRIORITY = 5, STACK = 10003
+  ---------------------------------------------------------------
+  --- Author: Comau Robotics S.p.A.                                    
+  --- Brief: Robot Arm handler server for handling motion commands for robot 1 
+  --- over TCP/IP communication  
+  --
+  --  BSD 2-Clause License
+  ---------------------------------------------------------------
+CONST
+  KI_LOCAL_PORT   = 1101                -- TCP server "listening" port (local to the server)
+  KS_MAIN_LOG     = '[ARM1_SERVER ] '   -- Name for main loop used in _vs_screen_lun 
+  KI_ARM_NUM      =  1                  -- PROG_ARM constant
+  KI_COND_RESTART = 74                  -- Condition number for restarting tcp/ip connection
+  KI_COND_RESET   =  1                  -- Condition number for resetting motion
+  KI_COND_LOCK    =  2                  -- Condition number for locking the arm
+  KI_COND_UNLOCK  =  3                  -- Condition number for unlocking the arm
+  KI_COND_CANCEL  =  4
+  KI_NUM_JNT      =  6
+  KI_NUM_CMP      =  6
+  -- Error values
+  KI_ERR_NULL               = 0x00000 -- Null error
+  KI_ERR_STATE_ACCEPT       = 0x00001 -- State  Server  error 15470 : Address already in use
+  KI_ERR_ROBOT_ACCEPT       = 0x00002 -- Robot  Server  error 15470 : Address already in use
+  KI_ERR_HANDLER_ACCEPT     = 0x00004 -- Motion Handler error 15470 : Address already in use
+  KI_ERR_STATE_WRITE        = 0x00008 -- State  Server  error 40033 : Error 15474 in write
+  KI_ERR_ROBOT_READ_NCON    = 0x00010 -- Robot  Server  error 39990 : Error 15467 in read
+  KI_ERR_HANDLER_READ_NCON  = 0x00020 -- Motion Handler error 39990 : Error 15467 in read
+  KI_ERR_ROBOT_READ_DCON    = 0x00040 -- Robot  Server  error 39990 : Error 15468 in read
+  KI_ERR_HANDLER_READ_DCON  = 0x00080 -- Motion Handler error 39990 : Error 15468 in read
+  KI_ERR_ROBOT_READ_CANC    = 0x00100 -- Robot  Server  error 39991 
+  KI_ERR_HANDLER_READ_CANC  = 0x00200 -- Motion Handler error 39991 
+  KI_ERR_ROBOT_READ_TOUT    = 0x00400 -- Robot  Server  error 39992 
+  KI_ERR_HANDLER_READ_TOUT  = 0x00800 -- Motion Handler error 39992 
+  KI_ERR_STATE_DISCONNECT   = 0x01000 -- State  Server  error 30767 
+  KI_ERR_ROBOT_DISCONNECT   = 0x02000 -- Robot  Server  error 30767 
+  KI_ERR_HANDLER_DISCONNECT = 0x04000 -- Motion Handler error 30767
+  KI_ERR_STATE_SAFETY_GATE  = 0x08000 -- Safety Gate / External Emergency Stop 
+  KI_ERR_STATE_WRONG_MOTION = 0x10000 -- Program Execution Errors (36864-37191) 
+  -- Progs ID 
+  KI_ID_STATE   = 1
+  KI_ID_ROBOT   = 2
+  KI_ID_HANDLER = 3
+
+TYPE
+  ---------------------------------------------------------------
+  --- Node: JOINT_NODE
+  --- Brief: Structure for describing an joint value . 
+  ---------------------------------------------------------------
+  JOINT_NODE = NODEDEF
+    $MAIN_JNTP FOR ARM[1]
+    $MOVE_TYPE -- JOINT, LINEAR,  CIRCULAR, SEG_VIA (for defining the VIA node)
+    $SEG_OVR
+  ENDNODEDEF
+  ---------------------------------------------------------------
+  --- Node: POSE_NODE
+  --- Brief: Structure for describing an position value . 
+  ---------------------------------------------------------------
+  POSE_NODE = NODEDEF
+    $MAIN_POS
+    $LIN_SPD
+    $MOVE_TYPE -- JOINT, LINEAR,  CIRCULAR, SEG_VIA (for defining the VIA node)
+    $SPD_EMT
+    $SEG_OVR
+  ENDNODEDEF
+
+
+VAR
+  -- Shared variables
+  _ss_state            : STRING[1] EXPORTED FROM pdl_tcp_functions NOSAVE -- Shared variable for showing the status (TERMINATE:T, READY:R, MOVING:M, CANCELING:C, SUCCEEDED:S, ERROR:E)
+  _sb_shutdown         : BOOLEAN   EXPORTED FROM pdl_tcp_functions NOSAVE -- shared variable for stopping the program
+  _sb_enable_robot     : BOOLEAN   EXPORTED FROM pdl_tcp_functions NOSAVE -- Shared variable to show that the robot is allowed to move 
+  _sb_reset_motion     : BOOLEAN   EXPORTED FROM pdl_tcp_functions NOSAVE -- Shared flag to cancel the motion and then reset
+  _sb_cancel_motion    : BOOLEAN   EXPORTED FROM pdl_tcp_functions NOSAVE -- Shared flag to cancel the motion and then reset
+  _sb_lock_robot       : BOOLEAN   EXPORTED FROM pdl_tcp_functions NOSAVE -- Shared flag to lock the arm
+  _sb_unlock_robot     : BOOLEAN   EXPORTED FROM pdl_tcp_functions NOSAVE -- Shared flag to unlock the arm
+  _si_verbose          : INTEGER   EXPORTED FROM pdl_tcp_functions NOSAVE -- Level of logging
+  _vs_screen_lun       : INTEGER   EXPORTED FROM pdl_tcp_functions NOSAVE -- Output screen identifier
+  _vb_first_sns_trk    : BOOLEAN   EXPORTED FROM pdl_tcp_functions NOSAVE
+  _si_error_state      : INTEGER   EXPORTED FROM pdl_tcp_functions NOSAVE -- Error state variable
+  _vb_tcp_conn_handler : BOOLEAN   EXPORTED FROM pdl_tcp_functions NOSAVE
+  _si_delay_change_sts : INTEGER   EXPORTED FROM pdl_tcp_functions NOSAVE
+
+  -- Shared variables for sensor tracking configuration
+  _si_sensor_type           : INTEGER EXPORTED FROM pdl_tcp_functions NOSAVE  -- The mode of Sensor Tracking     
+  _si_sensor_cnvrsn         : INTEGER EXPORTED FROM pdl_tcp_functions NOSAVE  -- Convert the values to millimeters : default 1
+  _si_sensor_gain           : INTEGER EXPORTED FROM pdl_tcp_functions NOSAVE  -- Percentage value that define the speed to be used for the corrections : default 100
+  _si_sensor_time           : INTEGER EXPORTED FROM pdl_tcp_functions NOSAVE  -- period in which the corrections must be applied default : 0ms
+  _si_sensor_ofst_lim_trans : INTEGER EXPORTED FROM pdl_tcp_functions NOSAVE  -- Maximum translational offset default 500
+  _si_sensor_ofst_lim_rot   : INTEGER EXPORTED FROM pdl_tcp_functions NOSAVE  -- Maximum rotational offset default 800
+
+  -- Global variables 
+  vs_server_host          : STRING[100]    ('0.0.0.0')NOSAVE     -- Server IP address
+  vi_server_netlun        : INTEGER                (0)NOSAVE     -- TCP socket identifier
+  vb_comm_success         : BOOLEAN             (TRUE)NOSAVE     -- Communication status flag
+  vi_ti                   : INTEGER                (0)NOSAVE
+  vs_motion_type          : STRING[1]                 EXPORTED FROM motion_server NOSAVE  -- Motion Type
+  va_sns_trk_corr         : ARRAY[KI_NUM_CMP] OF REAL EXPORTED FROM motion_server NOSAVE  -- Sensor Tracking Corrections
+  va_sns_trk_ofst         : ARRAY[KI_NUM_CMP] OF REAL EXPORTED FROM motion_server NOSAVE  -- Sensor Tracking Offsets
+  vp_joint_trajectory     : PATH of JOINT_NODE        EXPORTED FROM motion_server NOSAVE  -- joint trajectory that will be executed  
+  vp_cartesian_trajectory : PATH of POSE_NODE         EXPORTED FROM motion_server NOSAVE  -- pose trajectory that will be executed   
+  -- For Movefly
+  vj_joint_pos            : JOINTPOS FOR ARM[KI_ARM_NUM]  EXPORTED FROM motion_server -- Goal JointPos
+  vr_lin_spd              : REAL                 (0.0)NOSAVE
+  vr_fly_dist             : REAL                 (0.0)NOSAVE
+  -- tcp/ip msg id
+  t_msg_id                : INTEGER                (0)NOSAVE
+  -- Check move workspace
+  vs_errcode              : STRING[50]                NOSAVE
+  vb_workspace_in         : BOOLEAN                   EXPORTED FROM motion_server NOSAVE  -- Workspace check for all moves 
+
+  -- Declaration of shared functions 
+ROUTINE throw_error(error_msg, vs_main_log : STRING) EXPORTED FROM pdl_tcp_functions
+
+  --------------------------------------------------------------------
+  --- Routine: clear_joint_trajectory
+  --- Brief: Deletes all points from the shared PATH variable vp_joint_trajectory
+  --------------------------------------------------------------------
+ROUTINE clear_joint_trajectory
+BEGIN
+  IF PATH_LEN(vp_joint_trajectory) > 0 THEN
+    NODE_DEL(vp_joint_trajectory, 1, PATH_LEN(vp_joint_trajectory))
+  ENDIF
+END clear_joint_trajectory
+
+  --------------------------------------------------------------------
+  --- Routine: clear_cartesian_trajectory
+  --- Brief: Deletes all points from the shared PATH variable vp_cartesian_trajectory
+  --------------------------------------------------------------------
+ROUTINE clear_cartesian_trajectory
+BEGIN
+  IF PATH_LEN(vp_cartesian_trajectory) > 0 THEN
+    NODE_DEL(vp_cartesian_trajectory, 1, PATH_LEN(vp_cartesian_trajectory))
+  ENDIF
+END clear_cartesian_trajectory
+
+  ---------------------------------------------------------------
+  --- Routine: set_succeeded_state
+  --- Brief: Sets the Robot briefly into a succeded state and reset's it 
+  ---------------------------------------------------------------
+ROUTINE set_succeeded_state
+BEGIN
+  IF _ss_state = 'M' THEN
+    LOCK ARM[KI_ARM_NUM]
+    CANCEL ALL FOR ARM[KI_ARM_NUM]
+    UNLOCK ARM[KI_ARM_NUM]
+    RESUME ARM[KI_ARM_NUM]
+    clear_joint_trajectory
+    clear_cartesian_trajectory
+    _ss_state := 'S'
+    DELAY _si_delay_change_sts
+		
+    _sb_enable_robot := FALSE
+    IF _si_verbose = 1 THEN
+      WRITE _vs_screen_lun (KS_MAIN_LOG, 'Robot motion succeeded ready to receive new command.', NL)
+    ENDIF
+  ENDIF
+END set_succeeded_state
+
+  --------------------------------------------------------------------
+  --- Routine: reset_motion
+  --- Brief: Cancels the existing motion and resets
+  --------------------------------------------------------------------
+ROUTINE reset_motion
+VAR t_i : INTEGER
+BEGIN
+  -- LOCK ARM[KI_ARM_NUM]
+  -- CANCEL ALL FOR ARM[KI_ARM_NUM]
+  -- UNLOCK ARM[KI_ARM_NUM]
+  RESUME ARM[KI_ARM_NUM]
+  clear_joint_trajectory
+  clear_cartesian_trajectory
+  $SENSOR_TYPE := 0
+  $SENSOR_ENBL := FALSE
+  FOR t_i :=1 TO KI_NUM_CMP DO
+    va_sns_trk_corr[t_i] := 0
+    va_sns_trk_ofst[t_i] := 0
+  ENDFOR
+
+  IF _si_verbose = 1 THEN
+    WRITE _vs_screen_lun (KS_MAIN_LOG, 'Robot Reset Complete', NL)
+  ENDIF
+  _sb_reset_motion  := FALSE
+  --_sb_enable_robot  := TRUE
+  ENABLE CONDITION[KI_COND_RESET]
+END reset_motion
+
+  --------------------------------------------------------------------
+  --- Routine: cancel_motion
+  --- Brief: Cancels the existing motion and resets
+  --------------------------------------------------------------------
+ROUTINE cancel_motion
+VAR t_i : INTEGER
+BEGIN
+  LOCK ARM[KI_ARM_NUM]
+  CANCEL ALL FOR ARM[KI_ARM_NUM]
+  UNLOCK ARM[KI_ARM_NUM]
+  RESUME ARM[KI_ARM_NUM]
+  clear_joint_trajectory
+  clear_cartesian_trajectory
+  $SENSOR_TYPE := 0
+  $SENSOR_ENBL := FALSE
+  FOR t_i :=1 TO KI_NUM_CMP DO
+    va_sns_trk_corr[t_i] := 0
+    va_sns_trk_ofst[t_i] := 0
+  ENDFOR
+
+  IF _si_verbose = 1 THEN
+    WRITE _vs_screen_lun (KS_MAIN_LOG, 'Robot Cancel Complete', NL)
+  ENDIF
+  _sb_cancel_motion  := FALSE
+  ENABLE CONDITION[KI_COND_CANCEL]
+END cancel_motion
+
+  --------------------------------------------------------------------
+  --- Routine: lock_arm
+  --- Brief: Locks the arm without canceling the existing motion
+  --------------------------------------------------------------------
+ROUTINE lock_arm
+BEGIN
+  IF _si_verbose = 1 THEN 
+    WRITE _vs_screen_lun (KS_MAIN_LOG, 'Locking execution of the arm', NL)
+  ENDIF
+  _sb_enable_robot := FALSE
+  LOCK ARM[KI_ARM_NUM]
+  _ss_state := 'P'
+  DELAY _si_delay_change_sts
+  _sb_lock_robot := FALSE
+  ENABLE CONDITION[KI_COND_LOCK]
+END lock_arm
+
+  --------------------------------------------------------------------
+  --- Routine: resume_arm
+  --- Brief: Resumes and unlocks the arm placing it into a moving state.
+  --------------------------------------------------------------------
+ROUTINE resume_arm
+BEGIN
+  IF _si_verbose = 1 THEN 
+    WRITE _vs_screen_lun (KS_MAIN_LOG, 'Unlocking and resuming the arm', NL)
+  ENDIF
+  UNLOCK ARM[KI_ARM_NUM]
+  RESUME ARM[KI_ARM_NUM]
+  _ss_state := 'M'
+  _sb_enable_robot := TRUE
+  DELAY _si_delay_change_sts
+  _sb_unlock_robot := FALSE
+  ENABLE CONDITION[KI_COND_UNLOCK]
+END resume_arm
+
+-- +---------------------------------------------------------+
+-- | Name: ru_init_condition                                 |
+-- | Description: Init CONDITION                             |
+-- +---------------------------------------------------------+
+ROUTINE ru_init_condition
+BEGIN
+
+  CONDITION[KI_COND_RESET] :
+    WHEN _sb_reset_motion=TRUE DO
+      reset_motion
+  ENDCONDITION
+  ENABLE CONDITION[KI_COND_RESET]
+
+  CONDITION[KI_COND_CANCEL] :
+    WHEN _sb_cancel_motion=TRUE DO
+      cancel_motion
+  ENDCONDITION
+  ENABLE CONDITION[KI_COND_CANCEL]
+
+  -- Condition for locking the arm
+  CONDITION[KI_COND_LOCK] :
+    WHEN _sb_lock_robot=TRUE DO
+      lock_arm
+  ENDCONDITION
+  ENABLE CONDITION[KI_COND_LOCK]
+
+  -- Condition for unlocking the arm
+  CONDITION[KI_COND_UNLOCK] :
+    WHEN _sb_unlock_robot=TRUE DO
+      resume_arm
+  ENDCONDITION
+  ENABLE CONDITION[KI_COND_UNLOCK]
+END ru_init_condition
+
+  ------------------
+  ---- MAIN LOOP 
+  ------------------
+BEGIN
+ vb_comm_success  := TRUE       -- init communication status flag
+  vs_server_host   := $NET_L[1]  -- get IP from controller settings
+  vi_server_netlun := 0
+  vb_workspace_in  := TRUE
+  vs_errcode       := ''
+
+  -- Copyright printout should be included in all PDL programs
+  --WRITE _vs_screen_lun (NL, 'Copyright (c) 2020, Laboratory for Manufacturing Systems & Automation (LMS) - University of Patras', NL)
+  WRITE _vs_screen_lun (NL, '------', NL, 'Arm1 Handler Server starting... ', NL)
+
+  -- Initialize conditions for restarting
+  ru_init_condition
+
+  -- sensor tracking initialize parameters
+  $SENSOR_TYPE := 0   --External sensor in suspended
+  $SENSOR_ENBL := FALSE
+  SENSOR_TRK(TRUE, KI_ARM_NUM)
+  
+  -- Motion configuration - TODO Hardcoded
+  $TURN_CARE := TRUE   -- Check the configuration turns
+  $CNFG_CARE := FALSE
+
+  REPEAT
+
+    -- Execute command
+    IF _sb_enable_robot = TRUE THEN
+
+      -- Robot is moving
+      _ss_state := 'M'
+      WRITE _vs_screen_lun(KS_MAIN_LOG, "Moving! ", NL)
+      _sb_enable_robot := FALSE -- VE_ATTENTION
+      SELECT vs_motion_type OF 
+        CASE ('N'):
+          -- Initialization Case
+           IF _si_verbose = 1 THEN 
+             --WRITE _vs_screen_lun (KS_MAIN_LOG, 'Initialization Case, Do Nothing', NL)
+           ENDIF
+        CASE ('S'): -- SENSOR TRACKING Movement
+          IF _vb_first_sns_trk = TRUE THEN
+            IF _si_verbose = 1 THEN 
+              WRITE _vs_screen_lun (KS_MAIN_LOG, 'First Set Sensor Tracking Parameters', NL)
+            ENDIF
+            -- Sensor tracking parameters
+            FOR vi_ti := 1 TO KI_NUM_CMP DO
+              $SENSOR_CNVRSN[vi_ti] := _si_sensor_cnvrsn
+              $SENSOR_GAIN[vi_ti]   := _si_sensor_gain
+            ENDFOR
+            $SENSOR_TIME        := _si_sensor_time 
+            $SENSOR_OFST_LIM[1] := _si_sensor_ofst_lim_trans
+            $SENSOR_OFST_LIM[2] := _si_sensor_ofst_lim_rot
+            $SENSOR_ENBL := FALSE
+            -- Sensor type to 0 and back to _si_sensor_type
+            -- Resets the origin position for absolute corrections
+            $SENSOR_TYPE := 0
+            DELAY 50
+            $SENSOR_TYPE := _si_sensor_type
+            $SENSOR_ENBL := TRUE
+            _vb_first_sns_trk := FALSE
+            DELAY 50
+            -- !! Does not reset position for absolute sensor tracking
+            --$SENSOR_ENBL := FALSE
+            --SENSOR_TRK(FALSE, KI_ARM_NUM)
+            --DELAY 100
+            --SENSOR_TRK(TRUE, KI_ARM_NUM)
+            --$SENSOR_ENBL := TRUE
+          ENDIF
+          SENSOR_SET_DATA(va_sns_trk_corr, KI_ARM_NUM)
+          SENSOR_GET_OFST(va_sns_trk_ofst, KI_ARM_NUM)
+          DELAY 1
+        CASE('T'):
+          $SENSOR_ENBL := FALSE
+          $SENSOR_TYPE := 0
+          DELAY 40
+          IF PATH_LEN(vp_joint_trajectory) > 0 THEN
+            MOVE ALONG vp_joint_trajectory,
+            -- WITH $SEG_FLY = TRUE
+            -- WITH $LIN_SPD=sp_trajectory.NODE[1].$LIN_SPD, $SPD_EMT=SPD_LIN
+            ENDMOVE
+            IF (vb_workspace_in) THEN
+              set_succeeded_state
+            ENDIF
+          ENDIF
+					IF PATH_LEN(vp_joint_trajectory) = 0 THEN
+					   DELAY 5000
+					  _ss_state := 'R'   -- Turns again to ready 
+					ENDIF
+          IF (vb_workspace_in = FALSE) THEN
+            vb_workspace_in := TRUE
+            ENCODE(vs_errcode, PATH_LEN(vp_joint_trajectory)+1)
+            vs_errcode := STR_CAT(vs_errcode, 'th node is out of workspace')
+            throw_error(vs_errcode, KS_MAIN_LOG)
+          ENDIF
+        CASE('C'):
+          $SENSOR_ENBL := FALSE
+          $SENSOR_TYPE := 0
+          DELAY 40
+          IF PATH_LEN(vp_cartesian_trajectory) > 0 THEN
+            MOVE ALONG vp_cartesian_trajectory,
+            -- WITH $SEG_FLY = TRUE
+            -- WITH $LIN_SPD=sp_trajectory.NODE[1].$LIN_SPD, $SPD_EMT=SPD_LIN
+            ENDMOVE
+            IF (vb_workspace_in) THEN
+              set_succeeded_state
+            ENDIF
+          ENDIF
+					IF PATH_LEN(vp_cartesian_trajectory) = 0 THEN
+					  DELAY 5000
+					  _ss_state := 'R'   -- Turns again to ready 
+					ENDIF
+          IF (vb_workspace_in = FALSE) THEN
+            vb_workspace_in := TRUE
+            ENCODE(vs_errcode, PATH_LEN(vp_cartesian_trajectory)+1)
+            vs_errcode := STR_CAT(vs_errcode, 'th node is out of workspace')
+            throw_error(vs_errcode, KS_MAIN_LOG)
+          ENDIF
+        CASE ('F'): -- MOVEFLY
+          $SENSOR_ENBL := FALSE
+          $SENSOR_TYPE := 0
+          IF (vb_workspace_in = FALSE) THEN
+            vb_workspace_in := TRUE
+            throw_error('Node out of workspace.', KS_MAIN_LOG)
+          ELSE
+            MOVEFLY ARM[KI_ARM_NUM] LINEAR TO vj_joint_pos ADVANCE,
+              WITH $FLY_TYPE = FLY_CART, $MOVE_TYPE = LINEAR, $FLY_TRAJ = FLY_TOL, $STRESS_PER = 50, $FLY_DIST = vr_fly_dist,
+              WITH $TERM_TYPE = COARSE, $TOL_COARSE = 1, $LIN_SPD = vr_lin_spd
+            ENDMOVE  
+            DELAY 1
+          ENDIF
+        ELSE:
+          WRITE _vs_screen_lun (KS_MAIN_LOG, 'Wrong Motion Type: ', vs_motion_type, ' Keep going..', NL)
+      ENDSELECT
+    ENDIF
+    DELAY ROUND(1 / 50 * 1000)
+  
+  UNTIL _sb_shutdown   -- Main loop
+
+  WRITE _vs_screen_lun (KS_MAIN_LOG, 'Connection closed.', NL)
+  DELAY 500 
+  
+END arm1_handler

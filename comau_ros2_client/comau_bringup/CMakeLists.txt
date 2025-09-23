@@ -1,3 +1,5 @@
+# Copyright 2024 Comau Robotics S.p.A.
+
 cmake_minimum_required(VERSION 3.8)
 project(comau_bringup)
 
@@ -15,41 +17,24 @@ find_package(rclcpp REQUIRED)
 find_package(aura_description REQUIRED)
 find_package(nj4-110_description REQUIRED)
 find_package(nj4-170-29_description REQUIRED)
+find_package(nj-165-30_description REQUIRED)
 find_package(nj130-26_description REQUIRED)
 find_package(nj220_description REQUIRED)
 find_package(racer5-0-80_description REQUIRED)
-find_package(racer5-0-80_description REQUIRED)
+find_package(racer5-cobot_description REQUIRED)
 find_package(racer5-cobot-rail_description REQUIRED)
 find_package(racer7-14_description REQUIRED)
-
-add_library(
-    ${PROJECT_NAME}
-    SHARED
-    src/yaml_config_params.cpp)
+find_package(nj60_description REQUIRED)
 
 install(
-  DIRECTORY 
-    src
+  DIRECTORY
     config
     launch 
    # test
   DESTINATION share/${PROJECT_NAME})
 
-# necessario per compilazione 	        
-ament_target_dependencies( 
-  ${PROJECT_NAME} 
-  rclcpp) 
-
-
-add_executable(load_param_node src/yaml_config_params.cpp)
-ament_target_dependencies(load_param_node rclcpp) 
-
-
-install(TARGETS
-load_param_node
-  DESTINATION lib/${PROJECT_NAME})
 ament_export_dependencies(   
-  rclcpp) 
+  rclcpp)
 
 
 if(BUILD_TESTING)

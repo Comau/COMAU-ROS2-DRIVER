@@ -4,8 +4,9 @@
   <version>0.1.0</version>
   <description>The comau_msgs package</description>
 
-  <author>Laboratory for Manufacturing Systems and Automation (LMS) - University of Patras</author>
-  <maintainer email="lmsgit@lms.mech.upatras.gr">Laboratory for Manufacturing Systems and Automation (LMS) - University of Patras</maintainer>
+  <author>Comau Robotics S.p.A</author>
+  <maintainer email="andrea.perica@comau.com">Comau Robotics S.p.A.</maintainer>
+  <maintainer email="giulia.nicastro@external.comau.com">Comau Robotics S.p.A.</maintainer>
 
   <license>BSD-2-Clause</license>
 

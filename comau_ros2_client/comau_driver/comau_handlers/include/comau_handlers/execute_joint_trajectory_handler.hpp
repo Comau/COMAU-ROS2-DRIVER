@@ -1,11 +1,11 @@
 /**
- * @file execute_joint_trajectory_handler.h
- * @author Laboratory for Manufacturing Systems & Automation (LMS) - University of Patras
- * @brief The ROS node that publishes the robot information
- * @version 0.1
- * @date 25-02-2020
+ * @file execute_joint_trajectory_handler.hpp
+ * @author Comau Robotics S.p.A.
+ * @brief The ROS2 node that publishes the joint trajectory action
+ * @version 1.0
+ * @date 02/07/2024
  *
- * @copyright (c) 2020 Laboratory for Manufacturing Systems & Automation (LMS) - University of Patras
+ * @copyright (c) Comau Robotics S.p.A.
  *
  */
 
@@ -29,6 +29,8 @@
 #include <joint_limits/joint_limits.hpp>
 #include <joint_limits/joint_limits_rosparam.hpp>
 #include <urdf/model.h>
+#include <string>
+#include <map>
 
 // msgs
 #include <comau_msgs/msg/action_result_status_constants.hpp>

@@ -1,0 +1,28 @@
+# Copyright 2024 Comau Robotics S.p.A.
+
+#Parameters for connecting with virtual robot at Roboshop
+execute_trajectory_handler_node:
+  ros__parameters:
+    loop_hz: 50.0
+    cycle_time_error_threshold: 0.025
+    parallel_joint_fix: false      # true if the robot is with parallelogram
+    use_arm1_server: true
+    use_robot_server: true
+    use_state_server: true
+    verbose: true
+    robot_ip: "192.168.56.2"      # this the the IP of the Robot
+    arm1_server_port: "1101"      # the port of TCP for Arm1 server
+    state_server_port: "1104"     # the port of TCP state server
+    robot_server_port: "1105"     # the port of TCP robot/executor server
+    default_linear_velocity: 1.0
+    din_pins: [-1, -1, -1, -1, -1, -1]
+    dout_pins: [-1, -1, -1, -1, -1, -1]
+    fly_dist: 5.0
+    fly_lin_velocity: 0.2
+    sensor_cnvrsn: 1
+    sensor_gain: 100
+    sensor_ofst_lim_rot: 800
+    sensor_ofst_lim_trans: 500
+    sensor_time: 0
+    sensor_type: 10
+    threshold: 0.2

@@ -1,11 +1,13 @@
 <?xml version="1.0"?>
-<package format="2">
+<package format="3">
   <name>racer5-cobot_description</name>
   <version>1.1.0</version>
   <description>The racer5-cobot_description package</description>
 
-  #<author>Laboratory for Manufacturing Systems and Automation (LMS) - University of Patras</author>
-  #<maintainer email="lmsgit@lms.mech.upatras.gr">Laboratory for Manufacturing Systems and Automation (LMS) - University of Patras</maintainer>
+  <author>Comau Robotics S.p.A</author>
+  <maintainer email="andrea.perica@comau.com">Comau Robotics S.p.A.</maintainer>
+  <maintainer email="giulia.nicastro@external.comau.com">Comau Robotics S.p.A.</maintainer>
+
   <license>BSD-2-Clause</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>  

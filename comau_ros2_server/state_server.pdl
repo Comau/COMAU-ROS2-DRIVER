@@ -1,0 +1,417 @@
+PROGRAM state_server &PA, NOHOLD, STACK = 10000
+  ---------------------------------------------------------------
+  --- Author: Comau Robotics S.p.A.                                    
+  --- Brief: Robot Arm handler server for handling motion commands for robot 1 
+  --- over TCP/IP communication  
+  --
+  --  BSD 2-Clause License
+  ---------------------------------------------------------------
+CONST
+  KI_LOCAL_PORT      = 1104              -- TCP server "listening" port (local to the server)
+  KS_MAIN_LOG        = '[STATE_SERVER]' -- Name for main loop used in LUN_CRT 
+  KI_ARM_NUM         =  1                -- PROG_ARM constant
+  KI_COND_RESTART    = 72
+  KI_COND_SAFETYGATE =  4
+  KI_COND_ERR_PROG   =  5
+  KI_COND_RESET      = 73
+  KI_MAX_NUM_IO      =  6
+  KI_NUM_JNT         =  10
+  KI_NUM_CMP         =  6
+  -- Error values
+  KI_ERR_NULL               = 0x00000 -- Null error
+  KI_ERR_STATE_ACCEPT       = 0x00001 -- State  Server  error 15470 : Address already in use
+  KI_ERR_ROBOT_ACCEPT       = 0x00002 -- Robot  Server  error 15470 : Address already in use
+  KI_ERR_HANDLER_ACCEPT     = 0x00004 -- Motion Handler error 15470 : Address already in use
+  KI_ERR_STATE_WRITE        = 0x00008 -- State  Server  error 40033 : Error 15474 in write
+  KI_ERR_ROBOT_READ_NCON    = 0x00010 -- Robot  Server  error 39990 : Error 15467 in read
+  KI_ERR_HANDLER_READ_NCON  = 0x00020 -- Motion Handler error 39990 : Error 15467 in read
+  KI_ERR_ROBOT_READ_DCON    = 0x00040 -- Robot  Server  error 39990 : Error 15468 in read
+  KI_ERR_HANDLER_READ_DCON  = 0x00080 -- Motion Handler error 39990 : Error 15468 in read
+  KI_ERR_ROBOT_READ_CANC    = 0x00100 -- Robot  Server  error 39991 
+  KI_ERR_HANDLER_READ_CANC  = 0x00200 -- Motion Handler error 39991 
+  KI_ERR_ROBOT_READ_TOUT    = 0x00400 -- Robot  Server  error 39992 
+  KI_ERR_HANDLER_READ_TOUT  = 0x00800 -- Motion Handler error 39992 
+  KI_ERR_STATE_DISCONNECT   = 0x01000 -- State  Server  error 30767 
+  KI_ERR_ROBOT_DISCONNECT   = 0x02000 -- Robot  Server  error 30767 
+  KI_ERR_HANDLER_DISCONNECT = 0x04000 -- Motion Handler error 30767
+  KI_ERR_STATE_SAFETY_GATE  = 0x08000 -- Safety Gate / External Emergency Stop 
+  KI_ERR_STATE_WRONG_MOTION = 0x10000 -- Program Execution Errors (36864-37191) 
+  KI_ERR_ROBOT_ALARM        = 0x20000 -- Sys state in alarm at restarting
+  KI_ERR_MOTION_DRIVEOFF    = 0x40000 -- Ask motion in drive off
+
+  -- Progs ID 
+  KI_ID_STATE   = 1
+  KI_ID_ROBOT   = 2
+  KI_ID_HANDLER = 3
+
+TYPE
+  ---------------------------------------------------------------
+  --- Record: STATE_MESSAGE_TYPE
+  --- Brief: Structure for describing the state message. 
+  ---------------------------------------------------------------
+  STATE_MESSAGE_TYPE = RECORD
+    timestamp      : INTEGER                           -- UNIX Timestamp as returned from CLOCK Built-In Function (11.41 pdl manual)
+    robot_status   : STRING[1]                         -- Current status of the robot (TERMINATE:T, READY:R, PAUSED:P, RESUMING:I, MOVING:M, CANCELING:C, SUCCEEDED:S, ERROR:E)
+    sts_selector   : INTEGER                           -- State selector key (operation mode): 1: T1, 2: AUTO, 3: REMOTE
+    sensor_type    : INTEGER                           -- Current sensor type 
+    joint_position : ARRAY[KI_NUM_JNT] OF REAL         -- The value of each joint in degrees as returned from ARM_JNTP function
+    ee_position    : ARRAY[KI_NUM_CMP] OF REAL         -- The value of the End Effector Position as an array
+    pins_in        : ARRAY[KI_MAX_NUM_IO]  OF INTEGER  -- The DIN pin numbers as an array
+    states_in      : ARRAY[KI_MAX_NUM_IO]  OF INTEGER  -- The DIN states as an array
+    pins_out       : ARRAY[KI_MAX_NUM_IO]  OF INTEGER  -- The DOUT pin numbers as an array
+    states_out     : ARRAY[KI_MAX_NUM_IO]  OF INTEGER  -- The DOUT states as an array
+    error_value    : INTEGER                           -- Error values to client
+    num_joints     : INTEGER                           -- Number of controlled joints
+    jnt_type       : ARRAY[KI_NUM_JNT] OF INTEGER      -- ARRAY FOR JOINT TYPE
+  ENDRECORD
+
+VAR
+  -- Shared variables
+  _ss_state          : STRING[1] EXPORTED FROM pdl_tcp_functions NOSAVE  -- Shared variable for showing the status (TERMINATE:T, READY:R, PAUSED:P, RESUMING:I, MOVING:M, CANCELING:C, SUCCEEDED:S, ERROR:E)
+  _sb_shutdown       : BOOLEAN   EXPORTED FROM pdl_tcp_functions NOSAVE  -- Shared variable to sb_shutdown pdl program
+  _si_verbose        : INTEGER   EXPORTED FROM pdl_tcp_functions NOSAVE  -- Level of logging
+  _vs_screen_lun     : INTEGER   EXPORTED FROM pdl_tcp_functions NOSAVE  -- Output screen identifier
+  _sb_robot_init     : BOOLEAN   EXPORTED FROM pdl_tcp_functions NOSAVE  -- Shared variable indicating the robot is initialized
+  _si_sensor_type    : INTEGER   EXPORTED FROM pdl_tcp_functions NOSAVE  -- Shared variable showing the current sensor type
+  _si_error_state    : INTEGER   EXPORTED FROM pdl_tcp_functions NOSAVE  -- Error state variable
+  _vb_tcp_conn_state : BOOLEAN   EXPORTED FROM pdl_tcp_functions NOSAVE
+  _si_delay_change_sts : INTEGER EXPORTED FROM pdl_tcp_functions NOSAVE
+  _si_publish_freq   : INTEGER   EXPORTED FROM pdl_tcp_functions NOSAVE -- The frequency in Hz that will publish the state message. 25 Hz is ideal for real robot communication.
+
+  _ai_din_pins       : ARRAY[KI_MAX_NUM_IO] OF INTEGER EXPORTED FROM pdl_tcp_functions NOSAVE -- Shared variable for DIN pin numbers
+  _ai_dout_pins      : ARRAY[KI_MAX_NUM_IO] OF INTEGER EXPORTED FROM pdl_tcp_functions NOSAVE -- Shared variable for DOUT pin numbers
+
+  -- Global variables 
+  vs_server_host   : STRING[100] ('0.0.0.0')NOSAVE     -- Server IP address
+  vi_server_netlun : INTEGER             (0)NOSAVE     -- TCP socket identifier
+  vb_comm_success  : BOOLEAN          (TRUE)NOSAVE     -- Communication status flag
+  state_message    : STATE_MESSAGE_TYPE     NOSAVE     -- The state message that will be published
+  vi_ti            : INTEGER             (0)NOSAVE
+  vr_strk_dist     : REAL              (0.0)NOSAVE     -- distance to strok-end value (joint degree)
+  ai_jnt_type      : ARRAY[KI_NUM_JNT] OF INTEGER      -- ARRAY FOR JOINT TYPE
+
+  -- Declaration of shared functions 
+ROUTINE tcp_server_accept(netlun, port, screenlun, verbose: INTEGER; log_tag: STRING; si_prog_id: INTEGER) : INTEGER EXPORTED FROM pdl_tcp_functions
+ROUTINE tcp_server_disconnect(netlun, screenlun, verbose: INTEGER; log_tag: STRING; si_prog_id: INTEGER) EXPORTED FROM pdl_tcp_functions
+ROUTINE throw_error(error_msg, vs_main_log : STRING) EXPORTED FROM pdl_tcp_functions
+ROUTINE throw_collision(error_msg, vs_main_log : STRING) EXPORTED FROM pdl_tcp_functions GLOBAL
+ROUTINE close_state_tcp EXPORTED FROM state_server
+
+  --------------------------------------------------------------------
+  --- Routine: close_state_tcp
+  --- Brief: Dsiconnects the tcp socket
+  --------------------------------------------------------------------
+ROUTINE close_state_tcp
+BEGIN
+   tcp_server_disconnect((vi_server_netlun), _vs_screen_lun, _si_verbose, KS_MAIN_LOG, KI_ID_STATE)
+END close_state_tcp
+
+  --------------------------------------------------------------------
+  --- Routine: check_strk_end
+  --- Brief: Check if the actual robot pose is inside the stroke-end values
+  --------------------------------------------------------------------
+ROUTINE check_strk_end(jntp : REAL; ti_i : INTEGER) : BOOLEAN
+BEGIN
+   if((jntp > $STRK_END_N[ti_i]) AND (jntp < $STRK_END_P[ti_i])) THEN
+    RETURN(TRUE)
+   ENDIF
+   RETURN(FALSE)
+END check_strk_end
+
+  ---------------------------------------------------------------
+  --- Routine: publish_state_message
+  --- Brief: Collects and sends the status information 
+  ---------------------------------------------------------------
+ROUTINE publish_state_message : BOOLEAN
+VAR
+  t_jntp           : JOINTPOS
+  t_i              : INTEGER
+  ee_pos           : POSITION
+  ee_pos_rpy       : POSITION
+  roll, pitch, yaw : REAL
+
+BEGIN
+
+  state_message.timestamp    := CLOCK
+  state_message.robot_status := _ss_state
+  state_message.error_value  := _si_error_state
+
+  -- Publish the sensor type
+  state_message.sensor_type  := _si_sensor_type
+  state_message.sts_selector := 0
+  IF (BIT_TEST($SYS_STATE, 15, ON)) THEN
+    state_message.sts_selector := state_message.sts_selector OR 0x2 -- T1
+  ELSE
+    IF (BIT_TEST($SYS_STATE, 16, ON)) THEN
+      state_message.sts_selector := state_message.sts_selector OR 0x1 -- AUTO
+    ELSE
+      IF (BIT_TEST($SYS_STATE, 14, ON)) THEN
+        state_message.sts_selector := state_message.sts_selector OR 0x4 -- REMOTE
+      ENDIF
+    ENDIF
+  ENDIF
+  IF (BIT_TEST($SYS_STATE, 31, OFF)) THEN
+    state_message.sts_selector := state_message.sts_selector OR 0x8 -- DRIVE ON
+  ENDIF 
+  IF (BIT_TEST($SYS_STATE, 26, ON)) THEN
+    state_message.sts_selector := state_message.sts_selector OR 0x10 -- START
+  ENDIF
+
+  t_jntp := ARM_JNTP(KI_ARM_NUM)
+  FOR t_i := 1 TO $LAST_JNT_AXIS DO
+    state_message.joint_position[t_i] := t_jntp[t_i] -- The feedback always contains the correct joint value
+    -- If the strok-end is reached, the value is cottected by vr_strk_dist to avoid POS_GET_RPY error.
+    IF (check_strk_end(t_jntp[t_i],t_i) = FALSE) THEN
+      IF(t_jntp[t_i] <> 0) THEN
+        t_jntp[t_i] := t_jntp[t_i] - vr_strk_dist*(t_jntp[t_i]/ABS(t_jntp[t_i]))
+      ELSE
+        IF ($ARM_DATA[1].A_ALONG_2D[2,t_i] = 1) THEN -- Linear joint
+          t_jntp[t_i] := t_jntp[t_i] + vr_strk_dist*0.1
+        ELSE  -- Revolute joint
+          t_jntp[t_i] := t_jntp[t_i] + vr_strk_dist
+        ENDIF
+      ENDIF
+    ENDIF
+  ENDFOR
+  
+  -- The ros tool_controller frame orientation is fixed now (extra transformation on ros side)
+  JNTP_TO_POS(t_jntp, ee_pos)
+  POS_GET_RPY(ee_pos, roll, pitch, yaw)
+
+  state_message.ee_position[1] := ee_pos.X
+  state_message.ee_position[2] := ee_pos.Y
+  state_message.ee_position[3] := ee_pos.Z
+  state_message.ee_position[4] := roll
+  state_message.ee_position[5] := pitch
+  state_message.ee_position[6] := yaw
+
+  IF _sb_robot_init = TRUE THEN
+    FOR t_i := 1 TO KI_MAX_NUM_IO DO
+      IF _ai_din_pins[t_i] <> -1 THEN
+        state_message.pins_in[t_i] := _ai_din_pins[t_i]
+        IF $DIN[state_message.pins_in[t_i]] = TRUE THEN
+          state_message.states_in[t_i] := 1
+        ENDIF 
+        IF $DIN[state_message.pins_in[t_i]] = FALSE THEN
+          state_message.states_in[t_i] := 0
+        ENDIF 
+      ENDIF
+      IF _ai_dout_pins[t_i] <> -1 THEN
+        state_message.pins_out[t_i] := _ai_dout_pins[t_i]
+        IF $DOUT[state_message.pins_out[t_i]] = TRUE THEN
+          state_message.states_out[t_i] := 1
+        ENDIF 
+        IF $DOUT[state_message.pins_out[t_i]] = FALSE THEN
+          state_message.states_out[t_i] := 0
+        ENDIF 
+      ENDIF
+    ENDFOR
+  ENDIF
+  $ERROR := 0
+  ERR_TRAP_ON(40033)   --ERR_TRAP for inactive connection 
+  WRITE vi_server_netlun (state_message.timestamp, state_message.robot_status, state_message.sts_selector, state_message.sensor_type, state_message.joint_position[1], state_message.joint_position[2], state_message.joint_position[3], state_message.joint_position[4], state_message.joint_position[5], state_message.joint_position[6],state_message.joint_position[7], state_message.joint_position[8], state_message.joint_position[9], state_message.joint_position[10], state_message.ee_position[1], state_message.ee_position[2], state_message.ee_position[3], state_message.ee_position[4], state_message.ee_position[5], state_message.ee_position[6], state_message.states_in[1], state_message.states_in[2], state_message.states_in[3], state_message.states_in[4], state_message.states_in[5], state_message.states_in[6], state_message.states_out[1], state_message.states_out[2], state_message.states_out[3], state_message.states_out[4], state_message.states_out[5], state_message.states_out[6], state_message.error_value,state_message.num_joints,state_message.jnt_type[1],state_message.jnt_type[2],state_message.jnt_type[3],state_message.jnt_type[4],state_message.jnt_type[5],state_message.jnt_type[6],state_message.jnt_type[7],state_message.jnt_type[8],state_message.jnt_type[9],state_message.jnt_type[10])
+  ERR_TRAP_OFF(40033)
+  IF $ERROR = 40033 THEN
+    WRITE _vs_screen_lun (KS_MAIN_LOG, ' WRITE Error - code: ', $FL_STS, NL)
+    _si_error_state := _si_error_state OR KI_ERR_STATE_WRITE
+    RETURN(FALSE)
+  ENDIF
+  
+  RETURN(TRUE)
+
+END publish_state_message
+  
+
+-- +---------------------------------------------------------+
+-- | Name: ru_restart_server                                 |
+-- | Description: Reconnection Server                        |
+-- +---------------------------------------------------------+
+ROUTINE ru_restart_server
+BEGIN
+  WRITE _vs_screen_lun (KS_MAIN_LOG, ' Restarting State Server ... ', NL)
+  DELAY 200
+  tcp_server_disconnect(vi_server_netlun, _vs_screen_lun, _si_verbose, KS_MAIN_LOG, KI_ID_STATE)   -- close LUN
+  DELAY 200
+  vi_server_netlun := tcp_server_accept(vi_server_netlun, KI_LOCAL_PORT, _vs_screen_lun, _si_verbose, KS_MAIN_LOG, KI_ID_STATE)
+  ENABLE CONDITION[KI_COND_RESTART]   -- enable the condition
+END ru_restart_server
+  
+
+-- +----------------------------------------------------------------------------+
+-- | Name: ru_safety_gate                                                       |
+-- | Description: Reset motion in case of safety gate / external emergency stop |
+-- +----------------------------------------------------------------------------+
+ROUTINE ru_safety_gate(vi_on : BOOLEAN)
+BEGIN
+  IF vi_on THEN
+    _si_error_state := _si_error_state OR KI_ERR_STATE_SAFETY_GATE
+    throw_error('Safety Gate / Emergency stop error', KS_MAIN_LOG)
+  ELSE
+    IF ($GO[4] = FALSE) THEN
+      ENABLE CONDITION[KI_COND_RESET]
+    ELSE   
+      _si_error_state := _si_error_state AND (NOT(KI_ERR_STATE_SAFETY_GATE))
+    ENDIF
+  ENDIF
+END ru_safety_gate
+
+ROUTINE ru_error_prog
+CONST 
+  KI_WARN_COLLISION = 62563 -- Warning collision error code
+VAR 
+  vs_err_code : STRING[40]
+  vi_err_sev  : INTEGER
+  vs_err_str  : STRING[10]
+  vi_err_code : INTEGER
+BEGIN
+  -- Set error
+  SELECT $THRD_CEXP OF
+  CASE (1):
+	  WRITE _vs_screen_lun (NL, '---', NL, 'Program Execution Warning : ', NL)
+    vi_err_code := $THRD_ERROR
+    ENCODE(vs_err_code, vi_err_code)
+    vs_err_code := STR_CAT('Program Execution Error : ', vs_err_code)
+    vs_err_str  := ERR_STR(vi_err_code, 0x2, vi_err_sev)
+    IF vi_err_sev > 2 THEN -- Severity greater than WARNING
+      _si_error_state := _si_error_state OR KI_ERR_STATE_WRONG_MOTION
+      throw_error(vs_err_code, KS_MAIN_LOG)
+    ELSE
+      WRITE _vs_screen_lun (KS_MAIN_LOG, ' Program Execution Warning : ', vi_err_code, NL)
+    ENDIF
+  CASE (2):
+    --WARNING COLLISION
+    vi_err_code := KI_WARN_COLLISION
+    ENCODE(vs_err_code, vi_err_code)
+    _si_error_state := _si_error_state OR KI_ERR_STATE_WRONG_MOTION
+    throw_collision(vs_err_code, KS_MAIN_LOG)
+  CASE (3): -- Reset error
+    IF (_si_error_state AND  KI_ERR_STATE_WRONG_MOTION) = KI_ERR_STATE_WRONG_MOTION THEN
+      _si_error_state := _si_error_state AND (NOT(KI_ERR_STATE_WRONG_MOTION))
+    ENDIF
+  ELSE:
+  ENDSELECT
+END ru_error_prog
+  
+-- +---------------------------------------------------------+
+-- | Name: ru_restart_server                                 |
+-- | Description: Init CONDITION                             |
+-- +---------------------------------------------------------+
+ROUTINE ru_init_condition
+BEGIN
+  -- condition for restarting tcp/ip connection
+  CONDITION[KI_COND_RESTART] :
+    WHEN _vb_tcp_conn_state = FALSE DO   -- if server connection is NOK
+      ru_restart_server  -- retry 
+  ENDCONDITION
+
+  -- Condition for reset motion if safety gate
+  -- $SLI[9]  : Emergency stop external \xc4 double channel integrity block output
+  -- $SLI[10] : General stop \xc4 double channel integrity block output
+  -- $SLI[11] : Auto stop (fence) - double channel integrity block output
+  CONDITION[KI_COND_SAFETYGATE] NODISABLE :
+    WHEN $SLI[9]- OR $SLI[10]- OR $SLI[12]- DO
+      ru_safety_gate(TRUE)
+    WHEN $SLI[9]+ OR $SLI[10]+ OR $SLI[12]+ DO -- ($SLI[9]+ OR $SLI[10]+ OR $SLI[12]+) AND $GO[4]+
+      ru_safety_gate(FALSE)
+  ENDCONDITION
+
+  CONDITION[KI_COND_RESET] :
+    WHEN $GO[4]+ DO
+      ru_safety_gate(FALSE)
+  ENDCONDITION
+
+  CONDITION[KI_COND_ERR_PROG] NODISABLE:
+    WHEN (ERRORCLASS EC_PROG BY arm1_handler)  DO
+      ru_error_prog
+    WHEN (ERRORNUM 62563) OR (ERRORNUM 28986) DO
+      ru_error_prog
+    WHEN $GO[4]+ DO
+      ru_error_prog
+  ENDCONDITION
+
+END ru_init_condition
+
+
+  ------------------
+  ---- MAIN LOOP 
+  ------------------
+BEGIN
+  
+  vb_comm_success  := TRUE       -- init communication status flag
+  vs_server_host   := $NET_L[1]  -- get IP from controller settings
+  vi_server_netlun := 0
+  vr_strk_dist     := 0.01       -- distance to strok-end value (joint degree)
+
+  -- Copyright printout should be included in all PDL programs
+  --WRITE _vs_screen_lun (NL, 'Copyright (c) 2020, Laboratory for Manufacturing Systems & Automation (LMS) - University of Patras', NL)
+  WRITE _vs_screen_lun (NL, '------' , NL, 'Robot State Server starting... ', NL)
+  
+  $BASE   := POS(0.0,0.0,0.0,0.0,0.0,0.0,'')
+  $UFRAME := POS(0.0,0.0,0.0,0.0,0.0,0.0,'')
+  $TOOL   := POS(0.0,0.0,0.0,0.0,0.0,0.0,'')
+
+  -- Initialize conditions for restarting
+  ru_init_condition
+  ENABLE CONDITION[KI_COND_RESTART]
+  ENABLE CONDITION[KI_COND_SAFETYGATE]
+  ENABLE CONDITION[KI_COND_ERR_PROG]
+  $DV_TOUT := 0
+
+  FOR vi_ti := 1 TO KI_NUM_JNT DO
+    ai_jnt_type[vi_ti] := -1;
+  ENDFOR
+
+  FOR vi_ti := 1 TO KI_NUM_JNT DO
+    state_message.joint_position[vi_ti] := 0
+  ENDFOR
+
+  FOR vi_ti := 1 TO $LAST_JNT_AXIS DO
+    IF BIT_TEST($JNT_MASK, vi_ti) THEN
+      ai_jnt_type[vi_ti] := $ARM_DATA[1].A_ALONG_2D[2,vi_ti]
+    ENDIF
+    WRITE _vs_screen_lun (KS_MAIN_LOG, 'KI_AXIS_',vi_ti,': ',ai_jnt_type[vi_ti], NL)
+  ENDFOR
+
+  FOR vi_ti := 1 TO KI_MAX_NUM_IO DO
+    state_message.pins_in[vi_ti]    := -1
+    state_message.states_in[vi_ti]  := -1
+    state_message.pins_out[vi_ti]   := -1
+    state_message.states_out[vi_ti] := -1
+  ENDFOR
+
+  state_message.num_joints  := $NUM_JNT_AXES
+  state_message.jnt_type    := ai_jnt_type
+  
+  WRITE _vs_screen_lun (KS_MAIN_LOG, 'Server Address : ', vs_server_host, NL)
+  WRITE _vs_screen_lun (KS_MAIN_LOG, 'Server Port    : ', KI_LOCAL_PORT, NL)
+  WRITE _vs_screen_lun (KS_MAIN_LOG, 'Waiting for connections...', NL)
+  vi_server_netlun := tcp_server_accept(vi_server_netlun, KI_LOCAL_PORT, _vs_screen_lun, _si_verbose, KS_MAIN_LOG, KI_ID_ROBOT)
+  WRITE _vs_screen_lun (KS_MAIN_LOG, 'Starting cycle...', NL)
+
+  REPEAT
+
+    -- Publish state message loop stops when a client send terminate message and the status goes 'T' 
+    vb_comm_success := publish_state_message
+    IF vb_comm_success = FALSE THEN
+      throw_error('Publish state message failed', KS_MAIN_LOG)
+      _vb_tcp_conn_state := FALSE
+      DELAY 100
+    ENDIF
+
+    IF($THRD_ERROR = 0) THEN
+      if (_ss_state = 'A') THEN
+       IF (_si_error_state AND  KI_ERR_STATE_WRONG_MOTION) = KI_ERR_STATE_WRONG_MOTION THEN
+      _si_error_state := _si_error_state AND (NOT(KI_ERR_STATE_WRONG_MOTION))
+      ENDIF
+       _ss_state := 'M'
+      ENDIF
+    ENDIF
+
+    DELAY ROUND(1 / _si_publish_freq * 1000)
+    
+  UNTIL _sb_shutdown -- Main loop
+
+  WRITE _vs_screen_lun (KS_MAIN_LOG, 'Connection closed.', NL)
+  CLOSE FILE vi_server_netlun
+    
+END state_server
