@@ -23,11 +23,11 @@ It is also possible to use the library in virtual mode. In this case, the user o
 This repository contains the PDL code used for the COMAU ROS2 interface.
 
 Translate all four PDL files into cod files and upload them on the C5GPlus controller using the FTP within the folder "UD:\USR\comau_ros2_server".
-‚Äúpdl_tcp_functions‚Äù - NO HOLD PDL program with utility functions for the TCP/IP communication
-‚Äústate_server` - NO HOLD PDL program that contains a TCP server for publishing robot's state
-‚Äúrobot_server‚Äù - NO HOLD PDL program that contains a TCP server for receiving driver management commands
-‚Äúmotion_server‚Äù - NO HOLD PDL program that contains a TCP server for receiving motion commands
-‚Äúarm1_handler‚Äù - HOLD PDL program that executes the motion commands
+ìpdl_tcp_functionsî - NO HOLD PDL program with utility functions for the TCP/IP communication
+ìstate_server` - NO HOLD PDL program that contains a TCP server for publishing robot's state
+ìrobot_serverî - NO HOLD PDL program that contains a TCP server for receiving driver management commands
+ìmotion_serverî - NO HOLD PDL program that contains a TCP server for receiving motion commands
+ìarm1_handlerî - HOLD PDL program that executes the motion commands
 
 Load and activate only the pdl_tcp_functions.cod file which will automatically load and activate the other files. It is necessary to set the robot in Drive-On state and press the green Start button before launching the client.
 The Robot Controller should have the following software options:
