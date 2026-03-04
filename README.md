@@ -1,129 +1,44 @@
-Myco Robot
-======
+## Overview
+This repository contains all the required ROS2 packages to work with Comau robots through ROS2.
 
+The Comau Experimental package has been tested under ROS2 Humble and Ubuntu 22.04. This is research code, expect that it changes often and any fitness for a particular purpose is disclaimed.
 
-<p align="center">
-  <img src="docs/images/MyCo-3.5-0.95.webp" />
-</p>
+## Acknowledgment
+Developed in collaboration between:
 
-This repository provides ROS2 support for the Myco Robot. The recommend operating environment is on Ubuntu 22.04 with ROS humble. So far These packages haven't been tested in other environment.
+[<img height="60" alt="COMAU" src="comau_ros2_client/doc/COMAU-logo.png">](https://www.comau.com/en)  &nbsp; and &nbsp;
+[<img height="60" alt="LMS" src="comau_ros2_client/doc/LMS-logo.jpg">](http://lms.mech.upatras.gr)
 
-### Installation
+## Short scheme
 
-#### Ubuntu 22.04 + ROS Humble
+The library is based on TCP/IP communication between the ROS2 module running on an external PC and the PDL module running on the cabinet IPC. The following figure reports the set-up.
 
-**Install some important dependent software packages:**
-```sh
-$ sudo apt-get install ros-humble-joint-trajectory-controller
-$ sudo apt-get install ros-humble-controller-manager
-$ sudo apt-get install ros-humble-trajectory-msgs
-$ sudo apt-get install ros-humble-gazebo-ros2-control*
-$ sudo apt-get install ros-humble-joint-state-controller
-$ sudo apt-get install ros-humble-position-controllers
-```
+[<img height="260" alt="COMAU" src="comau_ros2_client/doc/scheme1.PNG" />]
 
-**Install related software packages:**
-```sh
-$ sudo apt-get install build-essential libgtk-3-dev
-$ sudo apt install python3-wxgtk4.0
-$ sudo apt install python3-transforms3d
-```
+It is also possible to use the library in virtual mode. In this case, the user only needs a laptop where both Windows and Linux run. The former is necessary to support RoboShop Comau software tool; the latter is used for ROS2.
 
-**Install or upgrade MoveIt!.** 
+[<img height="360" alt="COMAU" src="comau_ros2_client/doc/scheme2.PNG" />]
+## How to Start the Communication on Robot Side
 
-If you have installed MoveIt!, please make sure that it's been upgraded to the latest version.
+This repository contains the PDL code used for the COMAU ROS2 interface.
 
-Install/Upgrade MoveIt!:
+Translate all four PDL files into cod files and upload them on the C5GPlus controller using the FTP within the folder "UD:\USR\comau_ros2_server".
+“pdl_tcp_functions” - NO HOLD PDL program with utility functions for the TCP/IP communication
+“state_server` - NO HOLD PDL program that contains a TCP server for publishing robot's state
+“robot_server” - NO HOLD PDL program that contains a TCP server for receiving driver management commands
+“motion_server” - NO HOLD PDL program that contains a TCP server for receiving motion commands
+“arm1_handler” - HOLD PDL program that executes the motion commands
 
-```sh
-$ sudo apt-get update
-$ sudo apt-get install ros-humble-moveit
-```
+Load and activate only the pdl_tcp_functions.cod file which will automatically load and activate the other files. It is necessary to set the robot in Drive-On state and press the green Start button before launching the client.
+The Robot Controller should have the following software options:
+TCP/IP
 
+[<img height="360" alt="COMAU" src="comau_ros2_client/doc/scheme3.PNG" />]
 
-**Install this repository from Source**
+## How to use the COMAU ROS2 Client
 
-First set up a catkin workspace (see [this tutorials](http://wiki.ros.org/catkin/Tutorials)).  
-Then clone the repository into the src/ folder. It should look like /path/to/your/catkin_workspace/src/myco_robot.  
-Make sure to source the correct setup file according to your workspace hierarchy, then use catkin_make to compile.  
+## Real Robot/Roboshop
 
-Assuming your catkin workspace folder is ~/catkin_ws, you should use the following commands:
-```sh
-$ cd ~/catkin_ws/src
-$ git clone https://github.com/Comau/MyCo-ROS2.git
-$ cd ..
-$ colcon build
-$ source install/setup.bash
-```
+To undesrtand the driver follow the instructions at 
 
-
----
-
-### Usage with Gazebo Simulation
-
-***There are launch files available to bringup a simulated robot - either Myco3, Myco5 or Myco10.  
-In the following the commands for Myco3 are given. For Myco5 or Myco10, simply replace the prefix accordingly.***
-
-Bring up the simulated robot in Gazebo and Start up RViz with a configuration including the MoveIt!:
-```sh
-$ ros2 launch myco_3_5_950mm_ros2_moveit2 myco_3_5_950mm.launch.py
-```
-
-Start up myco basic api and "Myco Control Panel" interface:
-```sh
-$ ros2 launch myco_3_5_950mm_ros2_moveit2 myco_3_5_950mm_basic_api.launch.py 
-$ ros2 launch myco_basic_api fake_myco_gui.launch.py
-```
-
-> Tutorial about how to use MoveIt! RViz plugin: [docs/moveit_plugin_tutorial_english.md](docs/moveit_plugin_tutorial_english.md)  
-Tips:
-Every time you want to plan a trajectory, you should set the start state to current first.
-
-
----
-
-###  Usage with real Hardware
-
-***There are launch files available to bringup a real robot - either Myco3, Myco5 or Myco10.  
-In the following the commands for Myco3 are given. For Myco5 or Myco10, simply replace the prefix accordingly.***
-
-Put the file *myco_drivers.yaml*, that you got from the vendor, into the folder myco_robot_bringup/config/.Then copy the parameters in this file to the myco_robot_bringup/config/myco_arm_control.yaml
-
-Connect Myco to the computer with a LAN cable. Then confirm the ethernet interface name of the connection with `ifconfig`. The default ethernet name is eth0. If the ethernet name is not eth0, you should correct the following line in the file *myco_robot_bringup/config/myco_arm_control.yaml* 
-
-```
-myco_ethernet_name: eth0
-```
-
-Bring up the hardware of Myco. Before bringing up the hardware, you should setup Linux with PREEMPT_RT properly. There is a [tutorial](https://wiki.linuxfoundation.org/realtime/documentation/howto/applications/preemptrt_setup). There are two versions of myco EtherCAT slaves. Please bring up the hardware accordingly.
-
-```sh
-$ sudo chrt 10 bash
-$ ros2 launch myco_3_5_950mm_ros2_moveit2 myco_3_5_950mm_moveit.launch.py 
-```
-
-Start up RViz with a configuration including the MoveIt! Motion Planning plugin:
-```sh
-$ sudo su
-$ ros2 launch myco_3_5_950mm_ros2_moveit2 myco_3_5_950mm_moveit_rviz.launch.py
-```
-Start up myco basic api:
-```sh
-$ sudo su
-$ ros2 launch myco_3_5_950mm_ros2_moveit2 myco_3_5_950mm_basic_api.launch.py
-```
-Start up "Myco Control Panel" interface:
-```sh
-$ sudo su
-$ ros2 launch myco_basic_api myco_gui.launch.py
-```
-
-Enable the servos of Myco with "Myco Control Panel" interface: if there is no "Warning", just press the "Servo On" button to enable the robot. If there is "Warning", press the "Clear Fault" button first and then press the "Servo On" button.
-
-Tutorial about how to use MoveIt! RViz plugin: [docs/moveit_plugin_tutorial_english.md](docs/moveit_plugin_tutorial_english.md)  
-Tips:
-Every time you want to plan a trajectory, you should set the start state to current first.
-
-Before turning the robot off, you should press the "Servo Off" button to disable the robot.
-
-For more information about API, see [docs/API_description_english.md](docs/API_description_english.md)
+[comau_ros2_client README](comau_ros2_client/README.md)
