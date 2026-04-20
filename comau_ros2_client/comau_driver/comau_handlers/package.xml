@@ -32,6 +32,7 @@
   <depend>urdf</depend>
   <depend>rclcpp_components</depend>
   <depend>Boost</depend>
+  <depend>joint_limits</depend>
 
   <doc_depend>doxygen</doc_depend>
   

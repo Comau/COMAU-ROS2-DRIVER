@@ -30,6 +30,7 @@
   <depend>comau_msgs</depend>
   <depend>comau_driver</depend>
   <depend>comau_handlers</depend>
+  <depend>joint_limits</depend>
   <depend>urdf</depend>
   <depend>rclcpp_components</depend>
   <depend>Boost</depend>

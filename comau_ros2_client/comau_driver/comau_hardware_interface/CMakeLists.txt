@@ -63,6 +63,7 @@ set(HW_IF_INCLUDE_DEPENDS
   comau_msgs
   comau_driver
   comau_handlers
+  joint_limits
   Boost
   #comau_controllers
 )

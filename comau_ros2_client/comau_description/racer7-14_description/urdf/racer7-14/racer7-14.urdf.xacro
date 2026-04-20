@@ -4,8 +4,6 @@
   <xacro:macro name="racer7-14_description">
 
   <xacro:include filename="$(find racer7-14_description)/urdf/comau_common.macro.xacro"/>
-  <xacro:include filename="$(find racer7-14_description)/urdf/racer7-14/racer7-14.transmission.xacro" />
-  <xacro:include filename="$(find racer7-14_description)/urdf/racer7-14/racer7-14.gazebo.xacro" />
 
   <!--Experimental Parameters!-->
   <xacro:property name="col_scale" default="1.0"/> <!--Just to make sure the dont self collide-->

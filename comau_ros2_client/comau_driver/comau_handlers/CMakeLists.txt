@@ -68,6 +68,7 @@ geometry_msgs
 tf2_geometry_msgs
 geometry2
 hardware_interface
+joint_limits
 urdf
 rclcpp_components
 realtime_tools

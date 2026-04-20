@@ -49,6 +49,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(comau_msgs REQUIRED)
 find_package(realtime_tools REQUIRED)
 find_package(comau_handlers REQUIRED)
+find_package(joint_limits REQUIRED)
 
 include_directories(
  include
@@ -70,6 +71,7 @@ geometry_msgs
 tf2_geometry_msgs
 geometry2
 hardware_interface
+joint_limits
 urdf
 rclcpp_components
 realtime_tools

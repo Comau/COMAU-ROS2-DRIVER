@@ -30,6 +30,7 @@
   <depend>comau_msgs</depend>
   <depend>comau_driver</depend>
   <depend>comau_handlers</depend>
+  <depend>joint_limits</depend>
   <depend>urdf</depend>
   <depend>trajectory_msgs</depend>
   <depend>tf2_geometry_msgs</depend>
